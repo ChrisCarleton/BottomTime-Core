@@ -3,12 +3,12 @@ import Joi from 'joi';
 const logEntryBaseSchema = {
 	// Basic info
 	entryTime: Joi.date().iso().required(),
-	bottomTime: Joi.number().integer().positive(),
-	totalTime: Joi.number().integer().positive().min(Joi.ref('bottomTime')),
+	bottomTime: Joi.number().positive(),
+	totalTime: Joi.number().positive().min(Joi.ref('bottomTime')),
 	location: Joi.string().max(200).required(),
 	site: Joi.string().max(200).required(),
-	avgDepth: Joi.number().positive(),
-	maxDepth: Joi.number().positive(),
+	averageDepth: Joi.number().positive(),
+	maxDepth: Joi.number().positive().min(Joi.ref('averageDepth')),
 	gps: Joi.object().keys({
 		latitude: Joi.number().min(-90.0).max(90.0).required(),
 		longitude: Joi.number().min(-180.0).max(180.0).required()

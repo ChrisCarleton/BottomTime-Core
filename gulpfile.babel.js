@@ -19,7 +19,7 @@ function test() {
 	mkdirp.sync(path.join(__dirname, 'logs/'));
 	process.env.BT_LOG_FILE = path.join(__dirname, 'logs/test.log');
 	return gulp
-		.src(['tests/**/*.test.js'])
+		.src(['tests/**/*.tests.js'])
 		.pipe(mocha({
 			require: ['@babel/register'],
 			timeout: 10000
