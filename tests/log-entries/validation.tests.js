@@ -36,7 +36,7 @@ describe('Log entry validation' , () => {
 
 	it('Update requires an entry Id', () => {
 		logEntry.entryId = undefined;
-		validateUpdate('object.allowUnknown');
+		validateUpdate('any.required');
 	});
 
 	it('Create does not allow an entry Id', () => {
@@ -46,111 +46,111 @@ describe('Log entry validation' , () => {
 
 	it('Entry time is a valid ISO date', () => {
 		logEntry.entryTime = 'Tuesday?';
-		validateUpdate('date.isoDate');
+		validateCreate('date.isoDate');
 	});
 
 	it('Entry time is required', () => {
 		logEntry.entryTime = undefined;
-		validateUpdate('any.required');
+		validateCreate('any.required');
 	});
 
 	it('Bottom time cannot be zero', () => {
 		logEntry.bottomTime = 0;
-		validateUpdate('number.positive');
+		validateCreate('number.positive');
 	});
 
 	it('Bottom time cannot be negative', () => {
 		logEntry.bottomTime = -1;
-		validateUpdate('number.positive');
+		validateCreate('number.positive');
 	});
 
 	it('Bottom time can be fractional', () => {
 		logEntry.bottomTime = 29.23;
 		logEntry.totalTime = logEntry.bottomTime + 2.3;
-		validateUpdate();
+		validateCreate();
 	});
 
 	it('Total time cannot be zero', () => {
 		logEntry.bottomTime = undefined;
 		logEntry.totalTime = 0;
-		validateUpdate('number.positive');
+		validateCreate('number.positive');
 	});
 
 	it('Total time cannot be negative', () => {
 		logEntry.bottomTime = undefined;
 		logEntry.totalTime = -4;
-		validateUpdate('number.positive');
+		validateCreate('number.positive');
 	});
 
 	it('Total time can be fractional', () => {
 		logEntry.totalTime = logEntry.bottomTime + 7.38;
-		validateUpdate();
+		validateCreate();
 	});
 
 	it('Total time cannot be less than bottom time', () => {
 		logEntry.bottomTime = logEntry.bottomTime + 5;
 		logEntry.totalTime = logEntry.bottomTime - 5;
-		validateUpdate('number.min');
+		validateCreate('number.min');
 	});
 
 	it('Location is required', () => {
 		logEntry.location = '';
-		validateUpdate('any.empty');
+		validateCreate('any.empty');
 	});
 
 	it('Location must be a string', () => {
 		logEntry.location = true;
-		validateUpdate('string.base');
+		validateCreate('string.base');
 	});
 
 	it('Location cannot exceed 200 characters', () => {
 		logEntry.location = faker.lorem.paragraph(7);
-		validateUpdate('string.max');
+		validateCreate('string.max');
 	});
 
 	it('Site is required', () => {
 		logEntry.site = '';
-		validateUpdate('any.empty');
+		validateCreate('any.empty');
 	});
 
 	it('Site cannot exceed 200 characters', () => {
 		logEntry.site = faker.lorem.paragraph(7);
-		validateUpdate('string.max');
+		validateCreate('string.max');
 	});
 
 	it('Average depth cannot be zero', () => {
 		logEntry.averageDepth = 0;
-		validateUpdate('number.positive');
+		validateCreate('number.positive');
 	});
 
 	it('Average depth cannot be negative', () => {
 		logEntry.averageDepth = -3;
-		validateUpdate('number.positive');
+		validateCreate('number.positive');
 	});
 
 	it('Average depth can be fractional', () => {
 		logEntry.averageDepth = logEntry.maxDepth - 2.23;
-		validateUpdate();
+		validateCreate();
 	});
 
 	it('Max depth cannot be zero', () => {
 		logEntry.maxDepth = 0;
-		validateUpdate('number.positive');
+		validateCreate('number.positive');
 	});
 
 	it('Max depth cannot be negative', () => {
 		logEntry.maxDepth = -22;
-		validateUpdate('number.positive');
+		validateCreate('number.positive');
 	});
 
 	it('Max depth can be fractional', () => {
 		logEntry.maxDepth += 14.35;
-		validateUpdate();
+		validateCreate();
 	});
 
 	it('Max depth cannot be less than average depth', () => {
 		logEntry.maxDepth = logEntry.averageDepth - 2;
-		validateUpdate('number.min');
+		validateCreate('number.min');
 	});
 
 });

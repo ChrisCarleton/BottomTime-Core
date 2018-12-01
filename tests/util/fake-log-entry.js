@@ -1,6 +1,6 @@
 import faker from 'faker';
 
-export default (userId) => {
+export default () => {
 	const bottomTime = faker.random.number({ min: 10, max: 70 });
 	const totalTime = faker.random.number({ min: bottomTime, max: bottomTime + 8 });
 
@@ -11,7 +11,7 @@ export default (userId) => {
 		entryTime: faker.date.past(3).toISOString(),
 		bottomTime: bottomTime,
 		totalTime: totalTime,
-		location: faker.fake('{{address.city}} {{address.citySuffix}}'),
+		location: faker.fake('{{address.city}}{{address.citySuffix}}, {{address.stateAbbr}}'),
 		site: faker.fake('{{address.cityPrefix}} {{name.lastName}}'),
 		averageDepth: avgDepth,
 		maxDepth: maxDepth,

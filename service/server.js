@@ -5,9 +5,27 @@ import express from 'express';
 import glob from 'glob';
 import http from 'http';
 import log, { requestLogger } from './logger';
+import { notFound } from './utils/error-response';
 import path from 'path';
 import session from 'express-session';
 
+// Wire up process-wide event handlers.
+process.on('unhandledRejection', (reason, p) => {
+	log.fatal('Catastrophic failure - unhandled exception! Details:', {
+		reason: reason,
+		promise: p
+	});
+	process.exit(187);
+});
+
+process.on('uncaughtException', err => {
+	// This is pretty serious... end the process because it's likely
+	// we're in an inconsistent state.
+	log.fatal('Catastrophic failure - unhandled exception! Details:', err);
+	process.exit(187);
+});
+
+// Express middleware
 const app = express();
 
 app.use(session({
@@ -19,18 +37,20 @@ app.use(bodyParser.json());
 applyAuth(app);
 app.use(requestLogger);
 
+// Load routes
 glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {
 	log.debug('Route loader:', loader);
 	require(loader)(app);
 });
 
+
+// Generic 404 for all other routes
 app.all('*', (req, res) => {
-	res.status(404).json({
-		status: 404,
-		message: 'Route not found.'
-	});
+	notFound(req, res);
 });
 
+
+// Launch server
 const server = http.createServer(app);
 server.listen(config.port);
 log.info(`Service is now listening on port ${config.port}.`);

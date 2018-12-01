@@ -1,18 +1,24 @@
 import { App } from '../../service/server';
-import database from '../../service/data/database';
 import { expect, request } from 'chai';
-import faker from 'faker';
 import fakeLogEntry from '../util/fake-log-entry';
 import LogEntry from '../../service/data/log-entry';
 
+let stub;
+
 describe('Logs Controller', () => {
+	afterEach(done => {
+		// Purge log records.
+		LogEntry.deleteMany({}, done);
+
+		// Clean up sinon stubs.
+		if (stub) {
+			stub.restore();
+			stub = null;
+		}
+	});
+
 	describe('GET /log/:logId', () => {
 
-		afterEach(done => {
-			// Purge log records.
-			LogEntry.deleteMany({}, done);
-		});
-		
 		it('Will fetch the requested log entry', done => {
 			const fake = fakeLogEntry();
 			const logEntry = new LogEntry(fake);
@@ -25,7 +31,7 @@ describe('Logs Controller', () => {
 					expect(res.status).to.equal(200);
 					expect(res.body).to.exist;
 
-					fake._id = res.body._id;
+					fake.entryId = res.body.entryId;
 					expect(res.body).to.eql(fake);
 					done();
 				})
@@ -41,6 +47,80 @@ describe('Logs Controller', () => {
 					done();
 				})
 				.catch(done);
+		});
+
+		it('Will return Server Error if something goes wrong', done => {
+			done();
+		});
+
+	});
+
+	describe('POST /logs', () => {
+
+		it('Will create a new record', done => {
+			const fake = fakeLogEntry();
+			request(App)
+				.post('/logs')
+				.send([fake])
+				.then(res => {
+					expect(res.status).to.equal(200);
+					expect(res.body).to.exist;
+					expect(res.body).to.be.an('Array');
+					expect(res.body.length).to.equal(1);
+					
+					fake.entryId = res.body[0].entryId;
+					expect(res.body[0]).to.eql(fake);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will create multiple records', done => {
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+
+			request(App)
+				.post('/logs')
+				.send(fakes)
+				.then(res => {
+					expect(res.status).to.equal(200);
+					expect(res.body).to.exist;
+					expect(res.body).to.be.an('Array');
+
+					for (let i = 0; i < fakes.length; i++) {
+						fakes[i].entryId = res.body[i].entryId;
+						expect(res.body[i]).to.eql(fakes[i]);
+					}
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Bad Request if one or more log entries are invalid', done => {
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+
+			fakes[1].averageDepth = -1;
+			request(App)
+				.post('/logs')
+				.send(fakes)
+				.then(res => {
+					expect(res.status).to.equal(400);
+					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
+					expect(res.body.error.isJoi).to.be.true;
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Server Error if database request fails', done => {
+			done();
 		});
 
 	});
