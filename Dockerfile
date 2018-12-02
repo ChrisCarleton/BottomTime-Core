@@ -1,5 +1,7 @@
 FROM	node:10.11.0
 
+ENV		NODE_ENV production
+
 RUN		mkdir -p /usr/src/bottomtime
 WORKDIR	/usr/src/bottomtime
 ADD		. .

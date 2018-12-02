@@ -1,8 +1,12 @@
 .git/
+.circleci/
 logs/
 node_modules/
+tests/
 
 LICENSE
 README.md
 .gitignore
+.eslintrc.js
 Dockerfile
+gulpfile.babel.js
