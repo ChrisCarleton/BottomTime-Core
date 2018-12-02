@@ -1,0 +1,66 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: node:10.11.0
+      - image: mongo:2.6.8
+        name: mongodb
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - bt_core_{{ checksum "package.json" }}
+            - bt_core_
+      - run:
+          name: Test
+          command: |
+            npm install -g gulp
+            npm install
+            gulp ci-build
+      - save_cache:
+          key: bt_core_{{ checksum "package.json" }}
+          paths:
+            - node_modules/
+
+  deploy-dev:
+    docker:
+      - image: circleci/terraform
+    steps:
+      - checkout
+      - run:
+          name: Building Docker Image
+          command: docker build -t bottom-time/core-dev .
+      - run:
+          command: echo "Deploy to dev..."
+
+  deploy-prod:
+    docker:
+      - image: circleci/terraform
+    steps:
+      - checkout
+      - run:
+          name: Building Docker Image
+          command: docker build -t bottom-time/core .
+      - run:
+          command: echo "Deploy to prod..."
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - test
+      - deploy-dev:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - master
+      - deploy-prod:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - prod
