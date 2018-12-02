@@ -24,26 +24,40 @@ jobs:
             - node_modules/
 
   deploy-dev:
-    docker:
-      - image: ccarleton/terraform_docker:latest
+    machine:
+      enabled: true
+      image: circleci/classic:201808-01
     steps:
       - checkout
       - run:
           name: Building Docker Image
           command: docker build -t bottom-time/core-dev .
       - run:
-          command: echo "Deploy to dev..."
+          name: Get Terraform
+          command: |
+            wget -O terraform.zip https://releases.hashicorp.com/terraform/0.11.10/terraform_0.11.10_linux_amd64.zip
+            unzip terraform.zip
+          working_directory: /usr/bin
+      - run:
+          command: terraform -v
 
   deploy-prod:
-    docker:
-      - image: ccarleton/terraform_docker:latest
+    machine:
+      enabled: true
+      image: circleci/classic:201808-01
     steps:
       - checkout
       - run:
           name: Building Docker Image
           command: docker build -t bottom-time/core .
       - run:
-          command: echo "Deploy to prod..."
+          name: Get Terraform
+          command: |
+            wget -O terraform.zip https://releases.hashicorp.com/terraform/0.11.10/terraform_0.11.10_linux_amd64.zip
+            unzip terraform.zip
+          working_directory: /usr/bin
+      - run:
+          command: terraform -v
 
 workflows:
   version: 2
