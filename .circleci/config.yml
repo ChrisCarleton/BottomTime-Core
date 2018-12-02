@@ -53,8 +53,8 @@ jobs:
       - run:
           name: Get Terraform
           command: |
-            wget -O terraform.zip https://releases.hashicorp.com/terraform/0.11.10/terraform_0.11.10_linux_amd64.zip
-            unzip terraform.zip
+            sudo wget -O terraform.zip https://releases.hashicorp.com/terraform/0.11.10/terraform_0.11.10_linux_amd64.zip
+            sudo unzip terraform.zip
           working_directory: /usr/bin
       - run:
           command: terraform -v
