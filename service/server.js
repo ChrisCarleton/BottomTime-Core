@@ -1,5 +1,6 @@
 import applyAuth from './auth';
 import bodyParser from 'body-parser';
+import compression from 'compression';
 import config from './config';
 import express from 'express';
 import glob from 'glob';
@@ -28,6 +29,7 @@ process.on('uncaughtException', err => {
 // Express middleware
 const app = express();
 
+app.use(compression());
 app.use(session({
 	resave: true,
 	saveUninitialized: false,
