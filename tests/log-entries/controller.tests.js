@@ -124,4 +124,64 @@ describe('Logs Controller', () => {
 		});
 
 	});
+
+	describe('PUT /logs/:logId', () => {
+
+		it('Will update the log entry', done => {
+			const fake = fakeLogEntry();
+			const originalEntry = new LogEntry(fake);
+			let entryId;
+
+			originalEntry.save()
+				.then(entry => {
+					entryId = entry._id.toString();
+					fake.location = 'Some new location';
+					fake.maxDepth = 139.5;
+
+					return request(App)
+						.put(`/logs/${entryId}`)
+						.send(fake);
+				})
+				.then(res => {
+					expect(res.status).to.equal(200);
+					return request(App)
+						.get(`/logs/${entryId}`);
+				})
+				.then(res => {
+					fake.entryId = entryId;
+					expect(res.body).to.eql(fake);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Bad Request if update is invalid', done => {
+			const fake = fakeLogEntry();
+			const originalEntry = new LogEntry(fake);
+			let entryId;
+
+			originalEntry.save()
+				.then(entity => {
+					entryId = entity._id.toString();
+					fake.site = null;
+
+					return request(App)
+						.put(`/logs/${entryId}`)
+						.send(fake);
+				})
+				.then(res => {
+					expect(res.status).to.equal(400);
+					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
+					expect(res.body.status).to.equal(400);
+
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Server Error if database fails', done => {
+			done();
+		});
+
+	});
 });

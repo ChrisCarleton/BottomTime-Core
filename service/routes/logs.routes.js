@@ -5,7 +5,8 @@ import {
 	UpdateLog,
 	UpdateLogs,
 	DeleteLog,
-	DeleteLogs
+	DeleteLogs,
+	RetrieveLogEntry
 } from '../controllers/logs.controller';
 
 module.exports = app => {
@@ -16,7 +17,7 @@ module.exports = app => {
 		.delete(DeleteLogs);
 	
 	app.route('/logs/:logId([a-f0-9]{24})')
-		.get(GetLog)
-		.put(UpdateLog)
-		.delete(DeleteLog);
+		.get(RetrieveLogEntry, GetLog)
+		.put(RetrieveLogEntry, UpdateLog)
+		.delete(RetrieveLogEntry, DeleteLog);
 };
