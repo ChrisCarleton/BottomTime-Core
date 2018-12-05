@@ -6,7 +6,7 @@ resource "aws_vpc" "main" {
 	cidr_block = "10.0.0.0/16"
 
 	tags {
-		Name = "Bottom Time Application VPC"
+		Name = "Bottom Time Application VPC - ${var.env}"
 	}
 }
 
@@ -17,7 +17,7 @@ resource "aws_subnet" "public_1" {
 	availability_zone = "${data.aws_availability_zones.available.names[0]}"
 
 	tags {
-		Name = "Bottom Time public-facing subnet - ${data.aws_availability_zones.available.names[0]}"
+		Name = "Bottom Time public-facing subnet - ${data.aws_availability_zones.available.names[0]} ${var.env}"
 	}
 }
 
@@ -27,7 +27,7 @@ resource "aws_subnet" "private_1" {
 	availability_zone = "${data.aws_availability_zones.available.names[0]}"
 
 	tags {
-		Name = "Bottom Time private-facing subnet - ${data.aws_availability_zones.available.names[0]}"
+		Name = "Bottom Time private-facing subnet - ${data.aws_availability_zones.available.names[0]} ${var.env}"
 	}
 }
 
@@ -38,7 +38,7 @@ resource "aws_subnet" "public_2" {
 	availability_zone = "${data.aws_availability_zones.available.names[1]}"
 
 	tags {
-		Name = "Bottom Time public-facing subnet - ${data.aws_availability_zones.available.names[1]}"
+		Name = "Bottom Time public-facing subnet - ${data.aws_availability_zones.available.names[1]} ${var.env}"
 	}
 }
 
@@ -48,7 +48,7 @@ resource "aws_subnet" "private_2" {
 	availability_zone = "${data.aws_availability_zones.available.names[1]}"
 
 	tags {
-		Name = "Bottom Time private-facing subnet - ${data.aws_availability_zones.available.names[1]}"
+		Name = "Bottom Time private-facing subnet - ${data.aws_availability_zones.available.names[1]} ${var.env}"
 	}
 }
 
@@ -58,7 +58,7 @@ resource "aws_internet_gateway" "main" {
 	vpc_id = "${aws_vpc.main.id}"
 
 	tags {
-		Name = "Bottom Time Application Internet Gateway"
+		Name = "Bottom Time Application Internet Gateway - ${var.env}"
 	}
 }
 
@@ -67,7 +67,7 @@ resource "aws_eip" "az_1" {
 	depends_on = ["aws_internet_gateway.main"]
 
 	tags {
-		Name = "Bottom Time Elastic IP - ${data.aws_availability_zones.available.names[0]}"
+		Name = "Bottom Time Elastic IP - ${data.aws_availability_zones.available.names[0]} - ${var.env}"
 	}
 }
 
@@ -76,7 +76,7 @@ resource "aws_eip" "az_2" {
 	depends_on = ["aws_internet_gateway.main"]
 	
 	tags {
-		Name = "Bottom Time Elastic IP - ${data.aws_availability_zones.available.names[1]}"
+		Name = "Bottom Time Elastic IP - ${data.aws_availability_zones.available.names[1]} - ${var.env}"
 	}
 }
 
@@ -86,7 +86,7 @@ resource "aws_nat_gateway" "az_1" {
 	depends_on = ["aws_internet_gateway.main"]
 
 	tags {
-		Name = "Bottom Time NAT Gateway - ${data.aws_availability_zones.available.names[0]}"
+		Name = "Bottom Time NAT Gateway - ${data.aws_availability_zones.available.names[0]} - ${var.env}"
 	}
 }
 
@@ -96,7 +96,7 @@ resource "aws_nat_gateway" "az_2" {
 	depends_on = ["aws_internet_gateway.main"]
 
 	tags {
-		Name = "Bottom Time NAT Gateway - ${data.aws_availability_zones.available.names[1]}"
+		Name = "Bottom Time NAT Gateway - ${data.aws_availability_zones.available.names[1]} - ${var.env}"
 	}
 }
 
@@ -110,7 +110,7 @@ resource "aws_route_table" "public" {
 	}
 
 	tags {
-		Name = "Bottom Time application public-facing route table"
+		Name = "Bottom Time application public-facing route table - ${var.env}"
 	}
 }
 
@@ -147,7 +147,7 @@ resource "aws_route_table" "private_az2" {
 	}
 
 	tags {
-		Name = "Bottom Time application private-facing route table - ${data.aws_availability_zones.available.names[1]}"
+		Name = "Bottom Time application private-facing route table - ${data.aws_availability_zones.available.names[1]} ${var.env}"
 	}
 }
 

@@ -1,3 +1,3 @@
 resource "aws_ecs_cluster" "main" {
-	name = "bottomtime-cluster"
+	name = "bottomtime-cluster-${var.env}"
 }

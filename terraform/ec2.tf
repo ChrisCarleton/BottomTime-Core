@@ -13,7 +13,7 @@ data "aws_ami" "ecs_optimized" {
 }
 
 resource "aws_launch_configuration" "main" {
-	name_prefix = "bottomtime_service_"
+	name_prefix = "bottomtime_service_${var.env}_"
 	image_id = "${data.aws_ami.ecs_optimized.id}"
 	instance_type = "${var.instance_type}"
 	iam_instance_profile = "${aws_iam_instance_profile.instance.id}"

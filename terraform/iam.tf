@@ -1,5 +1,5 @@
 resource "aws_iam_role" "instance" {
-	name = "BottomTime-instance-role-${var.region}"
+	name = "BottomTime-instance-role-${var.region}-${var.env}"
 	assume_role_policy = <<EOF
 {
   "Version": "2008-10-17",

@@ -1,5 +1,5 @@
 resource "aws_security_group" "lb" {
-	name = "bottomtime-load-balancer"
+	name = "bottomtime-load-balancer-${var.env}"
 	description = "Allows HTTPS access to the load balancer."
 	vpc_id = "${aws_vpc.main.id}"
 
@@ -23,7 +23,7 @@ resource "aws_security_group" "lb" {
 }
 
 resource "aws_security_group" "instance" {
-	name = "bottomtime-instances"
+	name = "bottomtime-instances-${var.env}"
 	description = "Allows access to ephemeral ports for ECS."
 	vpc_id = "${aws_vpc.main.id}"
 
