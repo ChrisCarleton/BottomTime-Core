@@ -30,3 +30,15 @@ resource "aws_launch_configuration" "main" {
 		volume_size = 40
 	}
 }
+
+resource "aws_lb" "main" {
+	name = "bottomtime_load_balancer_${var.env}"
+	internal = false
+	load_balancer_type = "application"
+	security_groups = ["${aws_security_group.lb.id}"]
+	subnets = ["${aws_subnet.private_1.id}", "${aws_subnet.private_2.id}"]
+	
+	tags {
+		Name = "BottomTime Application Load Balancer - ${var.env}"
+	}
+}
