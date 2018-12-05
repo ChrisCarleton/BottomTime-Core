@@ -67,7 +67,16 @@ export function DeleteLogs(req, res) {
 }
 
 export function DeleteLog(req, res) {
-	res.sendStatus(500);
+	LogEntry.deleteOne({ _id: req.logEntry.id })
+		.then(() => {
+			res.sendStatus(200);
+		})
+		.catch(err => {
+			const logId = logError(
+				`Failed to delete record for log entry ${req.logEntry.id}`,
+				err);
+			serverError(res, logId);
+		});
 }
 
 export function RetrieveLogEntry(req, res, next) {

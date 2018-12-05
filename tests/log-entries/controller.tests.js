@@ -155,6 +155,21 @@ describe('Logs Controller', () => {
 				.catch(done);
 		});
 
+		it('Will return Not Found if the log engry does not exit', done => {
+			const fake = fakeLogEntry();
+			fake.entryId = 'b5ca1b72aa445300db582a03';
+
+			request(App)
+				.put(`/logs/${fake.entryId}`)
+				.send(fake)
+				.then(res => {
+					expect(res.status).to.equal(404);
+
+					done();
+				})
+				.catch(done);
+		});
+
 		it('Will return Bad Request if update is invalid', done => {
 			const fake = fakeLogEntry();
 			const originalEntry = new LogEntry(fake);
@@ -183,5 +198,47 @@ describe('Logs Controller', () => {
 			done();
 		});
 
+	});
+
+	describe('DELETE /logs/:logId', () => {
+
+		it('Will delete the specified log entry', done => {
+			const fake = fakeLogEntry();
+			const entry = new LogEntry(fake);
+
+			entry.save()
+				.then(entity => {
+					fake.entryId = entity._id.toString();
+
+					return request(App)
+						.del(`/logs/${fake.entryId}`);
+				})
+				.then(res => {
+					expect(res.status).to.equal(200);
+					
+					return LogEntry.findById(fake.entryId);
+				})
+				.then(res => {
+					expect(res).to.be.null;
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Not Found if the log entry does not exist', done => {
+			const entryId = '7916e401d28648cc662f8977';
+
+			request(App)
+				.del(`/logs/${entryId}`)
+				.then(res => {
+					expect(res.status).to.equal(404);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Server Error if the database fails', done => {
+			done();
+		});
 	});
 });
