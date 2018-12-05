@@ -3,6 +3,7 @@
 logs/
 node_modules/
 tests/
+terraform/
 
 LICENSE
 README.md
