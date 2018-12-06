@@ -16,3 +16,19 @@ resource "aws_autoscaling_group" "main" {
 		}
 	]
 }
+
+resource "aws_autoscaling_policy" "service_scale_in" {
+	name = "BottomTime-Scale-In-${var.env}"
+	scaling_adjustment = -1
+	adjustment_type = "ChangeInCapacity"
+	cooldown = 240
+	autoscaling_group_name = "${aws_autoscaling_group.main.name}"
+}
+
+resource "aws_autoscaling_policy" "service_scale_out" {
+	name = "BottomTime-Scale-Out-${var.env}"
+	scaling_adjustment = 1
+	adjustment_type = "ChangeInCapacity"
+	cooldown = 300
+	autoscaling_group_name = "${aws_autoscaling_group.main.name}"
+}

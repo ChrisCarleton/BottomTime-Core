@@ -28,6 +28,16 @@ variable "instance_type" {
 	default = "t3.small"
 }
 
+variable "latency_low_threshold" {
+	type = "string"
+	default = 200
+}
+
+variable "latency_high_threshold" {
+	type = "string"
+	default = 600
+}
+
 variable "log_level" {
 	type = "string"
 	default = "info"
