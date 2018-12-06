@@ -1,5 +1,5 @@
 resource "aws_iam_role" "execution" {
-	name = "BottomTime-task-execution-role-${var.region}-${var.env}"
+	name = "BottomTime-Task-Execution-Role-${var.region}-${var.env}"
 	assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -22,7 +22,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "execution" {
-	name = "BottomTime-task-execution-role-policy"
+	name = "BottomTime-Task-Execution-Role-Policy"
 	role = "${aws_iam_role.execution.id}"
 	policy = <<EOF
 {
@@ -50,7 +50,7 @@ EOF
 }
 
 resource "aws_iam_role" "service" {
-	name = "BottomTime-task-role-${var.region}-${var.env}"
+	name = "BottomTime-Task-Role-${var.region}-${var.env}"
 	assume_role_policy = <<EOF
 {
   "Version": "2008-10-17",
@@ -69,7 +69,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "service" {
-	name = "BottomTime-task-role-policy"
+	name = "BottomTime-Task-Role-Policy"
 	role = "${aws_iam_role.service.id}"
 	policy = <<EOF
 {
@@ -95,7 +95,7 @@ EOF
 }
 
 resource "aws_iam_role" "instance" {
-	name = "BottomTime-instance-role-${var.region}-${var.env}"
+	name = "BottomTime-Instance-Role-${var.region}-${var.env}"
 	assume_role_policy = <<EOF
 {
   "Version": "2008-10-17",
@@ -114,7 +114,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "instance" {
-	name = "BottomTime-instance-role-policy"
+	name = "BottomTime-Instance-Role-Policy"
 	role = "${aws_iam_role.instance.id}"
 
 	policy = <<EOF
@@ -147,6 +147,6 @@ EOF
 }
 
 resource "aws_iam_instance_profile" "instance" {
-	name = "BottomTime-instance-profile"
+	name = "BottomTime-Instance-Profile"
 	role = "${aws_iam_role.instance.id}"
 }

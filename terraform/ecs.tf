@@ -1,5 +1,5 @@
 locals {
-	container_name = "bottomtime-container-${var.env}"
+	container_name = "BottomTime-Container-${var.env}"
 	container_port = 29201
 }
 
@@ -18,7 +18,7 @@ data "template_file" "task_def" {
 }
 
 resource "aws_ecs_task_definition" "main" {
-	family = "bottomtime-${var.env}"
+	family = "BottomTime-Task-${var.env}"
 	container_definitions = "${data.template_file.task_def.rendered}"
 	task_role_arn = "${aws_iam_role.execution.arn}"
 	execution_role_arn = "${aws_iam_role.execution.arn}"
@@ -28,7 +28,7 @@ resource "aws_ecs_task_definition" "main" {
 }
 
 resource "aws_ecs_cluster" "main" {
-	name = "bottomtime-cluster-${var.env}"
+	name = "BottomTime-Cluster-${var.env}"
 }
 
 resource "aws_ecs_service" "main" {

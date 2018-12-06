@@ -1,5 +1,5 @@
 resource "aws_autoscaling_group" "main" {
-	name = "bottomtime_service_autoscaling_${var.env}"
+	name = "BottomTime-ASG-${var.env}"
 	min_size = "${var.min_instances}"
 	max_size = "${var.max_instances}"
 	default_cooldown = 180
