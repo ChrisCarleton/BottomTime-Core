@@ -49,6 +49,48 @@ resource "aws_iam_role_policy" "execution" {
 EOF
 }
 
+resource "aws_iam_role" "app_autoscaling" {
+	name = "BottomTime-App-Autoscaling-Role-${var.region}-${var.env}"
+	assume_role_policy = <<EOF
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "application-autoscaling.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "app_autoscaling" {
+	name = "BottomTime-App-Autoscaling-Policy"
+	role = "${aws_iam_role.app_autoscaling.id}"
+	policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecs:DescribeServices",
+                "ecs:UpdateService",
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:DescribeAlarms",
+                "cloudwatch:DeleteAlarms"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
 resource "aws_iam_role" "service" {
 	name = "BottomTime-Task-Role-${var.region}-${var.env}"
 	assume_role_policy = <<EOF
