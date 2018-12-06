@@ -1,3 +1,8 @@
+variable "build_number" {
+	type = "string"
+	default = "latest"
+}
+
 variable "domain_zone" {
 	type = "string"
 	default = "bottomtime.ca"
@@ -13,9 +18,19 @@ variable "env" {
 	default = "env"
 }
 
+variable "docker_image" {
+	type = "string"
+	default = "961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core"
+}
+
 variable "instance_type" {
 	type = "string"
 	default = "t3.small"
+}
+
+variable "log_level" {
+	type = "string"
+	default = "info"
 }
 
 variable "min_instances" {
