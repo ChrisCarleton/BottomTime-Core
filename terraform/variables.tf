@@ -15,17 +15,17 @@ variable "domain_name" {
 
 variable "env" {
 	type = "string"
-	default = "env"
+	default = "dev"
 }
 
 variable "docker_image" {
 	type = "string"
-	default = "961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core-dev"
+	default = "961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core"
 }
 
 variable "instance_type" {
 	type = "string"
-	default = "t3.small"
+	default = "t3.micro"
 }
 
 variable "latency_low_threshold" {
