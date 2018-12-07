@@ -23,7 +23,7 @@ resource "aws_launch_configuration" "main" {
 	iam_instance_profile = "${aws_iam_instance_profile.instance.id}"
 	security_groups = ["${aws_security_group.instance.id}"]
 	associate_public_ip_address = false
-	user_data = "${format(file("user-data.sh"), aws_ecs_cluster.main.name)}"
+	user_data = "${format(file("resources/user-data.sh"), aws_ecs_cluster.main.name)}"
 
 	lifecycle {
 		create_before_destroy = true

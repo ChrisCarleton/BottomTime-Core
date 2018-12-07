@@ -7,7 +7,7 @@ locals {
 
 
 data "template_file" "task_def" {
-	template = "${file("task-def.json")}"
+	template = "${file("resources/task-def.json")}"
 
 	vars {
 		build = "${var.build_number}"

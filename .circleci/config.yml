@@ -23,23 +23,7 @@ jobs:
           paths:
             - node_modules/
 
-  deploy-dev:
-    machine:
-      enabled: true
-      image: circleci/classic:201808-01
-    steps:
-      - checkout
-      - run:
-          name: Build Docker Image
-          command: docker build -t bottom-time/core-dev .
-      - run:
-          name: Deploy Docker Image
-          command: |
-            $(aws ecr get-login --no-include-email --region us-east-1)
-            docker tag bottom-time/core-dev:latest 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core-dev:latest
-            docker push 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core-dev:latest
-
-  deploy-prod:
+  deploy-image:
     machine:
       enabled: true
       image: circleci/classic:201808-01
@@ -52,24 +36,56 @@ jobs:
           name: Deploy Docker Image
           command: |
             $(aws ecr get-login --no-include-email --region us-east-1)
-            docker tag bottom-time/core:latest 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:latest
-            docker push 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:latest
+            docker tag bottom-time/core:latest 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:$CIRCLE_BUILD_NUM
+            docker push 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:$CIRCLE_BUILD_NUM
+
+  terraform-dev:
+    docker:
+      - image: hashicorp/terraform:0.11.10
+    steps:
+      - checkout
+      - run:
+          name: Deploy Dev Environment
+          working_directory: terraform/env/dev/us-east-1
+          command: |
+            terraform init -from-module=../../../modules/ -backend-config="key=dev.us-east-1.tfstate"
+            terraform apply -auto-approve -var "build_number=$CIRCLE_BUILD_NUM" -var-file config.tfvars
+
+  terraform-prod:
+    docker:
+      - image: hashicorp/terraform:0.11.10
+    steps:
+      - checkout
+      - run:
+          name: Deploy Prod Environment
+          working_directory: terraform/env/prod/us-east-1
+          command: |
+            terraform init -from-module=../../../modules/ -backend-config="key=prod.us-east-1.tfstate"
+            terraform apply -auto-approve -var "build_number=$CIRCLE_BUILD_NUM" -var-file config.tfvars
 
 workflows:
   version: 2
   build-and-deploy:
     jobs:
       - test
-      - deploy-dev:
+      - deploy-image:
           requires:
             - test
           filters:
             branches:
               only:
                 - master
-      - deploy-prod:
+                - prod
+      - terraform-dev:
           requires:
-            - test
+            - deploy-image
+          filters:
+            branches:
+              only:
+                - master
+      - terraform-prod:
+          requires:
+            - deploy-image
           filters:
             branches:
               only:
