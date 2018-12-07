@@ -9,7 +9,7 @@ resource "aws_cloudwatch_metric_alarm" "service_low_latency" {
 	statistic = "Average"
 	threshold = "${var.latency_low_threshold}"
 	treat_missing_data = "missing"
-	alarm_actions = ["${aws_autoscaling_policy.service_scale_in.arn}"]
+	alarm_actions = ["${aws_autoscaling_policy.service_scale_in.arn}", "${aws_appautoscaling_policy.service_scale_in.arn}"]
 
 	dimensions {
 		LoadBalancer = "${aws_lb.main.arn_suffix}"
@@ -27,7 +27,7 @@ resource "aws_cloudwatch_metric_alarm" "service_high_latency" {
 	statistic = "Average"
 	threshold = "${var.latency_high_threshold}"
 	treat_missing_data = "missing"
-	alarm_actions = ["${aws_autoscaling_policy.service_scale_out.arn}"]
+	alarm_actions = ["${aws_autoscaling_policy.service_scale_out.arn}", "${aws_appautoscaling_policy.service_scale_out.arn}"]
 
 	dimensions {
 		LoadBalancer = "${aws_lb.main.arn_suffix}"

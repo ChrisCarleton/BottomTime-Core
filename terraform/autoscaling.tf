@@ -1,5 +1,5 @@
 locals {
-	scaling_resource_id = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.main.name}"
+	scaling_resource_id = "service/${local.cluster_name}/${local.service_name}"
 }
 
 resource "aws_autoscaling_group" "main" {
@@ -44,6 +44,8 @@ resource "aws_appautoscaling_target" "service" {
 	role_arn = "${aws_iam_role.app_autoscaling.arn}"
 	scalable_dimension = "ecs:service:DesiredCount"
 	service_namespace = "ecs"
+
+	depends_on = ["aws_ecs_service.main"]
 }
 
 resource "aws_appautoscaling_policy" "service_scale_in" {
@@ -59,6 +61,7 @@ resource "aws_appautoscaling_policy" "service_scale_in" {
 		metric_aggregation_type = "Average"
 
 		step_adjustment {
+			metric_interval_lower_bound = 0
 			scaling_adjustment = -1
 		}
 	}
@@ -67,7 +70,7 @@ resource "aws_appautoscaling_policy" "service_scale_in" {
 }
 
 resource "aws_appautoscaling_policy" "service_scale_out" {
-	name = "Service-Scale-In"
+	name = "Service-Scale-Out"
 	policy_type = "StepScaling"
 	resource_id = "${local.scaling_resource_id}"
 	scalable_dimension = "ecs:service:DesiredCount"
@@ -79,6 +82,7 @@ resource "aws_appautoscaling_policy" "service_scale_out" {
 		metric_aggregation_type = "Average"
 
 		step_adjustment {
+			metric_interval_upper_bound = 0
 			scaling_adjustment = 1
 		}
 	}

@@ -1,6 +1,8 @@
 locals {
 	container_name = "BottomTime-Container-${var.env}"
 	container_port = 29201
+	cluster_name = "BottomTime-Cluster-${var.env}"
+	service_name = "BottomTime-Service-${var.env}"
 }
 
 
@@ -28,11 +30,11 @@ resource "aws_ecs_task_definition" "main" {
 }
 
 resource "aws_ecs_cluster" "main" {
-	name = "BottomTime-Cluster-${var.env}"
+	name = "${local.cluster_name}"
 }
 
 resource "aws_ecs_service" "main" {
-	name = "BottomTime-Service-${var.env}"
+	name = "${local.service_name}"
 	cluster = "${aws_ecs_cluster.main.id}"
 	desired_count = 2
 	launch_type = "EC2"
@@ -42,7 +44,7 @@ resource "aws_ecs_service" "main" {
 	health_check_grace_period_seconds = 30
 	task_definition = "${aws_ecs_task_definition.main.id}"
 
-	depends_on = ["aws_iam_role_policy.service"]
+	depends_on = ["aws_iam_role_policy.service", "aws_lb_listener.https"]
 
 	load_balancer {
 		target_group_arn = "${aws_lb_target_group.main.arn}"

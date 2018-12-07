@@ -20,7 +20,7 @@ variable "env" {
 
 variable "docker_image" {
 	type = "string"
-	default = "961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core"
+	default = "961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core-dev"
 }
 
 variable "instance_type" {

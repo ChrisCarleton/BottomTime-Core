@@ -12,14 +12,6 @@ data "aws_ami" "ecs_optimized" {
 	}
 }
 
-data "template_file" "user_data" {
-	template = "${file("user-data.sh")}"
-
-	vars {
-		cluster = "${aws_ecs_cluster.main.name}"
-	}
-}
-
 resource "aws_launch_configuration" "main" {
 	name_prefix = "BottomTime_Core_${var.env}_"
 	image_id = "${data.aws_ami.ecs_optimized.id}"
@@ -27,7 +19,7 @@ resource "aws_launch_configuration" "main" {
 	iam_instance_profile = "${aws_iam_instance_profile.instance.id}"
 	security_groups = ["${aws_security_group.instance.id}"]
 	associate_public_ip_address = false
-	user_data = "${data.template_file.user_data.rendered}"
+	user_data = "${format(file("user-data.sh"), aws_ecs_cluster.main.name)}"
 
 	lifecycle {
 		create_before_destroy = true
@@ -59,6 +51,8 @@ resource "aws_lb_target_group" "main" {
 	deregistration_delay = 15
 	target_type = "instance"
 
+	depends_on = ["aws_lb.main"]
+
 	health_check {
 		interval = 60
 		path = "/health"
@@ -78,21 +72,5 @@ resource "aws_lb_listener" "https" {
 	default_action {
 		type = "forward"
 		target_group_arn = "${aws_lb_target_group.main.arn}"
-	}
-}
-
-resource "aws_lb_listener" "http" {
-	load_balancer_arn = "${aws_lb.main.arn}"
-	port = 80
-	protocol = "HTTP"
-
-	default_action {
-		type = "redirect"
-
-		redirect {
-			port = 443
-			protocol = "HTTPS"
-			status_code = "HTTP_301"
-		}
 	}
 }
