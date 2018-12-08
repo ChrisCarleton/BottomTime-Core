@@ -6,7 +6,7 @@ import { cleanUpLogEntry } from '../data/clean-up';
 import Joi from 'joi';
 import { logError } from '../logger';
 import LogEntry from '../data/log-entry';
-import { NewEntrySchema, UpdateEntrySchema } from '../validation/log-entry';
+import { NewEntrySchema, /*UpdateEntrySchema*/ } from '../validation/log-entry';
 
 export function ListLogs(req, res) {
 	res.sendStatus(500);
