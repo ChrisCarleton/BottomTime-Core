@@ -1,0 +1,102 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: node:10.11.0
+      - image: mongo:2.6.8
+        name: mongodb
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - bt_core_{{ checksum "package.json" }}
+            - bt_core_
+      - run:
+          name: Test
+          command: |
+            npm install -g gulp-cli
+            npm install
+            gulp ci-build
+      - save_cache:
+          key: bt_core_{{ checksum "package.json" }}
+          paths:
+            - node_modules/
+
+  deploy-image:
+    machine:
+      enabled: true
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - run:
+          name: Build Docker Image
+          command: docker build -t bottom-time/core .
+      - run:
+          name: Deploy Docker Image
+          command: |
+            $(aws ecr get-login --no-include-email --region us-east-1)
+            docker tag bottom-time/core:latest 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:$CIRCLE_BUILD_NUM
+            docker push 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:$CIRCLE_BUILD_NUM
+            mkdir temp/
+            echo $CIRCLE_BUILD_NUM > temp/build
+      - persist_to_workspace:
+          root: temp/
+          paths:
+            - build
+
+  terraform-dev:
+    docker:
+      - image: hashicorp/terraform:0.11.10
+    steps:
+      - checkout
+      - attach_workspace:
+          at: terraform/env/
+      - run:
+          name: Deploy Dev Environment
+          working_directory: terraform/env/dev/us-east-1
+          command: |
+            terraform init -from-module=../../../modules/ -backend-config="key=dev.us-east-1.tfstate"
+            terraform apply -auto-approve -var "build_number=$(cat ../../build)" -var-file config.tfvars
+
+  terraform-prod:
+    docker:
+      - image: hashicorp/terraform:0.11.10
+    steps:
+      - checkout
+      - attach_workspace:
+          at: terraform/env/
+      - run:
+          name: Deploy Prod Environment
+          working_directory: terraform/env/prod/us-east-1
+          command: |
+            terraform init -from-module=../../../modules/ -backend-config="key=prod.us-east-1.tfstate"
+            terraform apply -auto-approve -var "build_number=$(cat ../../build)" -var-file config.tfvars
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - test
+      - deploy-image:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - master
+                - prod
+      - terraform-dev:
+          requires:
+            - deploy-image
+          filters:
+            branches:
+              only:
+                - master
+      - terraform-prod:
+          requires:
+            - deploy-image
+          filters:
+            branches:
+              only:
+                - prod

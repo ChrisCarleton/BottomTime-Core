@@ -59,3 +59,11 @@ typings/
 
 # next.js build output
 .next
+
+# Terraform temp files
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# temp directory
+temp/

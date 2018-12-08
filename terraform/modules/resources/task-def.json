@@ -1,0 +1,17 @@
+[
+	{
+		"name": "${name}",
+		"image": "${image}:${build}",
+		"cpu": 512,
+		"memory": 512,
+		"essential": true,
+		"portMappings": [
+			{
+				"containerPort": ${port}
+			}
+		],
+		"environment": [
+			{ "name": "BT_LOG_LEVEL", "value": "${log_level}" }
+		]
+	}
+]
