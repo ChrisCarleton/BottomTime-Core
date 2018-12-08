@@ -22,9 +22,7 @@ for testing but should definitely be set to a secure value in production to prev
 you wish to use. The default is `mongodb://localhost/dev`.
 
 ## API Documentation
-_Coming Soon!_
-
-TODO: Link to documentation on the APIs.
+See the full API documentation [here](docs/API.md)!
 
 ## Local Development
 You'll need the following installed:

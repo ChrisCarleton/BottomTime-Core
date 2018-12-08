@@ -5,6 +5,7 @@ node_modules/
 tests/
 terraform/
 temp/
+docs/
 
 LICENSE
 README.md
