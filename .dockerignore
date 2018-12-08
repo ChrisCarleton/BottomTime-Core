@@ -4,6 +4,7 @@ logs/
 node_modules/
 tests/
 terraform/
+temp/
 
 LICENSE
 README.md
