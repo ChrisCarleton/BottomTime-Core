@@ -26,7 +26,7 @@ export function GetLog(req, res) {
 }
 
 export function CreateLogs(req, res) {
-	const isValid = Joi.validate(req.body, Joi.array().items(NewEntrySchema));
+	const isValid = Joi.validate(req.body, Joi.array().min(1).items(NewEntrySchema));
 	if (isValid.error) {
 		return badRequest(
 			'Could not create log entries. Validation failed.',

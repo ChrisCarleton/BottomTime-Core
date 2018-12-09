@@ -122,6 +122,31 @@ describe('Logs Controller', () => {
 				.catch(done);
 		});
 
+		it('Will return Bad Request if array is empty', done => {
+			request(App)
+				.post('/logs')
+				.send([])
+				.then(res => {
+					expect(res.status).to.equal(400);
+					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
+					expect(res.body.error.isJoi).to.be.true;
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Bad Request if request payload is empty', done => {
+			request(App)
+				.post('/logs')
+				.then(res => {
+					expect(res.status).to.equal(400);
+					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
+					expect(res.body.error.isJoi).to.be.true;
+					done();
+				})
+				.catch(done);
+		});
+
 		it('Will return Server Error if database request fails', done => {
 			done();
 		});
@@ -538,6 +563,18 @@ describe('Logs Controller', () => {
 			request(App)
 				.del(`/logs`)
 				.send([])
+				.then(res => {
+					expect(res.status).to.equal(400);
+					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
+					expect(res.body.status).to.equal(400);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Bad Request if request payload is empty', done => {
+			request(App)
+				.del(`/logs`)
 				.then(res => {
 					expect(res.status).to.equal(400);
 					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
