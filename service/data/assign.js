@@ -7,4 +7,5 @@ export function assignLogEntry(entity, newLogEntry) {
 	entity.averageDepth = newLogEntry.averageDepth;
 	entity.maxDepth = newLogEntry.maxDepth;
 	entity.gps = newLogEntry.gps;
+	entity.weight = newLogEntry.weight;
 }

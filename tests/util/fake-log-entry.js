@@ -20,11 +20,11 @@ export default () => {
 			longitude: faker.random.number({ min: -180.0, max: 180.0 })
 		},
 
-		// weight: {
-		// 	amount: faker.random.number({ min: 2, max: 19 }),
+		weight: {
+			amount: faker.random.number({ min: 2, max: 19 }),
 		// 	accuracy: faker.random.arrayElement(['Good', 'TooLittle', 'TooMuch']),
 		// 	trim: faker.random.arrayElement(['Good', 'HeadDown', 'FeetDown']),
 		// 	notes: faker.lorem.paragraph(3)
-		// }
+		}
 	};
 };

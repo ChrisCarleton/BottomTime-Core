@@ -1,3 +1,5 @@
+import { logError } from '../logger';
+
 export const ErrorIds = {
 	badRequest: 'bottom-time/errors/bad-request',
 	notFound: 'bottom-time/errors/resource-not-found',
@@ -30,4 +32,15 @@ export function serverError(res, logId) {
 		message: 'A server error occurred.',
 		details: 'Your request could not be completed at this time. Please try again later.'
 	});
+}
+
+export function serverErrorMiddleware(req, res, next) {
+	try {
+		next();
+	} catch(err) {
+		const logId = logError(
+			`An unexpected server error has occurred.`,
+			err);
+		serverError(res, logId);
+	}
 }

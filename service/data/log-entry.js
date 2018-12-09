@@ -4,14 +4,17 @@ const logEntrySchema = mongoose.Schema({
 	entryTime: Date,
 	location: String,
 	site: String,
-	gps:{
+	gps: {
 		latitude: Number,
 		longitude: Number
 	},
 	bottomTime: Number,
 	totalTime: Number,
 	maxDepth: Number,
-	averageDepth: Number
+	averageDepth: Number,
+	weight: {
+		amount: Number
+	}
 });
 
 export default mongoose.model('LogEntry', logEntrySchema);

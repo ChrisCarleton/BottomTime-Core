@@ -8,11 +8,12 @@ import http from 'http';
 import log, { requestLogger } from './logger';
 import { notFound } from './utils/error-response';
 import path from 'path';
+import { serverErrorMiddleware } from './utils/error-response';
 import session from 'express-session';
 
 // Wire up process-wide event handlers.
 process.on('unhandledRejection', (reason, p) => {
-	log.fatal('Catastrophic failure - unhandled exception! Details:', {
+	log.fatal('Catastrophic failure - unhandled rejection! Details:', {
 		reason: reason,
 		promise: p
 	});
@@ -38,6 +39,7 @@ app.use(session({
 app.use(bodyParser.json());
 applyAuth(app);
 app.use(requestLogger);
+app.use(serverErrorMiddleware);
 
 // Load routes
 glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {

@@ -1,6 +1,6 @@
 export function cleanUpLogEntry(entry) {
 	return {
-		entryId: entry._id,
+		entryId: entry.id,
 		entryTime: entry.entryTime,
 		bottomTime: entry.bottomTime,
 		totalTime: entry.totalTime,
@@ -8,6 +8,7 @@ export function cleanUpLogEntry(entry) {
 		site: entry.site,
 		averageDepth: entry.averageDepth,
 		maxDepth: entry.maxDepth,
-		gps: entry.gps
+		gps: entry.gps,
+		weight: entry.weight
 	};
 }

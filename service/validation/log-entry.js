@@ -57,3 +57,5 @@ export const UpdateEntrySchema = Joi.object().keys({
 	entryId: Joi.string().regex(/[a-f0-9]{24}/i).required(),
 	...logEntryBaseSchema
 });
+
+export const EntryId = Joi.string().regex(/[a-f0-9]{24}/i).required();

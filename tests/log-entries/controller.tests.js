@@ -1,4 +1,5 @@
 import { App } from '../../service/server';
+import Bluebird from 'bluebird';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import LogEntry from '../../service/data/log-entry';
@@ -17,7 +18,7 @@ describe('Logs Controller', () => {
 		}
 	});
 
-	describe('GET /log/:logId', () => {
+	describe('GET /logs/:logId', () => {
 
 		it('Will fetch the requested log entry', done => {
 			const fake = fakeLogEntry();
@@ -232,6 +233,192 @@ describe('Logs Controller', () => {
 				.del(`/logs/${entryId}`)
 				.then(res => {
 					expect(res.status).to.equal(404);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Server Error if the database fails', done => {
+			done();
+		});
+	});
+
+	describe('PUT /logs', () => {
+		it('Will update records', done => {
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+			const logEntries = [
+				new LogEntry(fakes[0]),
+				new LogEntry(fakes[1]),
+				new LogEntry(fakes[2])
+			];
+
+			Bluebird.all([logEntries[0].save(), logEntries[1].save(), logEntries[2].save()])
+				.then(res => {
+					fakes[0].entryId = res[0].id;
+					fakes[1].entryId = res[1].id;
+					fakes[2].entryId = res[2].id;
+
+					fakes[0].weight = { amount: 69.4 };
+					fakes[1].maxDepth = 300;
+					fakes[2].site = 'Local swimming pool';
+
+					return request(App)
+						.put(`/logs`)
+						.send(fakes);
+				})
+				.then(res => {
+					console.log(res.body);
+					console.log(fakes);
+					expect(res.status).to.equal(200);
+					expect(res.body).to.be.an('Array');
+					expect(res.body).to.eql(fakes);
+
+					done();
+					// TODO: Verify that records were changed!
+				})
+				.catch(done);
+		});
+
+		it('Will return Not Found if one of the records is missing', done => {
+			done();
+		});
+
+		it('Will return Bad Request if the array is empty', done => {
+			done();
+		});
+
+		it('Will return Bad Request if the message body is malformed', done => {
+			done();
+		});
+
+		it('Will return Bad Request if one of the records is invalid', done => {
+			done();
+		});
+
+		it('Will return Server Error if the database fails', done => {
+			done();
+		});
+	});
+
+	describe('DELETE /logs', () => {
+		it('Will delete the specified log entries', done => {
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+			const logEntries = [
+				new LogEntry(fakes[0]),
+				new LogEntry(fakes[1]),
+				new LogEntry(fakes[2])
+			];
+
+			Bluebird.all([logEntries[0].save(), logEntries[1].save(), logEntries[2].save()])
+				.then(() => {
+					return request(App)
+						.del(`/logs`)
+						.send([logEntries[0].id, logEntries[1].id, logEntries[2].id]);
+				})
+				.then(res => {
+					expect(res.status).to.equal(200);
+
+					return Bluebird.all([
+						LogEntry.findById(logEntries[0].id),
+						LogEntry.findById(logEntries[1].id),
+						LogEntry.findById(logEntries[2].id)
+					]);
+				})
+				.then(res => {
+					expect(res[0]).to.be.null;
+					expect(res[1]).to.be.null;
+					expect(res[2]).to.be.null;
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will delete even if an entry is not found', done => {
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+			const logEntries = [
+				new LogEntry(fakes[0]),
+				new LogEntry(fakes[1]),
+				new LogEntry(fakes[2])
+			];
+
+			Bluebird.all([
+					logEntries[0].save(),
+					logEntries[1].save(),
+					logEntries[2].save()],
+					'a2603a50e9ea2b2ce68c8147')
+				.then(() => {
+					return request(App)
+						.del(`/logs`)
+						.send([logEntries[0].id, logEntries[1].id, logEntries[2].id]);
+				})
+				.then(res => {
+					expect(res.status).to.equal(200);
+
+					return Bluebird.all([
+						LogEntry.findById(logEntries[0].id),
+						LogEntry.findById(logEntries[1].id),
+						LogEntry.findById(logEntries[2].id)
+					]);
+				})
+				.then(res => {
+					expect(res[0]).to.be.null;
+					expect(res[1]).to.be.null;
+					expect(res[2]).to.be.null;
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will succeed even if no entries are found', done => {
+			const entryIds = [
+				'3fcb29793936e7c81d222432',
+				'cac63fdf32b968e8bdc2ef76',
+				'113caa26363c46a29e95b0ce'
+			];
+
+			request(App)
+				.del(`/logs`)
+				.send(entryIds)
+				.then(res => {
+					expect(res.status).to.equal(200);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Bad Request if array is empty', done => {
+			request(App)
+				.del(`/logs`)
+				.send([])
+				.then(res => {
+					expect(res.status).to.equal(400);
+					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
+					expect(res.body.status).to.equal(400);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Bad Request if entry ID list is invalid', done => {
+			request(App)
+				.del(`/logs`)
+				.send({ omg: 'wat?' })
+				.then(res => {
+					expect(res.status).to.equal(400);
+					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
+					expect(res.body.status).to.equal(400);
 					done();
 				})
 				.catch(done);

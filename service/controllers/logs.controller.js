@@ -6,7 +6,7 @@ import { cleanUpLogEntry } from '../data/clean-up';
 import Joi from 'joi';
 import { logError } from '../logger';
 import LogEntry from '../data/log-entry';
-import { NewEntrySchema, /*UpdateEntrySchema*/ } from '../validation/log-entry';
+import { NewEntrySchema, EntryId /*UpdateEntrySchema*/ } from '../validation/log-entry';
 
 export function ListLogs(req, res) {
 	res.sendStatus(500);
@@ -36,7 +36,28 @@ export function CreateLogs(req, res) {
 }
 
 export function UpdateLogs (req, res) {
-	res.sendStatus(500);
+	const entries = {};
+	req.body.forEach(e => {
+		entries[e.entryId] = e;
+	});
+
+	LogEntry.find({ _id: { $in: Object.keys(entries) } })
+		.then(foundEntries => {
+			for (let i = 0; i < foundEntries.length; i++) {
+				assignLogEntry(foundEntries[i], entries[foundEntries[i]._id]);
+			}
+
+			return Bluebird.all(_.map(foundEntries, e => { return e.save(); }));
+		})
+		.then(result => {
+			res.json(_.map(result, r => { return cleanUpLogEntry(r); }));
+		})
+		.catch(err => {
+			const logId = logError(
+				`Failed to update database records`,
+				err);
+			serverError(res, logId);
+		});
 }
 
 export function UpdateLog(req, res) {
@@ -63,19 +84,31 @@ export function UpdateLog(req, res) {
 }
 
 export function DeleteLogs(req, res) {
-	res.sendStatus(500);
+	const isValid = Joi.validate(req.body, Joi.array().items(EntryId));
+	if (isValid.error) {
+		return badRequest(
+			'Could not delete log entries. Validation failed.',
+			isValid.error,
+			res);
+	}
+
+	LogEntry.deleteMany({ _id: { $in: req.body } })
+		.then(() => {
+			res.sendStatus(200);
+		})
+		.catch(err => {
+			const logId = logError(
+				`Failed to delete record for log entries.`,
+				err);
+			serverError(res, logId);
+		});
+	
 }
 
 export function DeleteLog(req, res) {
 	LogEntry.deleteOne({ _id: req.logEntry.id })
 		.then(() => {
 			res.sendStatus(200);
-		})
-		.catch(err => {
-			const logId = logError(
-				`Failed to delete record for log entry ${req.logEntry.id}`,
-				err);
-			serverError(res, logId);
 		});
 }
 
