@@ -271,8 +271,46 @@ describe('Logs Controller', () => {
 						.send(fakes);
 				})
 				.then(res => {
-					console.log(res.body);
-					console.log(fakes);
+					expect(res.status).to.equal(200);
+					expect(res.body).to.be.an('Array');
+					expect(res.body).to.eql(fakes);
+
+					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } })
+				})
+				.then(res => {
+					expect(res).to.eql(logEntries);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will succeed if one of the records is missing', done => {
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+			const logEntries = [
+				new LogEntry(fakes[0]),
+				new LogEntry(fakes[1]),
+				new LogEntry(fakes[2])
+			];
+
+			Bluebird.all([logEntries[0].save(), logEntries[2].save()])
+				.then(res => {
+					fakes[0].entryId = res[0].id;
+					fakes[1].entryId = res[1].id;
+					fakes[2].entryId = res[2].id;
+
+					fakes[0].weight = { amount: 69.4 };
+					fakes[1].maxDepth = 300;
+					fakes[2].site = 'Local swimming pool';
+
+					return request(App)
+						.put(`/logs`)
+						.send(fakes);
+				})
+				.then(res => {
 					expect(res.status).to.equal(200);
 					expect(res.body).to.be.an('Array');
 					expect(res.body).to.eql(fakes);
@@ -283,7 +321,7 @@ describe('Logs Controller', () => {
 				.catch(done);
 		});
 
-		it('Will return Not Found if one of the records is missing', done => {
+		it('Will return an empty array if none of the records can be found', done => {
 			done();
 		});
 
