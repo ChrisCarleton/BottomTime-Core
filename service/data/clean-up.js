@@ -1,14 +1,8 @@
 export function cleanUpLogEntry(entry) {
-	return {
-		entryId: entry.id,
-		entryTime: entry.entryTime,
-		bottomTime: entry.bottomTime,
-		totalTime: entry.totalTime,
-		location: entry.location,
-		site: entry.site,
-		averageDepth: entry.averageDepth,
-		maxDepth: entry.maxDepth,
-		gps: entry.gps,
-		weight: entry.weight
-	};
+	const clean = { entryId: entry.id, ...entry.toJSON() };
+	delete clean._id;
+	delete clean.__v;
+	clean.entryTime = clean.entryTime.toISOString();
+
+	return clean;
 }

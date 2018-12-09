@@ -1,8 +1,10 @@
+import _ from 'lodash';
 import { App } from '../../service/server';
 import Bluebird from 'bluebird';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import LogEntry from '../../service/data/log-entry';
+import { cleanUpLogEntry } from '../../service/data/clean-up';
 
 let stub;
 
@@ -275,10 +277,10 @@ describe('Logs Controller', () => {
 					expect(res.body).to.be.an('Array');
 					expect(res.body).to.eql(fakes);
 
-					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } })
+					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
 				})
 				.then(res => {
-					expect(res).to.eql(logEntries);
+					expect(_.map(res, r => { return cleanUpLogEntry(r); })).to.eql(fakes);
 					done();
 				})
 				.catch(done);
@@ -292,15 +294,14 @@ describe('Logs Controller', () => {
 			];
 			const logEntries = [
 				new LogEntry(fakes[0]),
-				new LogEntry(fakes[1]),
-				new LogEntry(fakes[2])
+				new LogEntry(fakes[1])
 			];
 
-			Bluebird.all([logEntries[0].save(), logEntries[2].save()])
+			Bluebird.all([logEntries[0].save(), logEntries[1].save()])
 				.then(res => {
 					fakes[0].entryId = res[0].id;
 					fakes[1].entryId = res[1].id;
-					fakes[2].entryId = res[2].id;
+					fakes[2].entryId = '51c6d4fc8fbf1b3e1244b3ed';
 
 					fakes[0].weight = { amount: 69.4 };
 					fakes[1].maxDepth = 300;
@@ -313,28 +314,125 @@ describe('Logs Controller', () => {
 				.then(res => {
 					expect(res.status).to.equal(200);
 					expect(res.body).to.be.an('Array');
-					expect(res.body).to.eql(fakes);
+					expect(res.body).to.eql(_.take(fakes, 2));
 
+					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
+				})
+				.then(res => {
+					expect(_.map(res, r => { return cleanUpLogEntry(r); }))
+						.to.eql(_.take(fakes, 2));
 					done();
-					// TODO: Verify that records were changed!
 				})
 				.catch(done);
 		});
 
 		it('Will return an empty array if none of the records can be found', done => {
-			done();
+			const fakes = [
+				{ entryId: '29af670e6738361f4f34be16', ...fakeLogEntry() },
+				{ entryId: 'ab2e0cf79f5f34c6014292f1', ...fakeLogEntry() },
+				{ entryId: '7b201421444172c41ecdf766', ...fakeLogEntry() }
+			];
+
+			request(App)
+				.put(`/logs`)
+				.send(fakes)
+				.then(res => {
+					expect(res.status).to.equal(200);
+					expect(res.body).to.be.an('Array');
+					expect(res.body).to.be.empty;
+
+					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
+				})
+				.then(res => {
+					expect(res).to.be.empty;
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Will return Bad Request if the array is empty', done => {
-			done();
+			request(App)
+				.put(`/logs`)
+				.send([])
+				.then(res => {
+					expect(res.status).to.equal(400);
+					done();
+				})
+				.catch(done);
 		});
 
-		it('Will return Bad Request if the message body is malformed', done => {
-			done();
+		it('Will return Bad Request if the message body is empty', done => {
+			request(App)
+				.put(`/logs`)
+				.then(res => {
+					expect(res.status).to.equal(400);
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Will return Bad Request if one of the records is invalid', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+			const logEntries = [
+				new LogEntry(fakes[0]),
+				new LogEntry(fakes[1])
+			];
+
+			Bluebird.all([logEntries[0].save(), logEntries[1].save()])
+				.then(res => {
+					fakes[0].entryId = res[0].id;
+					fakes[1].entryId = res[1].id;
+
+					const modified = [
+						{ ...fakes[0] },
+						{ ...fakes[1] }
+					];
+
+					modified[0].weight = { amount: 69.4 };
+					modified[1].maxDepth = -23;
+
+					return request(App)
+						.put(`/logs`)
+						.send(modified);
+				})
+				.then(res => {
+					expect(res.status).to.equal(400);
+					return LogEntry.find({ _id: { $in: _.map(fakes, e => e.entryId) } });
+				})
+				.then(res => {
+					expect(_.map(res, r => { return cleanUpLogEntry(r); })).to.eql(fakes);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Bad Request if there are too many records', done => {
+			const fakes = [];
+			const logEntries = [];
+
+			for (let i = 0; i < 101; i++) {
+				fakes[i] = fakeLogEntry();
+				logEntries[i] = new LogEntry(fakes[i]);
+			}
+
+			Bluebird.all(_.map(logEntries, e => { return e.save() }))
+				.then(res => {
+					for (let i = 0; i < res.length; i++) {
+						fakes[i].entryId = res[i].id;
+					}
+
+					return request(App)
+						.put(`/logs`)
+						.send(fakes);
+				})
+				.then(res => {
+					expect(res.status).to.equal(400);
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Will return Server Error if the database fails', done => {

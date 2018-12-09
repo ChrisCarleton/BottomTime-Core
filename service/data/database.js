@@ -7,7 +7,9 @@ mongoose.Promise = require('bluebird');
 mongoose.connect(
 	config.mongoEndpoint,
 	{
-		useNewUrlParser: true
+		useNewUrlParser: true,
+		keepAlive: true,
+		keepAliveInitialDelay: 300000
 	})
 	.catch(err => {
 		log.fatal('Failed to connect to MongoDB database:', err);

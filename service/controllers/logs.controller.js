@@ -6,7 +6,7 @@ import { cleanUpLogEntry } from '../data/clean-up';
 import Joi from 'joi';
 import { logError } from '../logger';
 import LogEntry from '../data/log-entry';
-import { NewEntrySchema, EntryId /*UpdateEntrySchema*/ } from '../validation/log-entry';
+import { NewEntrySchema, EntryId, UpdateEntrySchema } from '../validation/log-entry';
 
 export function ListLogs(req, res) {
 	res.sendStatus(500);
@@ -36,6 +36,14 @@ export function CreateLogs(req, res) {
 }
 
 export function UpdateLogs (req, res) {
+	const isValid = Joi.validate(req.body, Joi.array().min(1).max(100).items(UpdateEntrySchema));
+	if (isValid.error) {
+		return badRequest(
+			'Could not update log entries. Validation failed.',
+			isValid.error,
+			res);
+	}
+
 	const entries = {};
 	req.body.forEach(e => {
 		entries[e.entryId] = e;
