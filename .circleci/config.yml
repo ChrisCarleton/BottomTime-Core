@@ -59,7 +59,7 @@ jobs:
           working_directory: terraform/env/dev/us-east-1
           command: |
             terraform init -from-module=../../../modules/ -backend-config="key=dev.us-east-1.tfstate"
-            terraform apply -auto-approve -var "build_number=$(cat ../../build)" -var-file config.tfvars
+            terraform apply -auto-approve -var "mongodb_endpoint=$DEV_DATABASE" -var "build_number=$(cat ../../build)" -var-file config.tfvars
 
   terraform-prod:
     docker:
