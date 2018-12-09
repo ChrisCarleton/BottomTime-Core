@@ -9,7 +9,16 @@ import LogEntry from '../data/log-entry';
 import { NewEntrySchema, EntryId, UpdateEntrySchema } from '../validation/log-entry';
 
 export function ListLogs(req, res) {
-	res.sendStatus(500);
+	LogEntry.find({})
+		.then(result => {
+			res.json(_.map(result, r => cleanUpLogEntry(r)));
+		})
+		.catch(err => {
+			const logId = logError(
+				"Failed to query database records",
+				err);
+			serverError(res, logId);
+		});
 }
 
 export function GetLog(req, res) {
