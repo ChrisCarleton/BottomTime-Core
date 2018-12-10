@@ -20,7 +20,7 @@ export function badRequest(message, error, res) {
 		errorId: ErrorIds.badRequest,
 		status: 400,
 		message: message,
-		error
+		details: error
 	});
 }
 
