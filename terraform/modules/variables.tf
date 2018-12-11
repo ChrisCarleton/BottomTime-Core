@@ -62,3 +62,8 @@ variable "region" {
 	type = "string"
 	default = "us-east-1"
 }
+
+variable "session_secret" {
+	type = "string"
+	default = "shhh!! secret"
+}

@@ -6,6 +6,7 @@ import express from 'express';
 import glob from 'glob';
 import http from 'http';
 import log, { requestLogger } from './logger';
+import moment from 'moment';
 import { notFound } from './utils/error-response';
 import path from 'path';
 import { serverErrorMiddleware } from './utils/error-response';
@@ -29,12 +30,24 @@ process.on('uncaughtException', err => {
 
 // Express middleware
 const app = express();
+const MongoDbStore = require('connect-mongodb-session')(session);
+const sessionStore = new MongoDbStore({
+	uri: config.mongoEndpoint,
+	collection: 'Session'
+});
+
+sessionStore.on('error', err => {
+	log.fatal('Session store failure - unable to read/write to session store! Details:', err);
+	process.exit(187);
+});
 
 app.use(compression());
 app.use(session({
 	resave: true,
 	saveUninitialized: false,
-	secret: config.sessionSecret
+	secret: config.sessionSecret,
+	store: sessionStore,
+	cookie: moment.duration(3, 'd')
 }));
 app.use(bodyParser.json());
 applyAuth(app);

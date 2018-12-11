@@ -17,6 +17,7 @@ data "template_file" "task_def" {
 		mongodb = "${var.mongodb_endpoint}"
 		name = "${local.container_name}"
 		port = "${local.container_port}"
+		session_secret = "${var.session_secret}"
 	}
 }
 
