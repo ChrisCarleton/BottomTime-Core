@@ -3,6 +3,7 @@ const config = {
 	logFileName: process.env.BT_LOG_FILE,
 	port: process.env.BT_PORT || 29201,
 	sessionSecret: process.env.BT_SESSION_SECRET || 'bottom_time',
+	siteUrl: process.env.BT_SITE_URL || 'http://localhost:29201/',
 
 	mongoEndpoint: process.env.BT_MONGO_ENDPOINT || 'mongodb://localhost/dev'
 };

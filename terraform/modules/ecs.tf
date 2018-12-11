@@ -11,6 +11,7 @@ data "template_file" "task_def" {
 
 	vars {
 		build = "${var.build_number}"
+		domain_name = "https://${var.domain_name}.${var.domain_zone}/"
 		env = "${var.env}"
 		image = "${var.docker_image}"
 		log_level = "${var.log_level}"

@@ -13,7 +13,8 @@
 		"environment": [
 			{ "name": "BT_LOG_LEVEL", "value": "${log_level}" },
 			{ "name": "BT_MONGO_ENDPOINT", "value": "${mongodb}" },
-			{ "name": "BT_SESSION_SECRET", "value": "${session_secret}" }
+			{ "name": "BT_SESSION_SECRET", "value": "${session_secret}" },
+			{ "name": "BT_SITE_URL", "value": "${domain_name}" }
 		]
 	}
 ]
