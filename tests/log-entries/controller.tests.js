@@ -1,23 +1,25 @@
 import _ from 'lodash';
 import { App } from '../../service/server';
 import Bluebird from 'bluebird';
+import { cleanUpLogEntry } from '../../service/data/clean-up';
+import mongoose from 'mongoose';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import LogEntry from '../../service/data/log-entry';
-import { cleanUpLogEntry } from '../../service/data/clean-up';
+import sinon from 'sinon';
 
 let stub;
 
 describe('Logs Controller', () => {
 	afterEach(done => {
-		// Purge log records.
-		LogEntry.deleteMany({}, done);
-
 		// Clean up sinon stubs.
 		if (stub) {
 			stub.restore();
 			stub = null;
 		}
+
+		// Purge log records.
+		LogEntry.deleteMany({}, done);
 	});
 
 	describe('GET /logs/:logId', () => {
@@ -53,7 +55,19 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Server Error if something goes wrong', done => {
-			done();
+			stub = sinon.stub(LogEntry, "findById")
+			stub.rejects('nope');
+
+			const fakeId = 'a99e1685d476a4fdce40d599';
+			request(App)
+				.get(`/logs/${fakeId}`)
+				.then(res => {
+					expect(res.status).to.equal(500);
+					expect(res.body.logId).to.exist;
+					expect(res.body.status).to.equal(500);
+					done();
+				})
+				.catch(done);
 		});
 
 	});
@@ -66,7 +80,7 @@ describe('Logs Controller', () => {
 				.post('/logs')
 				.send([fake])
 				.then(res => {
-					expect(res.status).to.equal(200);
+					expect(res.status).to.equal(201);
 					expect(res.body).to.exist;
 					expect(res.body).to.be.an('Array');
 					expect(res.body.length).to.equal(1);
@@ -89,7 +103,7 @@ describe('Logs Controller', () => {
 				.post('/logs')
 				.send(fakes)
 				.then(res => {
-					expect(res.status).to.equal(200);
+					expect(res.status).to.equal(201);
 					expect(res.body).to.exist;
 					expect(res.body).to.be.an('Array');
 
@@ -116,7 +130,7 @@ describe('Logs Controller', () => {
 				.then(res => {
 					expect(res.status).to.equal(400);
 					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
-					expect(res.body.error.isJoi).to.be.true;
+					expect(res.body.details.isJoi).to.be.true;
 					done();
 				})
 				.catch(done);
@@ -129,7 +143,7 @@ describe('Logs Controller', () => {
 				.then(res => {
 					expect(res.status).to.equal(400);
 					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
-					expect(res.body.error.isJoi).to.be.true;
+					expect(res.body.details.isJoi).to.be.true;
 					done();
 				})
 				.catch(done);
@@ -141,14 +155,28 @@ describe('Logs Controller', () => {
 				.then(res => {
 					expect(res.status).to.equal(400);
 					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
-					expect(res.body.error.isJoi).to.be.true;
+					expect(res.body.details.isJoi).to.be.true;
 					done();
 				})
 				.catch(done);
 		});
 
 		it('Will return Server Error if database request fails', done => {
-			done();
+			const fake = fakeLogEntry();
+
+			stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub.rejects('nope');
+
+			request(App)
+				.post('/logs')
+				.send([fake])
+				.then(res => {
+					expect(res.status).to.equal(500);
+					expect(res.body.status).to.equal(500);
+					expect(res.body.logId).to.exist;
+					done();
+				})
+				.catch(done);
 		});
 
 	});
@@ -223,7 +251,30 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Server Error if database fails', done => {
-			done();
+			const fake = fakeLogEntry();
+			const originalEntry = new LogEntry(fake);
+			let entryId;
+
+			originalEntry.save()
+				.then(entry => {
+					entryId = entry._id.toString();
+					fake.location = 'Some new location';
+					fake.maxDepth = 139.5;
+
+					stub = sinon.stub(mongoose.Model.prototype, 'save');
+					stub.rejects('nope');
+				
+					return request(App)
+						.put(`/logs/${entryId}`)
+						.send(fake);
+				})
+				.then(res => {
+					expect(res.status).to.equal(500);
+					expect(res.body.status).to.equal(500);
+					expect(res.body.logId).to.exist;
+					done();
+				})
+				.catch(done);
 		});
 
 	});
@@ -266,7 +317,26 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Server Error if the database fails', done => {
-			done();
+			const fake = fakeLogEntry();
+			const entry = new LogEntry(fake);
+
+			entry.save()
+				.then(entity => {
+					fake.entryId = entity._id.toString();
+
+					stub = sinon.stub(LogEntry, 'deleteOne')
+					stub.rejects('nope');
+
+					return request(App)
+						.del(`/logs/${fake.entryId}`);
+				})
+				.then(res => {
+					expect(res.status).to.equal(500);
+					expect(res.body.status).to.equal(500);
+					expect(res.body.logId).to.exist;
+					done();
+				})
+				.catch(done);
 		});
 	});
 
@@ -461,7 +531,41 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Server Error if the database fails', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+			const logEntries = [
+				new LogEntry(fakes[0]),
+				new LogEntry(fakes[1]),
+				new LogEntry(fakes[2])
+			];
+
+			Bluebird.all([logEntries[0].save(), logEntries[1].save(), logEntries[2].save()])
+				.then(res => {
+					fakes[0].entryId = res[0].id;
+					fakes[1].entryId = res[1].id;
+					fakes[2].entryId = res[2].id;
+
+					fakes[0].weight = { amount: 69.4 };
+					fakes[1].maxDepth = 300;
+					fakes[2].site = 'Local swimming pool';
+
+					stub = sinon.stub(mongoose.Model.prototype, 'save');
+					stub.rejects('nope');
+
+					return request(App)
+						.put(`/logs`)
+						.send(fakes);
+				})
+				.then(res => {
+					expect(res.status).to.equal(500);
+					expect(res.body.status).to.equal(500);
+					expect(res.body.logId).to.exist;
+					done();
+				})
+				.catch(done);
 		});
 	});
 
@@ -598,7 +702,33 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Server Error if the database fails', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+			const logEntries = [
+				new LogEntry(fakes[0]),
+				new LogEntry(fakes[1]),
+				new LogEntry(fakes[2])
+			];
+
+			Bluebird.all([logEntries[0].save(), logEntries[1].save(), logEntries[2].save()])
+				.then(() => {
+					stub = sinon.stub(LogEntry, 'deleteMany');
+					stub.rejects('nope');
+
+					return request(App)
+						.del(`/logs`)
+						.send([logEntries[0].id, logEntries[1].id, logEntries[2].id]);
+				})
+				.then(res => {
+					expect(res.status).to.equal(500);
+					expect(res.body.status).to.equal(500);
+					expect(res.body.logId).to.exist;
+					done();
+				})
+				.catch(done);
 		});
 	});
 });

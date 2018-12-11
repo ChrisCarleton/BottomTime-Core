@@ -47,7 +47,6 @@ glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {
 	require(loader)(app);
 });
 
-
 // Generic 404 for all other routes
 app.all('*', (req, res) => {
 	notFound(req, res);

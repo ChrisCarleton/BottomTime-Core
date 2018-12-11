@@ -1,7 +1,7 @@
 # Bottom Time API Documentation
 
-## Log Entries
-### Classes
-#### Log Entry Object
+# Bottom Time Service API Documentation
 
-### Routes
+## Contents
+1. [General APIs](General.md)
+1. [Log Entries](LogEntries.md)

@@ -40,7 +40,15 @@ export function CreateLogs(req, res) {
 
 	Bluebird.all(logEntries)
 		.then(entries => {
-			res.json(_.map(entries, e => { return cleanUpLogEntry(e); }));
+			res
+				.status(201)
+				.json(_.map(entries, e => { return cleanUpLogEntry(e); }));
+		})
+		.catch(err => {
+			const logId = logError(
+				`Failed to create database records`,
+				err);
+			serverError(res, logId);
 		});
 }
 
@@ -126,6 +134,12 @@ export function DeleteLog(req, res) {
 	LogEntry.deleteOne({ _id: req.logEntry.id })
 		.then(() => {
 			res.sendStatus(200);
+		})
+		.catch(err => {
+			const logId = logError(
+				`Failed to delete record for log entry.`,
+				err);
+			serverError(res, logId);
 		});
 }
 

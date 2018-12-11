@@ -11,7 +11,7 @@ function GetMongoDbHealth() {
 		.then(() => {
 			return {
 				...response,
-				status: 'healthy',
+				health: 'healthy',
 				details: 'MongoDB is responding to requests.'
 			}
 		})
@@ -19,7 +19,7 @@ function GetMongoDbHealth() {
 			logError('Health check failure.', err);
 			return {
 				...response,
-				status: 'unhealthy',
+				health: 'unhealthy',
 				details: 'There was a problem connecting to and/or querying the database.'
 			};
 		});
@@ -52,6 +52,7 @@ export function GetHealth(req, res) {
 }
 
 export function GetVersion(req, res) {
+	// This should probably return some Siren or other hypermedia response... meh. Maybe later.
 	res.json({
 		appVersion: '1.0.0',
 		apiVersion: '1.0.0'
