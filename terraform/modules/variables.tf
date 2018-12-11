@@ -23,6 +23,16 @@ variable "docker_image" {
 	default = "961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core"
 }
 
+variable "google_client_id" {
+	type = "string"
+	default = "399113053541-k86gnd1eo92ochborjtuofikn6v37dja.apps.googleusercontent.com"
+}
+
+variable "google_client_secret" {
+	type = "string"
+	default = ""
+}
+
 variable "instance_type" {
 	type = "string"
 	default = "t3.micro"

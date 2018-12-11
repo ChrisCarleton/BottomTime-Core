@@ -13,6 +13,8 @@ data "template_file" "task_def" {
 		build = "${var.build_number}"
 		domain_name = "https://${var.domain_name}.${var.domain_zone}/"
 		env = "${var.env}"
+		google_id = "${var.google_client_id}"
+		google_secret = "${var.google_client_secret}"
 		image = "${var.docker_image}"
 		log_level = "${var.log_level}"
 		mongodb = "${var.mongodb_endpoint}"
