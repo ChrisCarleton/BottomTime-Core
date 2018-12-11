@@ -133,7 +133,7 @@ export function DeleteLogs(req, res) {
 export function DeleteLog(req, res) {
 	LogEntry.deleteOne({ _id: req.logEntry.id })
 		.then(() => {
-			res.sendStatus(200);
+			res.sendStatus(204);
 		})
 		.catch(err => {
 			const logId = logError(

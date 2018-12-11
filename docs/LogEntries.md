@@ -98,3 +98,55 @@ HTTP Status Code | Details
 **403 Forbidden** | The request was denied because the currently logged-in user does not have sufficient permission to edit the log entries in the specified user's log book.
 **404 Not Found** | The user name provided in the `:userName` parameter could not be found.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
+
+### GET /users/:userName/logs/:logId
+Retrieves a single log entry from a user's log book.
+
+#### Route Parameters
+* **userName** - Name of the user whose log book the entries will be added to.
+* **logId** - The ID of the log entry (`entryId`) to return.
+
+#### Responses
+HTTP Status Code | Details
+- | -
+**200 OK** | The call succeeded and response body will contain the requested [LogEntry](#logentry-object) object.
+**401 Unauthorized** | The request was denied because the current user is not authenticated and the log book is not marked as public.
+**403 Forbidden** | The request was denied because the currently logged-in user does not have sufficient permission to view the log entries in the specified user's log book.
+**404 Not Found** | The user name provided in the `:userName` parameter could not be found or no log entry exists with the specified `:logId`.
+**500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
+
+### PUT /users/:userName/logs/:logId
+Updates and replaces specified log entry.
+
+#### Route Parameters
+* **userName** - Name of the user whose log book the entries belong to.
+* **logId** - The ID of the log entry (`entryId`) that needs to be updated.
+
+#### Message Body
+An array of [LogEntry](#logentry-object) objects with the desired modifications made to them.
+
+#### Responses
+HTTP Status Code | Details
+- | -
+**200 OK** | The call succeeded and the log entry has been saved. The response body will contain the same  [LogEntry](#logentry-object) object that were provided in the request.
+**400 Bad Request** | The request was denied because there was a problem with request body. The entry may have failed validation, or the request may have been malformed. The details of the [Error](General.md#error-object) object returned will contain specific information.
+**401 Unauthorized** | The request was denied because the request was not authenticated.
+**403 Forbidden** | The request was denied because the currently logged-in user does not have sufficient permission to edit the log entry in the specified user's log book.
+**404 Not Found** | The user name provided in the `:userName` parameter could not be found or the specified log entry does not exist.
+**500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
+
+### DELETE /users/:userName/logs/:logId
+Deletes the specified log entry.
+
+#### Route Parameters
+* **userName** - Name of the user whose log book the entry belongs to.
+* **logId** - The ID of the log entry (`entryId`) that needs to be deleted.
+
+#### Responses
+HTTP Status Code | Details
+- | -
+**204 No Content** | The call succeeded and the log entry has been deleted. The response body will be empty.
+**401 Unauthorized** | The request was denied because the current user not authenticated.
+**403 Forbidden** | The request was denied because the currently logged-in user does not have sufficient permission to edit or delete the log entry in the specified user's log book.
+**404 Not Found** | The user name provided in the `:userName` parameter could not be found or the specified log entry does not exist.
+**500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.

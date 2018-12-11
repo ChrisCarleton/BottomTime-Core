@@ -293,7 +293,7 @@ describe('Logs Controller', () => {
 						.del(`/logs/${fake.entryId}`);
 				})
 				.then(res => {
-					expect(res.status).to.equal(200);
+					expect(res.status).to.equal(204);
 					
 					return LogEntry.findById(fake.entryId);
 				})
