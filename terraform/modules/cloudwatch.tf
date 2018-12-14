@@ -1,5 +1,9 @@
+locals {
+	logs_group_name = "bottomtime/core/${var.region}/${var.env}"
+}
+
 resource "aws_cloudwatch_log_group" "logs" {
-	name = "bottomtime/core/${var.region}/${var.env}"
+	name = "${local.logs_group_name}"
 	retention_in_days = 30
 }
 

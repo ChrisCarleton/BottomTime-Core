@@ -14,9 +14,11 @@ data "template_file" "task_def" {
 		env = "${var.env}"
 		image = "${var.docker_image}"
 		log_level = "${var.log_level}"
+		logs_group = "${local.logs_group_name}"
 		mongodb = "${var.mongodb_endpoint}"
 		name = "${local.container_name}"
 		port = "${local.container_port}"
+		region = "${var.region}"
 	}
 }
 
