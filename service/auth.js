@@ -3,13 +3,14 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as LocalStrategy } from 'passport-local';
 import passport from 'passport';
 import url from 'url';
+import User from './data/user';
 
 passport.serializeUser((user, done) => {
 	done(null, user.id);
 });
 
 passport.deserializeUser((id, done) => {
-	done(null, null);
+	User.findById(id, done);
 });
 
 passport.use(new LocalStrategy((username, password, done) => {

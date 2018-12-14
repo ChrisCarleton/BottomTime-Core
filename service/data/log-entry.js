@@ -4,7 +4,6 @@ const logEntrySchema = mongoose.Schema({
 	entryTime: {
 		type: Date,
 		required: true,
-		default: Date.now(),
 		index: true
 	},
 	location: String,
