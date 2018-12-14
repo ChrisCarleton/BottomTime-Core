@@ -11,7 +11,8 @@
 			}
 		],
 		"environment": [
-			{ "name": "BT_LOG_LEVEL", "value": "${log_level}" }
+			{ "name": "BT_LOG_LEVEL", "value": "${log_level}" },
+			{ "name": "BT_MONGO_ENDPOINT", "value": "${mongodb}" }
 		]
 	}
 ]

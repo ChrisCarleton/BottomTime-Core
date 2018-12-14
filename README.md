@@ -6,10 +6,23 @@ Master: [![CircleCI](https://circleci.com/gh/ChrisCarleton/BottomTime-Core/tree/
 
 Production: [![CircleCI](https://circleci.com/gh/ChrisCarleton/BottomTime-Core/tree/prod.svg?style=svg&circle-token=b4c86baca538392eeb5676fd14ef920f2cc44857)](https://circleci.com/gh/ChrisCarleton/BottomTime-Core/tree/prod)
 
-## API Documentation
-_Coming Soon!_
+## Environment Variables
+The application is configured through the use of environment variables. Any of these can be set to change
+the behaviour of the running application:
 
-TODO: Link to documentation on the APIs.
+* **BT_LOG_LEVEL** Sets the level of verbosity of the log output. Valid values are `trace`, `debug`, `info`,
+`warn`, `error`, and `fatal`. The default is `debug`.
+* **BT_LOG_FILE** Setting this to a file name will force the application to write its logs to the file
+rather than `stdout`.
+* **BT_PORT** Can be set to override the default port the application listens for requests on. The default
+is 29201.
+* **BT_SESSION_SECRET** Sets the secret used to encrypt/decrypt session cookies. This doesn't really matter
+for testing but should definitely be set to a secure value in production to prevent session hijacking.
+* **BT_MONGO_ENDPOINT** Sets the connection string for the MongoDB database. The default is
+`mongodb://localhost/dev`.
+
+## API Documentation
+See the full API documentation [here](docs/API.md)!
 
 ## Local Development
 You'll need the following installed:
@@ -31,6 +44,11 @@ The dev server will log to `stdout`.
 
 *Hint:* Piping the dev server's log output through Bunyan makes it much easier to read:
 `gulp serve | bunyan`
+
+Before running any tests or the dev server you'll want to have a MongoDB database running to persist the
+application data. Running the `admin/init-local.sh` script will run such a database in a Docker container,
+which the application will try to use by default. However, you can set the `BT_MONGO_ENDPOINT` environment
+variable to point to any MongoDB database you wish to use for testing.
 
 ## Deployment
 Deployment and continuous integration builds are handled by

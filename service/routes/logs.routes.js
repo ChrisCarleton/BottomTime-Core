@@ -1,5 +1,23 @@
+import {
+	ListLogs,
+	GetLog,
+	CreateLogs,
+	UpdateLog,
+	UpdateLogs,
+	DeleteLog,
+	DeleteLogs,
+	RetrieveLogEntry
+} from '../controllers/logs.controller';
+
 module.exports = app => {
-	app.get('/logs', (req, res) => {
-		res.send('ok');
-	});
+	app.route('/logs')
+		.get(ListLogs)
+		.post(CreateLogs)
+		.put(UpdateLogs)
+		.delete(DeleteLogs);
+	
+	app.route('/logs/:logId([a-f0-9]{24})')
+		.get(RetrieveLogEntry, GetLog)
+		.put(RetrieveLogEntry, UpdateLog)
+		.delete(RetrieveLogEntry, DeleteLog);
 };

@@ -43,14 +43,19 @@ variable "log_level" {
 	default = "info"
 }
 
+variable "max_instances" {
+	type = "string"
+	default = 10
+}
+
 variable "min_instances" {
 	type = "string"
 	default = 1  
 }
 
-variable "max_instances" {
+variable "mongodb_endpoint" {
 	type = "string"
-	default = 10
+	default = ""
 }
 
 variable "region" {
