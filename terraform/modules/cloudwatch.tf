@@ -1,3 +1,8 @@
+resource "aws_cloudwatch_log_group" "logs" {
+	name = "bottomtime/core/${var.region}/${var.env}"
+	retention_in_days = 30
+}
+
 resource "aws_cloudwatch_metric_alarm" "service_low_latency" {
 	alarm_name = "BottomTime-ServiceLatency-Low-${var.env}"
 	alarm_description = "Service latency is very low and service can be scaled in."
