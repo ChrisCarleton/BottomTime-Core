@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt';
 import config from './config';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as LocalStrategy } from 'passport-local';
@@ -14,8 +15,15 @@ passport.deserializeUser((id, done) => {
 });
 
 passport.use(new LocalStrategy((username, password, done) => {
-	// TODO: Authenticate user.
-	done(null, null);
+	User.findOne({ usernameLower: username.toLowerCase() })
+		.then(user => {
+			if (!user || !user.passwordHash || !bcrypt.compareSync(password, user.passwordHash)) {
+				return done(null, false);
+			}
+
+			done(null, user);
+		})
+		.catch(done);
 }));
 
 passport.use(new GoogleStrategy({

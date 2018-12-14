@@ -30,7 +30,7 @@ function test() {
 
 function serve(done) {
 	devServer.start();
-	gulp.watch(['service/**/*.js'], () => {
+	gulp.watch(['service/**/*.js'], file => {
 		devServer.start.bind(devServer);
 		log(`Changes detected to ${file}; Dev server restarted.`);
 	});
