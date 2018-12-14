@@ -30,7 +30,7 @@ describe('Logs Controller', () => {
 			logEntry.save()
 				.then(entry => {
 					return request(App)
-						.get(`/logs/${entry._id}`);
+						.get(`/logs/${entry.id}`);
 				})
 				.then(res => {
 					expect(res.status).to.equal(200);
@@ -190,7 +190,7 @@ describe('Logs Controller', () => {
 
 			originalEntry.save()
 				.then(entry => {
-					entryId = entry._id.toString();
+					entryId = entry.id;
 					fake.location = 'Some new location';
 					fake.maxDepth = 139.5;
 
@@ -233,7 +233,7 @@ describe('Logs Controller', () => {
 
 			originalEntry.save()
 				.then(entity => {
-					entryId = entity._id.toString();
+					entryId = entity.id;
 					fake.site = null;
 
 					return request(App)
@@ -257,7 +257,7 @@ describe('Logs Controller', () => {
 
 			originalEntry.save()
 				.then(entry => {
-					entryId = entry._id.toString();
+					entryId = entry.id;
 					fake.location = 'Some new location';
 					fake.maxDepth = 139.5;
 
@@ -287,7 +287,7 @@ describe('Logs Controller', () => {
 
 			entry.save()
 				.then(entity => {
-					fake.entryId = entity._id.toString();
+					fake.entryId = entity.id;
 
 					return request(App)
 						.del(`/logs/${fake.entryId}`);

@@ -7,7 +7,9 @@ mongoose.Promise = require('bluebird');
 mongoose.connect(
 	config.mongoEndpoint,
 	{
+		autoIndex: process.env.NODE_ENV !== 'production',
 		useNewUrlParser: true,
+		useCreateIndex: true,
 		keepAlive: true,
 		keepAliveInitialDelay: 300000
 	})

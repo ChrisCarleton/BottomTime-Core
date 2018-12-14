@@ -2,6 +2,7 @@ import { logError } from '../logger';
 
 export const ErrorIds = {
 	badRequest: 'bottom-time/errors/bad-request',
+	notAuthorized: 'bottom-time/errors/unauthorized',
 	notFound: 'bottom-time/errors/resource-not-found',
 	serverError: 'bottom-time/errors/server-error'
 };
@@ -21,6 +22,15 @@ export function badRequest(message, error, res) {
 		status: 400,
 		message: message,
 		details: error
+	});
+}
+
+export function unauthorized(res) {
+	res.status(401).json({
+		errorId: ErrorIds.notAuthorized,
+		status: 401,
+		message: 'The requested action requires authentication',
+		details: 'Ensure that you are authenticated and providing the proper authorization tokens in your request.'
 	});
 }
 

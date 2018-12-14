@@ -10,6 +10,13 @@
 				"containerPort": ${port}
 			}
 		],
+		"logConfiguration": {
+			"logDriver": "awslogs",
+			"options": {
+				"awslogs-group": "${logs_group}",
+				"awslogs-region": "${region}"
+			}
+		},
 		"environment": [
 			{ "name": "BT_GOOGLE_CLIENT_ID", "value": "${google_id}" },
 			{ "name": "BT_GOOGLE_CLIENT_SECRET", "value": "${google_secret}" },

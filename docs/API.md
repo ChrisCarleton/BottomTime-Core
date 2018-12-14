@@ -1,5 +1,3 @@
-# Bottom Time API Documentation
-
 # Bottom Time Service API Documentation
 
 ## Contents

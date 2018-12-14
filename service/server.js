@@ -1,5 +1,6 @@
 import applyAuth from './auth';
 import bodyParser from 'body-parser';
+import containerMetadata from './utils/container-metadata';
 import compression from 'compression';
 import config from './config';
 import express from 'express';
@@ -16,7 +17,9 @@ import session from 'express-session';
 process.on('unhandledRejection', (reason, p) => {
 	log.fatal('Catastrophic failure - unhandled rejection! Details:', {
 		reason: reason,
-		promise: p
+		promise: p,
+		ecsInstanceId: containerMetadata.ContainerInstanceARN,
+		ecsTaskId: containerMetadata.TaskARN	
 	});
 	process.exit(187);
 });
@@ -24,7 +27,13 @@ process.on('unhandledRejection', (reason, p) => {
 process.on('uncaughtException', err => {
 	// This is pretty serious... end the process because it's likely
 	// we're in an inconsistent state.
-	log.fatal('Catastrophic failure - unhandled exception! Details:', err);
+	log.fatal(
+		'Catastrophic failure - unhandled exception! Details:',
+		{
+			ecsInstanceId: containerMetadata.ContainerInstanceARN,
+			ecsTaskId: containerMetadata.TaskARN
+		},
+		err);
 	process.exit(187);
 });
 
@@ -42,6 +51,7 @@ sessionStore.on('error', err => {
 });
 
 app.use(compression());
+app.use(serverErrorMiddleware);
 app.use(session({
 	resave: true,
 	saveUninitialized: false,
@@ -52,7 +62,6 @@ app.use(session({
 app.use(bodyParser.json());
 applyAuth(app);
 app.use(requestLogger);
-app.use(serverErrorMiddleware);
 
 // Load routes
 glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {
@@ -64,7 +73,6 @@ glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {
 app.all('*', (req, res) => {
 	notFound(req, res);
 });
-
 
 // Launch server
 const server = http.createServer(app);

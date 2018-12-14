@@ -47,8 +47,8 @@ An array of [LogEntry](#logentry-object) objects. *Note that the `entryId` prope
 HTTP Status Code | Details
 - | -
 **201 Created** | The call succeeded and the new log entries have been saved. The response body will contain the same array of [LogEntry](#logentry-object) objects that were provided in the request except that the `entryId` properties will be filled in.
-**400 Bad Request** | The request was denied because there was a problem with request body. One or more entries may have failed validation, the request may have been malformed, or perhaps, more than 100 log entries were provided in the request. The details of the [Error](General.md#error-object) object returned will contain specific information.
-**401 Unauthorized** | The request was denied because the request was not authenticated.
+**400 Bad Request** | The request was denied because there was a problem with the request body. One or more entries may have failed validation, the request may have been malformed, or perhaps, more than 100 log entries were provided in the request. The details of the [Error](General.md#error-object) object returned will contain specific information.
+**401 Unauthorized** | The request was denied because the current user is not authenticated.
 **403 Forbidden** | The request was denied because the currently logged-in user does not have sufficient permission to edit the log entries in the specified user's log book.
 **404 Not Found** | The user name provided in the `:userName` parameter could not be found.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
@@ -66,13 +66,13 @@ An array of [LogEntry](#logentry-object) objects with the desired modifications 
 HTTP Status Code | Details
 - | -
 **200 OK** | The call succeeded and the log entries have been saved. The response body will contain the same array of [LogEntry](#logentry-object) objects that were provided in the request.
-**400 Bad Request** | The request was denied because there was a problem with request body. One or more entries may have failed validation, the request may have been malformed, or perhaps, more than 100 log entries were provided in the request. The details of the [Error](General.md#error-object) object returned will contain specific information.
+**400 Bad Request** | The request was denied because there was a problem with the request body. One or more entries may have failed validation, the request may have been malformed, or perhaps, more than 100 log entries were provided in the request. The details of the [Error](General.md#error-object) object returned will contain specific information.
 **401 Unauthorized** | The request was denied because the request was not authenticated.
 **403 Forbidden** | The request was denied because the currently logged-in user does not have sufficient permission to edit the log entries in the specified user's log book.
 **404 Not Found** | The user name provided in the `:userName` parameter could not be found.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
-### DELTE /users/:userName/logs
+### DELETE /users/:userName/logs
 Deletes the specified log entries from the user's log book.
 
 #### Route Parameters
@@ -93,7 +93,7 @@ An array of `LogEntry` IDs (as seen in the `entryId` properties of the log entri
 HTTP Status Code | Details
 - | -
 **204 No Content** | The call succeeded and the log entries have been deleted. The response body will be empty as the HTTP code suggests.
-**400 Bad Request** | The request was denied because there was a problem with request body. The array may have been malformed. The details of the [Error](General.md#error-object) object returned will contain specific information.
+**400 Bad Request** | The request was denied because there was a problem with the request body. The array may have been malformed. The details of the [Error](General.md#error-object) object returned will contain specific information.
 **401 Unauthorized** | The request was denied because the request was not authenticated.
 **403 Forbidden** | The request was denied because the currently logged-in user does not have sufficient permission to edit the log entries in the specified user's log book.
 **404 Not Found** | The user name provided in the `:userName` parameter could not be found.
@@ -123,14 +123,14 @@ Updates and replaces specified log entry.
 * **logId** - The ID of the log entry (`entryId`) that needs to be updated.
 
 #### Message Body
-An array of [LogEntry](#logentry-object) objects with the desired modifications made to them.
+A [LogEntry](#logentry-object) object with the desired modifications made to them.
 
 #### Responses
 HTTP Status Code | Details
 - | -
-**200 OK** | The call succeeded and the log entry has been saved. The response body will contain the same  [LogEntry](#logentry-object) object that were provided in the request.
-**400 Bad Request** | The request was denied because there was a problem with request body. The entry may have failed validation, or the request may have been malformed. The details of the [Error](General.md#error-object) object returned will contain specific information.
-**401 Unauthorized** | The request was denied because the request was not authenticated.
+**200 OK** | The call succeeded and the log entry has been saved. The response body will contain the same [LogEntry](#logentry-object) object that were provided in the request.
+**400 Bad Request** | The request was denied because there was a problem with the request body. The entry may have failed validation, or the request may have been malformed. The details of the [Error](General.md#error-object) object returned will contain specific information.
+**401 Unauthorized** | The request was denied because the current user is not authenticated.
 **403 Forbidden** | The request was denied because the currently logged-in user does not have sufficient permission to edit the log entry in the specified user's log book.
 **404 Not Found** | The user name provided in the `:userName` parameter could not be found or the specified log entry does not exist.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.

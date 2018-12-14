@@ -14,8 +14,8 @@ the behaviour of the running application:
 rather than `stdout`.
 * **BT_LOG_LEVEL** Sets the level of verbosity of the log output. Valid values are `trace`, `debug`, `info`,
 `warn`, `error`, and `fatal`. The default is `debug`.
-* **BT_MONGO_ENDPOINT** Sets the endpoint for the MongoDB database. This can be set to any MongoDB database
-you wish to use. The default is `mongodb://localhost/dev`.
+* **BT_MONGO_ENDPOINT** Sets the connection string for the MongoDB database. The default is
+`mongodb://localhost/dev`.
 * **BT_PORT** Can be set to override the default port the application listens for requests on. The default
 is 29201.
 * **BT_SESSION_SECRET** Sets the secret used to encrypt/decrypt session cookies. This doesn't really matter

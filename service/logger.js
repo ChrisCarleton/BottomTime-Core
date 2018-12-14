@@ -1,5 +1,6 @@
 import bunyan from 'bunyan';
 import config from './config';
+import containerMetadata from './utils/container-metadata';
 import expressLogger from 'express-bunyan-logger';
 import uuid from 'uuid/v4';
 
@@ -39,7 +40,9 @@ export const requestLogger = expressLogger({
 		'response-hrtime'],
 	includesFn: (req) => {
 		return {
-			user: req.user
+			user: req.user,
+			ecsInstanceId: containerMetadata.ContainerInstanceARN,
+			ecsTaskId: containerMetadata.TaskARN
 		};
 	}
 });
@@ -51,7 +54,9 @@ export function logError(message, details) {
 	logger.error({
 		logId: logId,
 		message: message,
-		details: details
+		details: details,
+		ecsInstanceId: containerMetadata.ContainerInstanceARN,
+		ecsTaskId: containerMetadata.TaskARN
 	});
 	return logId;
 }

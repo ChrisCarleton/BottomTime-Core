@@ -18,6 +18,8 @@ function lint() {
 function test() {
 	mkdirp.sync(path.join(__dirname, 'logs/'));
 	process.env.BT_LOG_FILE = path.join(__dirname, 'logs/test.log');
+	process.env.ECS_CONTAINER_METADATA_FILE
+		= path.join(__dirname, 'tests/assets/container-metadata.json');
 	return gulp
 		.src(['tests/**/*.tests.js'])
 		.pipe(mocha({
@@ -30,7 +32,7 @@ function serve(done) {
 	devServer.start();
 	gulp.watch(['service/**/*.js'], () => {
 		devServer.start.bind(devServer);
-		log('Changes detected; Dev server restarted.')
+		log(`Changes detected to ${file}; Dev server restarted.`);
 	});
 
 	log('Dev server started.');
