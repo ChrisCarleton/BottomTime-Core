@@ -9,7 +9,7 @@ import path from 'path';
 const devServer = new gls('service/index.js');
 
 function lint() {
-	return gulp.src(['service/**/*.js', 'tests/**/*.js'])
+	return gulp.src(['gulpfile.babrel.js', 'service/**/*.js', 'tests/**/*.js'])
 		.pipe(eslint())
 		.pipe(eslint.format())
 		.pipe(eslint.failAfterError());
@@ -30,7 +30,7 @@ function serve(done) {
 	devServer.start();
 	gulp.watch(['service/**/*.js'], file => {
 		devServer.start.bind(devServer);
-		log('Changes detected; Dev server restarted.')
+		log(`Changes detected to ${file}; Dev server restarted.`);
 	});
 
 	log('Dev server started.');
