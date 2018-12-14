@@ -1,8 +1,8 @@
+import { unauthorized } from '../utils/error-response';
+
 export function RequireUser(req, res, next) {
 	if (!req.user) {
-		return res.status(403).json({
-
-		});
+		return unauthorized(res);
 	}
 
 	next();

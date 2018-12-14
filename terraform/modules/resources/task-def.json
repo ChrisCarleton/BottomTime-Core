@@ -10,6 +10,13 @@
 				"containerPort": ${port}
 			}
 		],
+		"logConfiguration": {
+			"logDriver": "awslogs",
+			"options": {
+				"awslogs-group": "${logs_group}",
+				"awslogs-region": "${region}"
+			}
+		},
 		"environment": [
 			{ "name": "BT_LOG_LEVEL", "value": "${log_level}" },
 			{ "name": "BT_MONGO_ENDPOINT", "value": "${mongodb}" }
