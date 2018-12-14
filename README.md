@@ -18,8 +18,8 @@ rather than `stdout`.
 is 29201.
 * **BT_SESSION_SECRET** Sets the secret used to encrypt/decrypt session cookies. This doesn't really matter
 for testing but should definitely be set to a secure value in production to prevent session hijacking.
-* **BT_MONGO_ENDPOINT** Sets the endpoint for the MongoDB database. This can be set to any MongoDB database
-you wish to use. The default is `mongodb://localhost/dev`.
+* **BT_MONGO_ENDPOINT** Sets the connection string for the MongoDB database. The default is
+`mongodb://localhost/dev`.
 
 ## API Documentation
 See the full API documentation [here](docs/API.md)!

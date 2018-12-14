@@ -9,7 +9,7 @@ import path from 'path';
 const devServer = new gls('service/index.js');
 
 function lint() {
-	return gulp.src(['gulpfile.babrel.js', 'service/**/*.js', 'tests/**/*.js'])
+	return gulp.src(['gulpfile.babel.js', 'service/**/*.js', 'tests/**/*.js'])
 		.pipe(eslint())
 		.pipe(eslint.format())
 		.pipe(eslint.failAfterError());

@@ -49,9 +49,18 @@ impacted - possibly disabled.
 
 The `status` property will match the lowest health status found in all of the components.
 
+### Version Object
+```json
+{
+	"appVersion": "String: Version number for the application.",
+	"apiVersion": "String Version number for the supported API specification."
+}
+```
+
 ## Routes
 ### GET /
-*Does nothing at the moment. Currently just returns a 404 response.*
+Returns a [Version](#version-object) representing the current application and API versions. The HTTP
+response code will be a 200 OK.
 
 ### GET /health
 Gets the health of the application node. This route is mainly used to provide a pass/fail report on the

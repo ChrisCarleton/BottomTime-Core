@@ -31,6 +31,7 @@ process.on('uncaughtException', err => {
 const app = express();
 
 app.use(compression());
+app.use(serverErrorMiddleware);
 app.use(session({
 	resave: true,
 	saveUninitialized: false,
@@ -39,7 +40,6 @@ app.use(session({
 app.use(bodyParser.json());
 applyAuth(app);
 app.use(requestLogger);
-app.use(serverErrorMiddleware);
 
 // Load routes
 glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {
@@ -51,7 +51,6 @@ glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {
 app.all('*', (req, res) => {
 	notFound(req, res);
 });
-
 
 // Launch server
 const server = http.createServer(app);

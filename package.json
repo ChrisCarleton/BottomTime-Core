@@ -24,7 +24,6 @@
   },
   "homepage": "https://github.com/ChrisCarleton/BottomTime-Core#readme",
   "devDependencies": {
-    "bluebird": "^3.5.3",
     "chai": "^4.1.2",
     "chai-http": "^4.2.0",
     "faker": "^4.1.0",
@@ -40,6 +39,7 @@
     "@babel/core": "^7.1.0",
     "@babel/preset-env": "^7.1.0",
     "@babel/register": "^7.0.0",
+    "bluebird": "^3.5.3",
     "body-parser": "^1.18.3",
     "bunyan": "^1.8.12",
     "compression": "^1.7.3",
