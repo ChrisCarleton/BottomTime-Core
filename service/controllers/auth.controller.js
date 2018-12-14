@@ -9,10 +9,10 @@ export function AuthenticateUser(req, res, next) {
 	passport.authenticate('local', (err, user) => {
 		const isValid = Joi.validate(req.body, LoginSchema);
 		if (isValid.error) {
-			// return badRequest(
-			// 	'Could not authenticate user: request was invalid.',
-			// 	isValid.error,
-			// 	res);
+			return badRequest(
+				'Could not authenticate user: request was invalid.',
+				isValid.error,
+				res);
 		}
 
 		if (err) {

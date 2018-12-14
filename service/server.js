@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import containerMetadata from './utils/container-metadata';
 import compression from 'compression';
 import config from './config';
+import database from './data/database';
 import express from 'express';
 import glob from 'glob';
 import http from 'http';
@@ -39,16 +40,7 @@ process.on('uncaughtException', err => {
 
 // Express middleware
 const app = express();
-const MongoDbStore = require('connect-mongodb-session')(session);
-const sessionStore = new MongoDbStore({
-	uri: config.mongoEndpoint,
-	collection: 'Session'
-});
-
-sessionStore.on('error', err => {
-	log.fatal('Session store failure - unable to read/write to session store! Details:', err);
-	process.exit(187);
-});
+const MongoDbStore = require('connect-mongo')(session);
 
 app.use(compression());
 app.use(serverErrorMiddleware);
@@ -56,7 +48,7 @@ app.use(session({
 	resave: true,
 	saveUninitialized: false,
 	secret: config.sessionSecret,
-	store: sessionStore,
+	store: new MongoDbStore({ mongooseConnection: database.connection }),
 	cookie: moment.duration(3, 'd')
 }));
 app.use(bodyParser.json());
