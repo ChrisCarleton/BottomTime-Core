@@ -1,11 +1,10 @@
 import _ from 'lodash';
 import { App } from '../../service/server';
 import Bluebird from 'bluebird';
-import { cleanUpLogEntry } from '../../service/data/clean-up';
 import mongoose from 'mongoose';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
-import LogEntry from '../../service/data/log-entry';
+import LogEntry, { cleanUpLogEntry } from '../../service/data/log-entry';
 import sinon from 'sinon';
 
 let stub;
