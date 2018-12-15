@@ -1,3 +1,5 @@
+import _ from 'lodash';
+import moment from 'moment';
 import mongoose from './database';
 
 const userSchema = mongoose.Schema({
@@ -19,6 +21,11 @@ const userSchema = mongoose.Schema({
 		type: String,
 		required: true
 	},
+	role: {
+		type: String,
+		required: true,
+		default: 'user'
+	},
 	createdAt: {
 		type: Date,
 		required: true
@@ -27,3 +34,28 @@ const userSchema = mongoose.Schema({
 });
 
 export default mongoose.model('User', userSchema);
+
+export function cleanUpUser(user) {
+	if (!user) {
+		return {
+			username: 'Anonymous_User',
+			email: '',
+			createdAt: null,
+			isAnonymous: true
+		};
+	}
+
+	const clean = {
+		..._.pick(
+			user.toJSON(),
+			[
+				'username',
+				'email',
+				'role'
+			]),
+		isAnonymous: false,
+		createdAt: moment(user.createdAt).utc().toISOString()
+	};
+
+	return clean;
+}

@@ -4,6 +4,7 @@ import { logError } from '../logger';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
 import { serverError } from '../utils/error-response';
+import { cleanUpUser } from '../data/user';
 
 export function AuthenticateUser(req, res, next) {
 	passport.authenticate('local', (err, user) => {
@@ -31,7 +32,16 @@ export function AuthenticateUser(req, res, next) {
 			});		
 		}
 
-		next();
+		req.login(user, err => {
+			if (err) {
+				const logId = logError(
+					'An error occurred while trying to authenticate a user.',
+					err);
+				return serverError(res, logId);
+			}
+
+			next();
+		});
 	})(req, res, next);
 }
 
@@ -42,6 +52,10 @@ export function Login(req, res) {
 export function Logout(req, res) {
 	req.logout();
 	res.sendStatus(204);
+}
+
+export function GetCurrentUser(req, res) {
+	res.json(cleanUpUser(req.user));
 }
 
 export function GoogleAuth(req, res) {

@@ -2,8 +2,10 @@ import bcrypt from 'bcrypt';
 import faker from 'faker';
 
 export default (password) => {
-	const username = faker.internet.userName();
-	const email = faker.internet.email();
+	const firstName = faker.name.firstName();
+	const lastName = faker.name.lastName();
+	const username = faker.internet.userName(firstName, lastName);
+	const email = faker.internet.email(firstName, lastName);
 	password = password || faker.internet.password(12, false);
 
 	return {
