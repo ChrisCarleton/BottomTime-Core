@@ -8,7 +8,6 @@
     "dev": "gulp serve | bunyan",
     "start": "node service/index.js",
     "test": "gulp test",
-    "CI": "nyc gulp ci-build",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {

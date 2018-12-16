@@ -19,7 +19,8 @@ jobs:
           command: |
             npm install -g gulp-cli nyc
             npm install
-            npm run CI
+            gulp lint
+            nyc gulp test
             npm run coverage
           environment:
             NODE_ENV: test

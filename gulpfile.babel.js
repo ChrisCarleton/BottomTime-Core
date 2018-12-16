@@ -1,4 +1,3 @@
-//import coveralls from 'gulp-coveralls';
 import eslint from 'gulp-eslint';
 import gls from 'gulp-live-server';
 import gulp from 'gulp';
@@ -41,17 +40,9 @@ function serve(done) {
 	done();
 }
 
-// function reportCoverage() {
-// 	return gulp
-// 		.src('coverage/lcov.info')
-// 		.pipe(coveralls());
-// }
-
 gulp.task('lint', lint);
 
 gulp.task('test', test);
-
-gulp.task('ci-build', gulp.series(lint, test));
 
 gulp.task('serve', serve);
 
