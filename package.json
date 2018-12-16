@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "gulp serve | bunyan",
     "start": "node service/index.js",
-    "test": "gulp test"
+    "test": "gulp test",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
     "type": "git",
@@ -23,9 +24,24 @@
     "url": "https://github.com/ChrisCarleton/BottomTime-Core/issues"
   },
   "homepage": "https://github.com/ChrisCarleton/BottomTime-Core#readme",
+  "nyc": {
+    "check-coverage": true,
+    "lines": 80,
+    "statements": 80,
+    "functions": 80,
+    "branches": 80,
+    "include": [
+      "service/**/*.js"
+    ],
+    "reporter": [
+      "lcov",
+      "text-summary"
+    ]
+  },
   "devDependencies": {
     "chai": "^4.1.2",
     "chai-http": "^4.2.0",
+    "coveralls": "^3.0.2",
     "faker": "^4.1.0",
     "fancy-log": "^1.3.2",
     "gulp": "^4.0.0",
