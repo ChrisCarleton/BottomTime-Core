@@ -44,8 +44,6 @@ gulp.task('lint', lint);
 
 gulp.task('test', test);
 
-gulp.task('ci-build', gulp.series(lint, test));
-
 gulp.task('serve', serve);
 
 gulp.task('default', serve);

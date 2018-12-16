@@ -17,9 +17,13 @@ jobs:
       - run:
           name: Test
           command: |
-            npm install -g gulp-cli
+            npm install -g gulp-cli nyc
             npm install
-            gulp ci-build
+            gulp lint
+            nyc gulp test
+            npm run coverage
+          environment:
+            NODE_ENV: test
       - save_cache:
           key: bt_core_{{ checksum "package.json" }}
           paths:
