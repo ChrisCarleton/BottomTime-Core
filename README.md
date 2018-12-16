@@ -6,6 +6,10 @@ Master: [![CircleCI](https://circleci.com/gh/ChrisCarleton/BottomTime-Core/tree/
 
 Production: [![CircleCI](https://circleci.com/gh/ChrisCarleton/BottomTime-Core/tree/prod.svg?style=svg&circle-token=b4c86baca538392eeb5676fd14ef920f2cc44857)](https://circleci.com/gh/ChrisCarleton/BottomTime-Core/tree/prod)
 
+Test Coverage: [![Coverage Status](https://coveralls.io/repos/github/ChrisCarleton/BottomTime-Core/badge.svg?branch=master)](https://coveralls.io/github/ChrisCarleton/BottomTime-Core?branch=master)
+
+Dependencies: [![Dependencies](https://david-dm.org/ChrisCarleton/BottomTime-Core.svg)](https://david-dm.org/ChrisCarleton/BottomTime-Core)
+
 ## Environment Variables
 The application is configured through the use of environment variables. Any of these can be set to change
 the behaviour of the running application:
