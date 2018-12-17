@@ -18,8 +18,8 @@ const config = {
 	}
 };
 
-if (!config.smtp.auth.user || !config.smtp.auth.pass) {
-	delete smtp.auth;
+if (!config.smtp.auth.user) {
+	delete config.smtp.auth;
 }
 
 export default config;
