@@ -9,8 +9,8 @@ const config = {
 	smtp: {
 		pool: true,
 		host: process.env.BT_SMTP_HOST || 'localhost',
-		port: process.env.BT_SMTP_PORT || 25,
-		secure: process.env.BT_SMTP_USE_TLS ? (process.env.BT_SMTP_USE_TLS === 'true') : true,
+		port: process.env.BT_SMTP_PORT || 15025,
+		secure: process.env.BT_SMTP_USE_TLS ? (process.env.BT_SMTP_USE_TLS === 'true') : false,
 		auth: {
 			user: process.env.BT_SMTP_USERNAME,
 			pass: process.env.BT_SMTP_PASSWORD

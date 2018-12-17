@@ -6,8 +6,12 @@ jobs:
       - image: node:10.11.0
         environment:
           BT_MONGO_ENDPOINT: mongodb://mongo/dev
+          BT_SMTP_HOST: smtp
+          BT_SMTP_PORT: 25
       - image: mongo:2.6.8
         name: mongo
+      - image: tecnativa/smtp-sink:latest
+        name: smtp
     steps:
       - checkout
       - restore_cache:
