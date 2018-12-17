@@ -21,6 +21,12 @@ rather than `stdout`.
 is 29201.
 * **BT_SESSION_SECRET** Sets the secret used to encrypt/decrypt session cookies. This doesn't really matter
 for testing but should definitely be set to a secure value in production to prevent session hijacking.
+* **BT_SMTP_HOST** The hostname of the SMTP server used for sending out e-mails. Default is `localhost`.
+* **BT_SMTP_PASSWORD** The password used to authenticate with the SMTP server.
+* **BT_SMTP_PORT** The port number on which the SMTP server should be contacted. The default is `25`.
+* **BT_SMTP_USE_TLS** Whether or not to use TLS (secure connection) when connecting to the SMTP server.
+Must be `true` or `false`. Default is `true`.
+* **BT_SMTP_USERNAME** The username used to authenticate with the SMTP server.
 * **BT_MONGO_ENDPOINT** Sets the connection string for the MongoDB database. The default is
 `mongodb://localhost/dev`.
 

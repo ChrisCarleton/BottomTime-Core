@@ -19,7 +19,12 @@
 		},
 		"environment": [
 			{ "name": "BT_LOG_LEVEL", "value": "${log_level}" },
-			{ "name": "BT_MONGO_ENDPOINT", "value": "${mongodb}" }
+			{ "name": "BT_MONGO_ENDPOINT", "value": "${mongodb}" },
+			{ "name": "BT_SMTP_HOST", "value": "${smtp_host}" },
+			{ "name": "BT_SMTP_PASSWORD", "value": "${smtp_auth_password}" },
+			{ "name": "BT_SMTP_PORT", "value": "${smtp_port}" },
+			{ "name": "BT_SMTP_USE_TLS", "value": "${smtp_use_tls}" },
+			{ "name": "BT_SMTP_USERNAME", "value": "${smtp_auth_username}" }
 		]
 	}
 ]
