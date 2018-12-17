@@ -30,7 +30,14 @@ const userSchema = mongoose.Schema({
 		type: Date,
 		required: true
 	},
-	passwordHash: String
+	passwordHash: String,
+	passwordResetToken: String,
+	passwordResetExpiration: Date,
+	isLockedOut: {
+		type: Boolean,
+		required: true,
+		default: false
+	}
 });
 
 export default mongoose.model('User', userSchema);
@@ -41,7 +48,9 @@ export function cleanUpUser(user) {
 			username: 'Anonymous_User',
 			email: '',
 			createdAt: null,
-			isAnonymous: true
+			role: 'user',
+			isAnonymous: true,
+			isLockedOut: false
 		};
 	}
 
@@ -51,9 +60,11 @@ export function cleanUpUser(user) {
 			[
 				'username',
 				'email',
-				'role'
+				'role',
+				'isLockedOut'
 			]),
 		isAnonymous: false,
+		hasPassword: user.passwordHash ? true : false,
 		createdAt: moment(user.createdAt).utc().toISOString()
 	};
 

@@ -12,7 +12,8 @@ The authentication domain deals with access to user accounts.
 	"createdAt": "String: An ISO date string indicating when the user account was first created. (UTC.)",
 	"role": "String: Indicates the user's privilege level in the system. One of user|admin.",
 	"isAnonymous": "Boolean: True if the user is unauthenticated; otherwise, false.",
-	"hasPassword": "Boolean: True if the user has a password set on his/her account."
+	"hasPassword": "Boolean: True if the user has a password set on his/her account.",
+	"isLockedOut": "Boolean: True if the account is locked out (not allowed to log in.)"
 }
 ```
 Some user accounts may not have a password set on them because the user opted to sign up using one of the
@@ -34,8 +35,8 @@ the user is not authenticated then the object is populated with "dummy" informat
 #### Responses
 HTTP Status Code | Details
 - | -
-200 OK | The call succeeded and the response body will contain a [UserAccount](#useraccount-object).
-500 Server Error | An error occurred on the server side. The response body will contain an [Error](General.md#error-object) with more details.
+**200 OK** | The call succeeded and the response body will contain a [UserAccount](#useraccount-object).
+**500 Server Error** | An error occurred on the server side. The response body will contain an [Error](General.md#error-object) with more details.
 
 ### POST /auth/login
 Attempts to log a user in using a username/password pair and create a user session.
@@ -47,10 +48,10 @@ and password.
 #### Responses
 HTTP Status Code | Details
 - | -
-204 No Content | The call succeeded and the user is authenticated. The `set-cookie` header will be returned containing the user's session cookie. The response body will be empty.
-400 Bad Request | The request was rejected because the provided [Authentication](#authentication-object) was invalid or missing.
-401 Unauthorized | Authentication failed. Either the user account does not exist, does not have a password set, or the supplied password was incorrect.
-500 Server Error | Something went wrong accessing the database. An [Error](General.md#error-object) object will be provided in the response with more details.
+**204 No Content** | The call succeeded and the user is authenticated. The `set-cookie` header will be returned containing the user's session cookie. The response body will be empty.
+**400 Bad Request** | The request was rejected because the provided [Authentication](#authentication-object) was invalid or missing.
+**401 Unauthorized** | Authentication failed. Either the user account does not exist, does not have a password set, is locked out, or the supplied password was incorrect.
+**500 Server Error** | Something went wrong accessing the database. An [Error](General.md#error-object) object will be provided in the response with more details.
 
 ### POST /auth/logout
 Logs out a user and terminates their session.
@@ -58,5 +59,5 @@ Logs out a user and terminates their session.
 #### Responses
 HTTP Status Code | Details
 - | -
-204 No Content | The call succeeded and the user's session has been invalidated. Their session cookie will no longer be accepted. The response body will be empty.
-500 Server Error | Something went wrong accessing the database. An [Error](General.md#error-object) object will be provided in the response with more details.
+**204 No Content** | The call succeeded and the user's session has been invalidated. Their session cookie will no longer be accepted. The response body will be empty.
+**500 Server Error** | Something went wrong accessing the database. An [Error](General.md#error-object) object will be provided in the response with more details.
