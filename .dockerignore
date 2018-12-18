@@ -6,6 +6,8 @@ tests/
 terraform/
 temp/
 docs/
+coverage/
+.nyc_output/
 
 LICENSE
 README.md
