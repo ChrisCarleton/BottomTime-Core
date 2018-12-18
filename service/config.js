@@ -7,7 +7,7 @@ const config = {
 	mongoEndpoint: process.env.BT_MONGO_ENDPOINT || 'mongodb://localhost/dev',
 
 	smtp: {
-		pool: true,
+		pool: (process.env.NODE_ENV === 'production'),
 		host: process.env.BT_SMTP_HOST || 'localhost',
 		port: process.env.BT_SMTP_PORT || 15025,
 		secure: process.env.BT_SMTP_USE_TLS ? (process.env.BT_SMTP_USE_TLS === 'true') : false,

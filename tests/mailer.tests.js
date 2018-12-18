@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import faker from 'faker';
-import mailer from '../service/utils/mailer';
+import mailer from '../service/mail/mailer';
 
 describe('Mailer', () => {
 	it('Can successfully send messages', done => {
