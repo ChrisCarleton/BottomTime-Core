@@ -1,9 +1,8 @@
-import { ErrorIds, badRequest } from '../utils/error-response';
+import { ErrorIds, badRequest, serverError, unauthorized } from '../utils/error-response';
 import Joi from 'joi';
 import { logError } from '../logger';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
-import { serverError } from '../utils/error-response';
 import { cleanUpUser } from '../data/user';
 
 export function AuthenticateUser(req, res, next) {
@@ -24,12 +23,10 @@ export function AuthenticateUser(req, res, next) {
 		}
 
 		if (!user) {
-			return res.status(401).json({
-				errorId: ErrorIds.notAuthorized,
-				status: 401,
-				message: 'Authentication failed',
-				details: 'Either the specified username does not exist, or the password is incorrect. Please check and try again.'
-			});		
+			return unauthorized(
+				res,
+				'User could not be authenticated',
+				'Check the username and password to verify that they are correct.');
 		}
 
 		req.login(user, err => {

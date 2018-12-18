@@ -37,12 +37,12 @@ export function conflict(res, field, message) {
 	});
 }
 
-export function unauthorized(res) {
+export function unauthorized(res, message, details) {
 	res.status(401).json({
 		errorId: ErrorIds.notAuthorized,
 		status: 401,
-		message: 'The requested action requires authentication',
-		details: 'Ensure that you are authenticated and providing the proper authorization tokens in your request.'
+		message: message || 'The requested action requires authentication',
+		details: details || 'Ensure that you are authenticated and providing the proper authorization tokens in your request.'
 	});
 }
 
