@@ -1,4 +1,4 @@
-import { ErrorIds, badRequest, serverError, unauthorized } from '../utils/error-response';
+import { badRequest, serverError, unauthorized } from '../utils/error-response';
 import Joi from 'joi';
 import { logError } from '../logger';
 import { LoginSchema } from '../validation/user';
