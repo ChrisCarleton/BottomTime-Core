@@ -10,18 +10,16 @@ describe('Auth Controller', () => {
 
 	let stub;
 
-	afterEach(() => {
+	afterEach(done => {
 		if (stub) {
 			stub.restore();
 			stub = null;
 		}
+
+		User.deleteMany({}, done);
 	});
 
 	describe('POST /auth/login', () => {
-		afterEach(done => {
-			User.deleteMany({}, done);
-		});
-	
 		it('Authenticates a user when username and password are correct', done => {
 			const password = faker.internet.password(12, false);
 			const fake = fakeUser(password);

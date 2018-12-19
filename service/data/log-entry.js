@@ -25,7 +25,7 @@ const logEntrySchema = mongoose.Schema({
 export default mongoose.model('LogEntry', logEntrySchema);
 
 export function assignLogEntry(entity, newLogEntry) {
-	entity.entryTime = newLogEntry.entryTime;
+	entity.entryTime = moment(newLogEntry.entryTime).utc().toDate();
 	entity.bottomTime = newLogEntry.bottomTime;
 	entity.totalTime = newLogEntry.totalTime;
 	entity.location = newLogEntry.location;

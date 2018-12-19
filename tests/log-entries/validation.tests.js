@@ -46,7 +46,7 @@ describe('Log entry validation' , () => {
 
 	it('Entry time is a valid ISO date', () => {
 		logEntry.entryTime = 'Tuesday?';
-		validateCreate('date.isoDate');
+		validateCreate('string.isoDate');
 	});
 
 	it('Entry time is required', () => {

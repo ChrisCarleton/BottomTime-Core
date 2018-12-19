@@ -6,7 +6,7 @@ export default (password) => {
 	const lastName = faker.name.lastName();
 	const username = faker.internet.userName(firstName, lastName);
 	const email = faker.internet.email(firstName, lastName);
-	password = password || faker.internet.password(12, false);
+	password = password || faker.internet.password(16, false, null, '!2_');
 
 	return {
 		usernameLower: username.toLowerCase(),

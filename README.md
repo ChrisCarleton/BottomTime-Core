@@ -23,7 +23,7 @@ rather than `stdout`.
 is 29201.
 * **BT_SESSION_SECRET** Sets the secret used to encrypt/decrypt session cookies. This doesn't really matter
 for testing but should definitely be set to a secure value in production to prevent session hijacking.
-* **BT_SITE_URL** Tells the application the base URL of the site. E.g. `https://api.bottomtime.ca/`. This
+* **BT_SITE_URL** Tells the application the base URL of the site. E.g. `https://www.bottomtime.ca/`. This
 is important for some components of the application that need to return or provide URLs.
 
 ## API Documentation
