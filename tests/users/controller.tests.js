@@ -14,14 +14,14 @@ function fakeCreateAccount() {
 		username: faker.internet.userName(firstName, lastName),
 		body: {
 			email: faker.internet.email(firstName, lastName),
-			password: faker.internet.password(12, false, null, '!*7'),
+			password: faker.internet.password(18, false, null, '*@1Az'),
 			role: 'user'
 		}
 	}
 }
 
 function createAccount(role = 'user') {
-	const password = faker.internet.password(12, false);
+	const password = faker.internet.password(18, false, null, '*@1Az');
 	const fake = fakeUser(password);
 	fake.role = role;
 

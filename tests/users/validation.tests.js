@@ -48,7 +48,7 @@ describe('Account Details Validation', () => {
 	beforeEach(() => {
 		account = {
 			email: faker.internet.email(),
-			password: faker.internet.password(12, false, null, '*__12'),
+			password: faker.internet.password(18, false, null, '*@1Az'),
 			role: faker.random.arrayElement(['user', 'admin'])
 		};
 	});
