@@ -129,14 +129,14 @@ workflows:
                 - prod
       - terraform-dev:
           requires:
-            - deploy-image
+            - deploy-image-dev
           filters:
             branches:
               only:
                 - master
       - terraform-prod:
           requires:
-            - deploy-image
+            - deploy-image-prod
           filters:
             branches:
               only:
