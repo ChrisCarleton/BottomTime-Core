@@ -1,11 +1,9 @@
 import _ from 'lodash';
-import { assignLogEntry } from '../data/assign';
 import { badRequest, serverError } from '../utils/error-response';
 import Bluebird from 'bluebird';
-import { cleanUpLogEntry } from '../data/clean-up';
 import Joi from 'joi';
 import { logError } from '../logger';
-import LogEntry from '../data/log-entry';
+import LogEntry, { assignLogEntry, cleanUpLogEntry } from '../data/log-entry';
 import { NewEntrySchema, EntryId, UpdateEntrySchema } from '../validation/log-entry';
 
 export function ListLogs(req, res) {

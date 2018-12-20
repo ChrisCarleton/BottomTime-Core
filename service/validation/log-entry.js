@@ -2,7 +2,7 @@ import Joi from 'joi';
 
 const logEntryBaseSchema = {
 	// Basic info
-	entryTime: Joi.date().iso().required(),
+	entryTime: Joi.string().isoDate().required(),
 	bottomTime: Joi.number().positive(),
 	totalTime: Joi.number().positive().min(Joi.ref('bottomTime')),
 	location: Joi.string().max(200).required(),

@@ -2,6 +2,8 @@ import { logError } from '../logger';
 
 export const ErrorIds = {
 	badRequest: 'bottom-time/errors/bad-request',
+	conflict: 'bottom-time/errors/conflict',
+	forbidden: 'bottom-time/errors/forbidden',
 	notAuthorized: 'bottom-time/errors/unauthorized',
 	notFound: 'bottom-time/errors/resource-not-found',
 	serverError: 'bottom-time/errors/server-error'
@@ -25,12 +27,31 @@ export function badRequest(message, error, res) {
 	});
 }
 
-export function unauthorized(res) {
+export function conflict(res, field, message) {
+	res.status(409).json({
+		errorId: ErrorIds.conflict,
+		status: 409,
+		fieldName: field,
+		message: `There was a conflict in field ${field}.`,
+		details: message
+	});
+}
+
+export function unauthorized(res, message, details) {
 	res.status(401).json({
 		errorId: ErrorIds.notAuthorized,
 		status: 401,
-		message: 'The requested action requires authentication',
-		details: 'Ensure that you are authenticated and providing the proper authorization tokens in your request.'
+		message: message || 'The requested action requires authentication',
+		details: details || 'Ensure that you are authenticated and providing the proper authorization tokens in your request.'
+	});
+}
+
+export function forbidden(res, details) {
+	res.status(403).json({
+		errorId: ErrorIds.forbidden,
+		status: 403,
+		message: 'You do not have permission to perform the desired action.',
+		details: details
 	});
 }
 

@@ -1,15 +1,17 @@
-.git/
 .circleci/
+.git/
+.nyc_output/
+coverage/
+docs/
 logs/
 node_modules/
-tests/
-terraform/
 temp/
-docs/
+terraform/
+tests/
 
-LICENSE
-README.md
-.gitignore
 .eslintrc.js
+.gitignore
 Dockerfile
 gulpfile.babel.js
+LICENSE
+README.md

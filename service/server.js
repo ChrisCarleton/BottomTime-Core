@@ -3,10 +3,12 @@ import bodyParser from 'body-parser';
 import containerMetadata from './utils/container-metadata';
 import compression from 'compression';
 import config from './config';
+import database from './data/database';
 import express from 'express';
 import glob from 'glob';
 import http from 'http';
 import log, { requestLogger } from './logger';
+import moment from 'moment';
 import { notFound } from './utils/error-response';
 import path from 'path';
 import { serverErrorMiddleware } from './utils/error-response';
@@ -38,13 +40,16 @@ process.on('uncaughtException', err => {
 
 // Express middleware
 const app = express();
+const MongoDbStore = require('connect-mongo')(session);
 
 app.use(compression());
 app.use(serverErrorMiddleware);
 app.use(session({
 	resave: true,
 	saveUninitialized: false,
-	secret: config.sessionSecret
+	secret: config.sessionSecret,
+	store: new MongoDbStore({ mongooseConnection: database.connection }),
+	cookie: moment.duration(3, 'd')
 }));
 app.use(bodyParser.json());
 applyAuth(app);

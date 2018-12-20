@@ -14,7 +14,8 @@ troubleshoot the problem.
 	"status": "Integer: The HTTP status code returned with the error.",
 	"message": "String: A brief message indicating what happened.",
 	"details": "String|Object: A more detailed explanation of the problem.",
-	"logId": "OPTIONAL String: A unique ID that can be used to find specific information in the system logs."
+	"logId": "OPTIONAL String: A unique ID that can be used to find specific information in the system logs.",
+	"field": "OPTIONAL String: Used for 409 Conflict errors. See below."
 }
 ```
 
@@ -22,6 +23,8 @@ troubleshoot the problem.
 will have a corresponding logID field that matches this value. This is to allow administrators to quickly
 look up the details of an error, without reporting those potentially sensitive details to be returned to the
 API caller.
+
+For Conflict errors (e.g. username already taken) the `field` property will indicate what is in conflict.
 
 ### ComponentHealthStatus Object
 ```json
