@@ -44,7 +44,16 @@ function createAccount(role = 'user') {
 		});
 }
 
+let stub;
+
 describe('Users Controller', () => {
+
+	afterEach(() => {
+		if (stub) {
+			stub.restore();
+			stub = null;
+		}
+	});
 
 	describe('PUT /users/:username', () => {
 		let admin, regularUser;
@@ -263,7 +272,7 @@ describe('Users Controller', () => {
 
 		it('Will return Server Error if something goes wrong with the database', done => {
 			const fake = fakeCreateAccount();
-			const stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub = sinon.stub(mongoose.Model.prototype, 'save');
 			stub.rejects('nope');
 
 			request(App)
