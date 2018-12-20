@@ -22,8 +22,8 @@ OAuth providers and so authentication is provided by a third party.
 ### Authentication Object
 ```json
 {
-	"username": "String",
-	"password": "String"
+	"username": "REQUIRED String",
+	"password": "REQUIRED String"
 }
 ```
 
@@ -35,8 +35,8 @@ the user is not authenticated then the object is populated with "dummy" informat
 #### Responses
 HTTP Status Code | Details
 - | -
-**200 OK** | The call succeeded and the response body will contain a [UserAccount](#useraccount-object).
-**500 Server Error** | An error occurred on the server side. The response body will contain an [Error](General.md#error-object) with more details.
+**200 OK** | The call succeeded and the response body will contain a [UserAccount](#useraccount-object) object.
+**500 Server Error** | An error occurred on the server side. The response body will contain an [Error](General.md#error-object) object with more details.
 
 ### POST /auth/login
 Attempts to log a user in using a username/password pair and create a user session.
@@ -49,7 +49,7 @@ and password.
 HTTP Status Code | Details
 - | -
 **204 No Content** | The call succeeded and the user is authenticated. The `set-cookie` header will be returned containing the user's session cookie. The response body will be empty.
-**400 Bad Request** | The request was rejected because the provided [Authentication](#authentication-object) was invalid or missing.
+**400 Bad Request** | The request was rejected because the provided [Authentication](#authentication-object) object was invalid or missing.
 **401 Unauthorized** | Authentication failed. Either the user account does not exist, does not have a password set, is locked out, or the supplied password was incorrect.
 **500 Server Error** | Something went wrong accessing the database. An [Error](General.md#error-object) object will be provided in the response with more details.
 

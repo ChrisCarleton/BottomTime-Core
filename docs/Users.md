@@ -35,11 +35,11 @@ Passwords must meet several strength requirements. All passwords must:
 
 ## Routes
 ### PUT /users/:username
-Creates a new user account. Certain actions are not permitted, however, and will not be permitted. These
+Creates a new user account. Certain actions are not permitted, however. These
 requests will fail with a `403 Forbidden` HTTP error.
 
-* Anonymous users may only create accounts with the role of `user`. Only administrators are permitted to
-create accounts with higher privilege levels.
+* Anonymous users may only create accounts with the role of `user`.
+* Only administrators are permitted to create accounts with higher privilege levels.
 * Authenticated users (other than administrators) cannot create additional accounts. They must logout and
 create a new account.
 

@@ -26,7 +26,7 @@ describe('Admin Controller', () => {
 		let stub;
 
 		afterEach(() => {
-			if(stub) {
+			if (stub) {
 				stub.restore();
 				stub = null;
 			}

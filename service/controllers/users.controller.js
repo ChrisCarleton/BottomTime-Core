@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import bcrypt from 'bcrypt';
 import Bluebird from 'bluebird';
 import { badRequest, conflict, forbidden, serverError } from '../utils/error-response';
@@ -29,7 +28,7 @@ export function CreateUserAccount(req, res) {
 	if (!req.user && req.body.role !== 'user') {
 		return forbidden(
 			res,
-			'Unauthenticated users can only create accounts with the role set to "user".');
+			'Anonymous users can only create accounts with the role set to "user".');
 	}
 
 	if (req.user && req.user.role !== 'admin') {
@@ -39,7 +38,8 @@ export function CreateUserAccount(req, res) {
 	}
 
 	const user = new User({
-		..._.pick(req.body, ['email', 'role']),
+		email: req.body.email,
+		role: req.body.role,
 		username: req.params.username,
 		usernameLower: req.params.username.toLowerCase(),
 		emailLower: req.body.email.toLowerCase(),

@@ -10,17 +10,16 @@ describe('Auth Controller', () => {
 
 	let stub;
 
-	afterEach(() => {
+	afterEach(done => {
 		if (stub) {
 			stub.restore();
 			stub = null;
 		}
+
+		User.deleteMany({}, done);
 	});
 
 	describe('POST /auth/login', () => {
-		afterEach(done => {
-			User.deleteMany({}, done);
-		});
 	
 		it('Authenticates a user when username and password are correct', done => {
 			const password = faker.internet.password(12, false);
@@ -38,6 +37,7 @@ describe('Auth Controller', () => {
 				})
 				.then(res => {
 					expect(res.status).to.equal(204);
+					expect(res.headers['set-cookie']).to.exist;
 					done();
 				})
 				.catch(done);
@@ -194,10 +194,8 @@ describe('Auth Controller', () => {
 					return agent.get('/auth/me');
 				})
 				.then(res => {
-					expect(res.status).to.equal(500);
-					// expect(res.body.status).to.equal(500);
-					// expect(res.body.logId).to.exist;
-					// expect(res.body.errorId).to.equal(ErrorIds.serverError);
+					expect(res.status).to.equal(200);
+					expect(res.body.isAnonymous).to.be.true;
 					done();
 				})
 				.catch(done)
