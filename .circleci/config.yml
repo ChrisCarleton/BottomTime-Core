@@ -87,6 +87,7 @@ jobs:
             echo "mongodb_endpoint = \"$DEV_DATABASE\""" >> secret.tfvars
             echo "google_client_secret = \"$GOOGLE_CLIENT_SECRET\""" >> secret.tfvars
             echo "build_number = \"$(cat ../../build)\""" >> secret.tfvars
+            cat secret.tfvars
             terraform init -from-module=../../../modules/ -backend-config="key=dev.us-east-1.tfstate"
             terraform apply -auto-approve -var-file secret.tfvars -var-file config.tfvars
 
@@ -105,7 +106,6 @@ jobs:
             echo "google_client_secret = \"$GOOGLE_CLIENT_SECRET\""" >> secret.tfvars
             echo "build_number = \"$(cat ../../build)\""" >> secret.tfvars
             echo "session_secret = \"$PROD_SESSION_SECRET\""" >> secret.tfvars
-            cat secret.tfvars
             terraform init -from-module=../../../modules/ -backend-config="key=prod.us-east-1.tfstate"
             terraform apply -auto-approve -var-file secret.tfvars -var-file config.tfvars
 
