@@ -29,7 +29,7 @@ jobs:
           paths:
             - node_modules/
 
-  deploy-image:
+  deploy-image-dev:
     machine:
       enabled: true
       image: circleci/classic:201808-01
@@ -44,6 +44,28 @@ jobs:
             $(aws ecr get-login --no-include-email --region us-east-1)
             docker tag bottom-time/core:latest 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:$CIRCLE_BUILD_NUM
             docker push 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:$CIRCLE_BUILD_NUM
+            mkdir temp/
+            echo $CIRCLE_BUILD_NUM > temp/build
+      - persist_to_workspace:
+          root: temp/
+          paths:
+            - build
+
+  deploy-image-prod:
+    machine:
+      enabled: true
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - run:
+          name: Build Docker Image
+          command: docker build -t bottom-time/core .
+      - run:
+          name: Deploy Docker Image
+          command: |
+            $(aws ecr get-login --no-include-email --region us-east-1)
+            docker tag bottom-time/core:latest 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core-prod:$CIRCLE_BUILD_NUM
+            docker push 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core-prod:$CIRCLE_BUILD_NUM
             mkdir temp/
             echo $CIRCLE_BUILD_NUM > temp/build
       - persist_to_workspace:
@@ -91,13 +113,19 @@ workflows:
   build-and-deploy:
     jobs:
       - test
-      - deploy-image:
+      - deploy-image-dev:
           requires:
             - test
           filters:
             branches:
               only:
                 - master
+      - deploy-image-prod:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
                 - prod
       - terraform-dev:
           requires:
