@@ -13,7 +13,7 @@ export function ListLogs(req, res) {
 		})
 		.catch(err => {
 			const logId = logError(
-				"Failed to query database records",
+				'Failed to query database records',
 				err);
 			serverError(res, logId);
 		});
@@ -32,25 +32,23 @@ export function CreateLogs(req, res) {
 			res);
 	}
 
-	const logEntries = _.map(req.body, e => {
-		return new LogEntry(e).save();
-	});
+	const logEntries = _.map(req.body, e => new LogEntry(e).save());
 
 	Bluebird.all(logEntries)
 		.then(entries => {
 			res
 				.status(201)
-				.json(_.map(entries, e => { return cleanUpLogEntry(e); }));
+				.json(_.map(entries, e => cleanUpLogEntry(e)));
 		})
 		.catch(err => {
 			const logId = logError(
-				`Failed to create database records`,
+				'Failed to create database records',
 				err);
 			serverError(res, logId);
 		});
 }
 
-export function UpdateLogs (req, res) {
+export function UpdateLogs(req, res) {
 	const isValid = Joi.validate(req.body, Joi.array().min(1).max(100).items(UpdateEntrySchema));
 	if (isValid.error) {
 		return badRequest(
@@ -67,17 +65,17 @@ export function UpdateLogs (req, res) {
 	LogEntry.find({ _id: { $in: Object.keys(entries) } })
 		.then(foundEntries => {
 			for (let i = 0; i < foundEntries.length; i++) {
-				assignLogEntry(foundEntries[i], entries[foundEntries[i]._id]);
+				assignLogEntry(foundEntries[i], entries[foundEntries[i].id]);
 			}
 
-			return Bluebird.all(_.map(foundEntries, e => { return e.save(); }));
+			return Bluebird.all(_.map(foundEntries, e => e.save()));
 		})
 		.then(result => {
-			res.json(_.map(result, r => { return cleanUpLogEntry(r); }));
+			res.json(_.map(result, r => cleanUpLogEntry(r)));
 		})
 		.catch(err => {
 			const logId = logError(
-				`Failed to update database records`,
+				'Failed to update database records',
 				err);
 			serverError(res, logId);
 		});
@@ -100,7 +98,7 @@ export function UpdateLog(req, res) {
 		})
 		.catch(err => {
 			const logId = logError(
-				`Failed to update database record for log entry ${req.body.entryId}`,
+				`Failed to update database record for log entry ${ req.body.entryId }`,
 				err);
 			serverError(res, logId);
 		});
@@ -121,11 +119,10 @@ export function DeleteLogs(req, res) {
 		})
 		.catch(err => {
 			const logId = logError(
-				`Failed to delete record for log entries.`,
+				'Failed to delete record for log entries.',
 				err);
 			serverError(res, logId);
 		});
-	
 }
 
 export function DeleteLog(req, res) {
@@ -135,7 +132,7 @@ export function DeleteLog(req, res) {
 		})
 		.catch(err => {
 			const logId = logError(
-				`Failed to delete record for log entry.`,
+				'Failed to delete record for log entry.',
 				err);
 			serverError(res, logId);
 		});
@@ -149,7 +146,7 @@ export function RetrieveLogEntry(req, res, next) {
 			}
 
 			req.logEntry = entry;
-			next();
+			return next();
 		})
 		.catch(err => {
 			const logId = logError('Failed to search database for log entry', err);

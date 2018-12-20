@@ -34,7 +34,7 @@ export function CreateUserAccount(req, res) {
 	if (req.user && req.user.role !== 'admin') {
 		return forbidden(
 			res,
-			`You are already signed in as "${req.user.username}" and are not authorized to create a new account.`);
+			`You are already signed in as "${ req.user.username }" and are not authorized to create a new account.`);
 	}
 
 	const user = new User({
@@ -47,7 +47,8 @@ export function CreateUserAccount(req, res) {
 		createdAt: moment().utc().toDate()
 	});
 
-	Bluebird.all([
+	Bluebird
+		.all([
 			User.findOne({ usernameLower: req.params.username.toLowerCase() }),
 			User.findOne({ emailLower: req.body.email.toLowerCase() })
 		])
@@ -69,12 +70,14 @@ export function CreateUserAccount(req, res) {
 			return user.save();
 		})
 		.then(entity => {
-			if (!entity) return;
+			if (!entity) {
+				return;
+			}
 
 			if (req.user && req.user.role === 'admin') {
 				return res.status(201).json(cleanUpUser(req.user));
 			}
-			
+
 			req.login(entity, err => {
 				if (err) {
 					const logId = logError('Failed to sign in user due to server error', err);

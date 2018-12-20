@@ -4,7 +4,7 @@ import containerMetadata from './utils/container-metadata';
 import expressLogger from 'express-bunyan-logger';
 import uuid from 'uuid/v4';
 
-let stream;
+let stream = null;
 
 if (config.logFileName) {
 	stream = {
@@ -19,17 +19,13 @@ if (config.logFileName) {
 const logger = bunyan.createLogger({
 	name: 'bt_log_main',
 	level: config.logLevel,
-	streams: [
-		stream
-	]
+	streams: [ stream ]
 });
 
 export const requestLogger = expressLogger({
 	name: 'bt_log_request',
 	level: config.logLevel,
-	streams: [
-		stream
-	],
+	streams: [ stream ],
 	excludes: [
 		'req-headers',
 		'res-headers',
@@ -37,14 +33,13 @@ export const requestLogger = expressLogger({
 		'short-body',
 		'req',
 		'res',
-		'response-hrtime'],
-	includesFn: (req) => {
-		return {
-			user: req.user,
-			ecsInstanceId: containerMetadata.ContainerInstanceARN,
-			ecsTaskId: containerMetadata.TaskARN
-		};
-	}
+		'response-hrtime'
+	],
+	includesFn: req => ({
+		user: req.user,
+		ecsInstanceId: containerMetadata.ContainerInstanceARN,
+		ecsTaskId: containerMetadata.TaskARN
+	})
 });
 
 export default logger;
@@ -52,9 +47,9 @@ export default logger;
 export function logError(message, details) {
 	const logId = uuid();
 	logger.error({
-		logId: logId,
-		message: message,
-		details: details,
+		logId,
+		message,
+		details,
 		ecsInstanceId: containerMetadata.ContainerInstanceARN,
 		ecsTaskId: containerMetadata.TaskARN
 	});

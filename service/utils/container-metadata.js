@@ -1,5 +1,7 @@
-const metadata = process.env.ECS_CONTAINER_METADATA_FILE
-	? require(process.env.ECS_CONTAINER_METADATA_FILE)
+import config from '../config';
+
+const metadata = config.containerMetadataFile
+	? require(config.containerMetadataFile)
 	: {};
 
 export default metadata;

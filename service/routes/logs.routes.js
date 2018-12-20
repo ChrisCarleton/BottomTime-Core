@@ -15,7 +15,7 @@ module.exports = app => {
 		.post(CreateLogs)
 		.put(UpdateLogs)
 		.delete(DeleteLogs);
-	
+
 	app.route('/logs/:logId([a-f0-9]{24})')
 		.get(RetrieveLogEntry, GetLog)
 		.put(RetrieveLogEntry, UpdateLog)

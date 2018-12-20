@@ -38,8 +38,10 @@ export function assignLogEntry(entity, newLogEntry) {
 
 export function cleanUpLogEntry(entry) {
 	const clean = { entryId: entry.id, ...entry.toJSON() };
+	/* eslint-disable no-underscore-dangle */
 	delete clean._id;
 	delete clean.__v;
+	/* eslint-enable no-underscore-dangle */
 	clean.entryTime = moment(entry.entryTime).utc().toISOString();
 	return clean;
 }

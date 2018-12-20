@@ -20,5 +20,5 @@ export const UserAccountSchema = Joi.object().keys({
 		.min(7)
 		.max(50)
 		.required(),
-	role: Joi.string().valid(['user', 'admin']).required()
+	role: Joi.string().valid([ 'user', 'admin' ]).required()
 }).required();

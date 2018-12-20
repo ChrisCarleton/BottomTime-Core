@@ -3,25 +3,25 @@ import faker from 'faker';
 import Joi from 'joi';
 import { UserAccountSchema, UsernameSchema } from '../../service/validation/user';
 
-let account;
+let account = null;
 
 function validateUsername(expectedError, username) {
 	const err = Joi.validate(username, UsernameSchema);
-	if (!expectedError) {
-		expect(err.error).to.be.null;
-	} else {
+	if (expectedError) {
 		expect(err.error).to.exist;
 		expect(err.error.details[0].type).to.equal(expectedError);
+	} else {
+		expect(err.error).to.be.null;
 	}
 }
 
 function validateAccount(expectedError) {
 	const err = Joi.validate(account, UserAccountSchema);
-	if (!expectedError) {
-		expect(err.error).to.be.null;
-	} else {
+	if (expectedError) {
 		expect(err.error).to.exist;
 		expect(err.error.details[0].type).to.equal(expectedError);
+	} else {
+		expect(err.error).to.be.null;
 	}
 }
 
@@ -31,7 +31,9 @@ describe('Username Validation', () => {
 	});
 
 	it('Username cannot be longer than 50 characters', () => {
-		validateUsername('string.max', 'holycrap.thisisaREALLY.longusername.Srsly-whydidI_picksuchalongassusername.dafuq');
+		validateUsername(
+			'string.max',
+			'holycrap.thisisaREALLY.longusername.Srsly-whydidI_picksuchalongassusername.dafuq');
 	});
 
 	it('Username cannot contain invalid characters', () => {
@@ -49,7 +51,7 @@ describe('Account Details Validation', () => {
 		account = {
 			email: faker.internet.email(),
 			password: faker.internet.password(18, false, null, '*@1Az'),
-			role: faker.random.arrayElement(['user', 'admin'])
+			role: faker.random.arrayElement([ 'user', 'admin' ])
 		};
 	});
 

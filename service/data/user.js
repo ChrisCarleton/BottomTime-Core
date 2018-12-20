@@ -55,6 +55,11 @@ export function cleanUpUser(user) {
 		};
 	}
 
+	let hasPassword = false;
+	if (user.passwordHash) {
+		hasPassword = true;
+	}
+
 	const clean = {
 		..._.pick(
 			user.toJSON(),
@@ -65,7 +70,7 @@ export function cleanUpUser(user) {
 				'isLockedOut'
 			]),
 		isAnonymous: false,
-		hasPassword: user.passwordHash ? true : false,
+		hasPassword,
 		createdAt: moment(user.createdAt).utc().toISOString()
 	};
 

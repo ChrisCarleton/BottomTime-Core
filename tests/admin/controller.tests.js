@@ -23,7 +23,7 @@ describe('Admin Controller', () => {
 	});
 
 	describe('GET /health', () => {
-		let stub;
+		let stub = null;
 
 		afterEach(() => {
 			if (stub) {
@@ -56,7 +56,7 @@ describe('Admin Controller', () => {
 					expect(res.status).to.equal(500);
 					expect(res.body.status).to.equal('unhealthy');
 					res.body.components.forEach(c => {
-						if(c.name === 'MongoDB') {
+						if (c.name === 'MongoDB') {
 							expect(c.health).to.equal('unhealthy');
 						} else {
 							expect(c.health).to.equal('healthy');
