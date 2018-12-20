@@ -17,7 +17,7 @@ function fakeCreateAccount() {
 			password: faker.internet.password(18, false, null, '*@1Az'),
 			role: 'user'
 		}
-	}
+	};
 }
 
 function createAccount(role = 'user') {
@@ -36,15 +36,13 @@ function createAccount(role = 'user') {
 			return result.agent.post('/auth/login')
 				.send({
 					username: entity.username,
-					password: password
+					password
 				});
 		})
-		.then(() => {
-			return result;
-		});
+		.then(() => result);
 }
 
-let stub;
+let stub = null;
 
 describe('Users Controller', () => {
 
@@ -56,7 +54,8 @@ describe('Users Controller', () => {
 	});
 
 	describe('PUT /users/:username', () => {
-		let admin, regularUser;
+		let admin = null;
+		let regularUser = null;
 
 		before(done => {
 			createAccount('admin')
@@ -82,7 +81,7 @@ describe('Users Controller', () => {
 			const fake = fakeCreateAccount();
 
 			agent
-				.put(`/users/${fake.username}`)
+				.put(`/users/${ fake.username }`)
 				.send(fake.body)
 				.then(res => {
 					expect(res.status).to.equal(201);
@@ -105,7 +104,7 @@ describe('Users Controller', () => {
 			fake.body.role = 'admin';
 
 			request(App)
-				.put(`/users/${fake.username}`)
+				.put(`/users/${ fake.username }`)
 				.send(fake.body)
 				.then(res => {
 					expect(res.status).to.equal(403);
@@ -120,7 +119,7 @@ describe('Users Controller', () => {
 			const fake = fakeCreateAccount();
 
 			admin.agent
-				.put(`/users/${fake.username}`)
+				.put(`/users/${ fake.username }`)
 				.send(fake.body)
 				.then(res => {
 					expect(res.status).to.equal(201);
@@ -143,7 +142,7 @@ describe('Users Controller', () => {
 			fake.body.role = 'admin';
 
 			admin.agent
-				.put(`/users/${fake.username}`)
+				.put(`/users/${ fake.username }`)
 				.send(fake.body)
 				.then(res => {
 					expect(res.status).to.equal(201);
@@ -152,7 +151,7 @@ describe('Users Controller', () => {
 				.then(res => {
 					expect(res.body.isAnonymous).to.be.false;
 					expect(res.body.username).to.equal(admin.user.username);
-					done();					
+					done();
 				})
 				.catch(done);
 		});
@@ -161,7 +160,7 @@ describe('Users Controller', () => {
 			const fake = fakeCreateAccount();
 
 			regularUser.agent
-				.put(`/users/${fake.username}`)
+				.put(`/users/${ fake.username }`)
 				.send(fake.body)
 				.then(res => {
 					expect(res.status).to.equal(403);
@@ -177,7 +176,7 @@ describe('Users Controller', () => {
 			fake.username = regularUser.user.username;
 
 			request(App)
-				.put(`/users/${fake.username.toUpperCase()}`)
+				.put(`/users/${ fake.username.toUpperCase() }`)
 				.send(fake.body)
 				.then(res => {
 					expect(res.status).to.equal(409);
@@ -190,7 +189,7 @@ describe('Users Controller', () => {
 					expect(res.body.isAnonymous).to.be.true;
 					done();
 				})
-				.catch(done);			
+				.catch(done);
 		});
 
 		it('Will return Conflict if email is taken', done => {
@@ -198,7 +197,7 @@ describe('Users Controller', () => {
 			fake.body.email = regularUser.user.email;
 
 			request(App)
-				.put(`/users/${fake.username.toUpperCase()}`)
+				.put(`/users/${ fake.username.toUpperCase() }`)
 				.send(fake.body)
 				.then(res => {
 					expect(res.status).to.equal(409);
@@ -211,7 +210,7 @@ describe('Users Controller', () => {
 					expect(res.body.isAnonymous).to.be.true;
 					done();
 				})
-				.catch(done);			
+				.catch(done);
 		});
 
 		it('Will return Bad Request if username is invalid', done => {
@@ -219,7 +218,7 @@ describe('Users Controller', () => {
 			fake.username = 'Whoa! Totally not valid';
 
 			request(App)
-				.put(`/users/${fake.username.toUpperCase()}`)
+				.put(`/users/${ fake.username.toUpperCase() }`)
 				.send(fake.body)
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -231,7 +230,7 @@ describe('Users Controller', () => {
 					expect(res.body.isAnonymous).to.be.true;
 					done();
 				})
-				.catch(done);			
+				.catch(done);
 		});
 
 		it('Will return Bad Request if request body is invalid', done => {
@@ -239,7 +238,7 @@ describe('Users Controller', () => {
 			fake.body.notCool = true;
 
 			request(App)
-				.put(`/users/${fake.username.toUpperCase()}`)
+				.put(`/users/${ fake.username.toUpperCase() }`)
 				.send(fake.body)
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -251,12 +250,12 @@ describe('Users Controller', () => {
 					expect(res.body.isAnonymous).to.be.true;
 					done();
 				})
-				.catch(done);			
+				.catch(done);
 		});
 
 		it('Will return Bad Request if request body is empty', done => {
 			request(App)
-				.put(`/users/${faker.internet.userName()}`)
+				.put(`/users/${ faker.internet.userName() }`)
 				.then(res => {
 					expect(res.status).to.equal(400);
 					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
@@ -267,7 +266,7 @@ describe('Users Controller', () => {
 					expect(res.body.isAnonymous).to.be.true;
 					done();
 				})
-				.catch(done);			
+				.catch(done);
 		});
 
 		it('Will return Server Error if something goes wrong with the database', done => {
@@ -276,7 +275,7 @@ describe('Users Controller', () => {
 			stub.rejects('nope');
 
 			request(App)
-				.put(`/users/${fake.username}`)
+				.put(`/users/${ fake.username }`)
 				.send(fake.body)
 				.then(res => {
 					expect(res.status).to.equal(500);

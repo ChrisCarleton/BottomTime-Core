@@ -1,4 +1,8 @@
+/* eslint no-process-env: 0 */
+
 const config = {
+	nodeEnv: process.env.NODE_ENV,
+
 	logLevel: process.env.BT_LOG_LEVEL || 'debug',
 	logFileName: process.env.BT_LOG_FILE,
 	port: process.env.BT_PORT || 29201,
@@ -10,7 +14,9 @@ const config = {
 	auth: {
 		googleClientId: process.env.BT_GOOGLE_CLIENT_ID || 'abcd',
 		googleClientSecret: process.env.BT_GOOGLE_CLIENT_SECRET || '1234'
-	}
+	},
+
+	containerMetadataFile: process.env.ECS_CONTAINER_METADATA_FILE
 };
 
 export default config;

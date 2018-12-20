@@ -4,17 +4,15 @@ import { logError } from '../logger';
 
 function GetMongoDbHealth() {
 	const response = {
-		name: 'MongoDB',
+		name: 'MongoDB'
 	};
 
 	return database.connection.db.stats()
-		.then(() => {
-			return {
-				...response,
-				health: 'healthy',
-				details: 'MongoDB is responding to requests.'
-			}
-		})
+		.then(() => ({
+			...response,
+			health: 'healthy',
+			details: 'MongoDB is responding to requests.'
+		}))
 		.catch(err => {
 			logError('Health check failure.', err);
 			return {
@@ -26,28 +24,26 @@ function GetMongoDbHealth() {
 }
 
 export function GetHealth(req, res) {
-	Bluebird.all([
-			GetMongoDbHealth()
-		])
+	Bluebird.all([ GetMongoDbHealth() ])
 		.then(components => {
 			let health = 'healthy';
 			let status = 200;
 			for (let i = 0; i < components.length; i++) {
-				if(components[i].health === 'unhealthy') {
+				if (components[i].health === 'unhealthy') {
 					health = 'unhealthy';
 					status = 500;
 					break;
 				}
 
-				if(components[i].health === 'warn') {
+				if (components[i].health === 'warn') {
 					health = 'warn';
 				}
 			}
 
 			res.status(status).json({
 				status: health,
-				components: components
-			});		
+				components
+			});
 		});
 }
 

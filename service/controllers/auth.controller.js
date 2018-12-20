@@ -29,11 +29,11 @@ export function AuthenticateUser(req, res, next) {
 				'Check the username and password to verify that they are correct.');
 		}
 
-		req.login(user, err => {
-			if (err) {
+		req.login(user, loginErr => {
+			if (loginErr) {
 				const logId = logError(
 					'An error occurred while trying to authenticate a user.',
-					err);
+					loginErr);
 				return serverError(res, logId);
 			}
 

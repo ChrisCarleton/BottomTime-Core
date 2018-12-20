@@ -8,7 +8,7 @@ import User, { cleanUpUser } from '../../service/data/user';
 
 describe('Auth Controller', () => {
 
-	let stub;
+	let stub = null;
 
 	afterEach(done => {
 		if (stub) {
@@ -20,21 +20,19 @@ describe('Auth Controller', () => {
 	});
 
 	describe('POST /auth/login', () => {
-	
+
 		it('Authenticates a user when username and password are correct', done => {
 			const password = faker.internet.password(12, false);
 			const fake = fakeUser(password);
 			const user = new User(fake);
-	
+
 			user.save()
-				.then(() => {
-					return request(App)
-						.post('/auth/login')
-						.send({
-							username: fake.username,
-							password: password
-						});
-				})
+				.then(() => request(App)
+					.post('/auth/login')
+					.send({
+						username: fake.username,
+						password
+					}))
 				.then(res => {
 					expect(res.status).to.equal(204);
 					expect(res.headers['set-cookie']).to.exist;
@@ -42,16 +40,16 @@ describe('Auth Controller', () => {
 				})
 				.catch(done);
 		});
-	
+
 		it('Fails when user cannot be found', done => {
 			const password = faker.internet.password(12, false);
 			const fake = fakeUser(password);
-	
+
 			request(App)
 				.post('/auth/login')
 				.send({
 					username: fake.username,
-					password: password
+					password
 				})
 				.then(res => {
 					expect(res.status).to.equal(401);
@@ -61,21 +59,19 @@ describe('Auth Controller', () => {
 				})
 				.catch(done);
 		});
-	
+
 		it('Fails when password is incorrect', done => {
 			const password = faker.internet.password(12, false);
 			const fake = fakeUser(password);
 			const user = new User(fake);
-	
+
 			user.save()
-				.then(() => {
-					return request(App)
-						.post('/auth/login')
-						.send({
-							username: fake.username,
-							password: 'Wr0ng.P@ss3rd'
-						});
-				})
+				.then(() => request(App)
+					.post('/auth/login')
+					.send({
+						username: fake.username,
+						password: 'Wr0ng.P@ss3rd'
+					}))
 				.then(res => {
 					expect(res.status).to.equal(401);
 					expect(res.body.status).to.equal(401);
@@ -84,7 +80,7 @@ describe('Auth Controller', () => {
 				})
 				.catch(done);
 		});
-	
+
 		it('Returns Bad Request if validation fails', done => {
 			request(App)
 				.post('/auth/login')
@@ -101,19 +97,19 @@ describe('Auth Controller', () => {
 				})
 				.catch(done);
 		});
-	
+
 		it('Returns Server Error if something goes wrong in the database', done => {
 			const password = faker.internet.password(12, false);
 			const fake = fakeUser(password);
 
 			stub = sinon.stub(User, 'findOne');
 			stub.rejects('nope');
-	
+
 			request(App)
 				.post('/auth/login')
 				.send({
 					username: fake.username,
-					password: password
+					password
 				})
 				.then(res => {
 					expect(res.status).to.equal(500);
@@ -143,7 +139,7 @@ describe('Auth Controller', () => {
 			const fake = fakeUser(password);
 			const agent = request.agent(App);
 			let user = new User(fake);
-	
+
 			user.save()
 				.then(entity => {
 					user = entity;
@@ -151,7 +147,7 @@ describe('Auth Controller', () => {
 						.post('/auth/login')
 						.send({
 							username: fake.username,
-							password: password
+							password
 						});
 				})
 				.then(res => {
@@ -174,7 +170,7 @@ describe('Auth Controller', () => {
 			const fake = fakeUser(password);
 			const agent = request.agent(App);
 			let user = new User(fake);
-	
+
 			user.save()
 				.then(entity => {
 					user = entity;
@@ -182,7 +178,7 @@ describe('Auth Controller', () => {
 						.post('/auth/login')
 						.send({
 							username: fake.username,
-							password: password
+							password
 						});
 				})
 				.then(res => {
@@ -204,23 +200,21 @@ describe('Auth Controller', () => {
 				});
 		});
 	});
-	
+
 	describe('POST /logout', () => {
 		it('Kills an existing session', done => {
 			const password = faker.internet.password(12, false);
 			const fake = fakeUser(password);
 			const agent = request.agent(App);
 			const user = new User(fake);
-	
+
 			user.save()
-				.then(() => {
-					return agent
-						.post('/auth/login')
-						.send({
-							username: fake.username,
-							password: password
-						});
-				})
+				.then(() => agent
+					.post('/auth/login')
+					.send({
+						username: fake.username,
+						password
+					}))
 				.then(res => {
 					expect(res.status).to.equal(204);
 					return agent.post('/auth/logout');
@@ -239,7 +233,7 @@ describe('Auth Controller', () => {
 					agent.close();
 				});
 		});
-	
+
 		it('Does nothing if there is no session', done => {
 			request(App)
 				.post('/auth/logout')
@@ -250,5 +244,4 @@ describe('Auth Controller', () => {
 				.catch(done);
 		});
 	});
-	
 });
