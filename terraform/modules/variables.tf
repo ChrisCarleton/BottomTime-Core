@@ -102,3 +102,8 @@ variable "smtp_use_tls" {
 	type = "string"
 	default = "false"
 }
+
+variable "support_email" {
+	type = "string"
+	default = "support@bottomtime.ca"
+}
