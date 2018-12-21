@@ -77,3 +77,28 @@ variable "session_secret" {
 	type = "string"
 	default = "shhh!! secret"
 }
+
+variable "smtp_auth_password" {
+	type = "string"
+	default = ""
+}
+
+variable "smtp_auth_username" {
+	type = "string"
+	default = ""
+}
+
+variable "smtp_host" {
+	type = "string"
+	default = ""
+}
+
+variable "smtp_port" {
+	type = "string"
+	default = 25
+}
+
+variable "smtp_use_tls" {
+	type = "string"
+	default = "false"
+}

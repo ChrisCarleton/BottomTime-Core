@@ -16,7 +16,22 @@ const config = {
 		googleClientSecret: process.env.BT_GOOGLE_CLIENT_SECRET || '1234'
 	},
 
+	smtp: {
+		pool: (process.env.NODE_ENV === 'production'),
+		host: process.env.BT_SMTP_HOST || 'localhost',
+		port: process.env.BT_SMTP_PORT || 15025,
+		secure: process.env.BT_SMTP_USE_TLS ? (process.env.BT_SMTP_USE_TLS === 'true') : false,
+		auth: {
+			user: process.env.BT_SMTP_USERNAME,
+			pass: process.env.BT_SMTP_PASSWORD
+		}
+	},
+
 	containerMetadataFile: process.env.ECS_CONTAINER_METADATA_FILE
 };
+
+if (!config.smtp.auth.user) {
+	delete config.smtp.auth;
+}
 
 export default config;

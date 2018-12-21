@@ -23,6 +23,11 @@ data "template_file" "task_def" {
 		port = "${local.container_port}"
 		region = "${var.region}"
 		session_secret = "${var.session_secret}"
+		smtp_auth_username = "${var.smtp_auth_username}"
+		smtp_auth_password = "${var.smtp_auth_password}"
+		smtp_host = "${var.smtp_host}"
+		smtp_port = "${var.smtp_port}"
+		smtp_use_tls = "${var.smtp_use_tls}"
 	}
 }
 
