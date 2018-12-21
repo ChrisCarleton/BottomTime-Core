@@ -6,6 +6,7 @@ import { logError } from '../logger';
 import Joi from 'joi';
 import moment from 'moment';
 import User, { cleanUpUser } from '../data/user';
+import uuid from 'uuid/v4';
 
 export function RequireAccountPermission(req, res, next) {
 	if (!req.user) {
@@ -155,7 +156,23 @@ export function ChangePassword(req, res) {
 }
 
 export function RequestPasswordReset(req, res) {
-	res.sendStatus(501);
+	User.findByUsername(req.params.username)
+		.then(user => {
+			if (!user) {
+				return;
+			}
+
+			user.passwordResetToken = uuid();
+			user.passwordResetExpiration = moment().add(1, 'd').utc().toDate();
+			return user.save();
+		})
+		.then(() => {
+			res.sendStatus(204);
+		})
+		.catch(err => {
+			const logId = logError('Failed establish password reset window. See details.', err);
+			serverError(res, logId);
+		});
 }
 
 export function ConfirmPasswordReset(req, res) {
