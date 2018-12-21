@@ -3,6 +3,6 @@ import log from '../logger';
 import nodemailer from 'nodemailer';
 
 export default nodemailer.createTransport({
-		...config.smtp,
-		logger: log
-	});
+	...config.smtp,
+	logger: log
+});

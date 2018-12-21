@@ -26,7 +26,7 @@ const config = {
 			pass: process.env.BT_SMTP_PASSWORD
 		}
 	},
-	
+
 	containerMetadataFile: process.env.ECS_CONTAINER_METADATA_FILE
 };
 

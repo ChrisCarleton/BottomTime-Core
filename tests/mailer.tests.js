@@ -4,7 +4,8 @@ import mailer from '../service/mail/mailer';
 
 describe('Mailer', () => {
 	it('Can successfully send messages', done => {
-		mailer.sendMail({
+		mailer
+			.sendMail({
 				from: 'info@bottomtime.ca',
 				to: faker.internet.email(),
 				subject: 'Test E-mail!!',
@@ -16,9 +17,5 @@ describe('Mailer', () => {
 				done();
 			})
 			.catch(done);
-	});
-
-	describe('Templating Engine', () => {
-
 	});
 });
