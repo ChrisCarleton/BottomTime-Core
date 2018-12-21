@@ -17,4 +17,8 @@ export function ResetPasswordEmail(username, userFriendlyName, resetToken) {
 		siteUrl: config.siteUrl,
 		supportEmail: config.supportEmail
 	});
+}
+
+export default {
+	ResetPasswordEmail
 };

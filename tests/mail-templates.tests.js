@@ -1,4 +1,3 @@
-import config from '../service/config';
 import { expect } from 'chai';
 import fs from 'fs';
 import path from 'path';

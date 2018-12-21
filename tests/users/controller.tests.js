@@ -4,8 +4,10 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect, request } from 'chai';
 import faker from 'faker';
 import fakeUser from '../util/fake-user';
+import mailer from '../../service/mail/mailer';
 import moment from 'moment';
 import mongoose from 'mongoose';
+import templates from '../../service/mail/templates';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
@@ -660,12 +662,25 @@ describe('Users Controller', () => {
 	describe('POST /users/:username/resetPassword', () => {
 		it('Will generate a reset token and email it', done => {
 			const user = new User(fakeUser());
+			const templatingSpy = sinon.spy(templates, 'ResetPasswordEmail');
+			const mailerSpy = sinon.spy(mailer, 'sendMail');
 
 			user.save()
 				.then(() => request(App).post(`/users/${ user.username }/resetPassword`))
-				// TODO: Verify that the mailer was invoked.
 				.then(res => {
 					expect(res.status).to.equal(204);
+					expect(mailerSpy.called).to.be.true;
+					expect(templatingSpy.called).to.be.true;
+
+					expect(templatingSpy.getCall(0).args[0]).to.equal(user.username);
+					expect(templatingSpy.getCall(0).args[2]).to.be.a('String');
+
+					const [ mailOptions ] = mailerSpy.getCall(0).args;
+					expect(mailOptions.to).to.equal(user.email);
+					expect(mailOptions.from).to.not.exist;
+					expect(mailOptions.subject).to.equal('Reset BottomTime password');
+					expect(mailOptions.html).to.exist;
+
 					return User.findByUsername(user.username);
 				})
 				.then(entity => {
@@ -673,11 +688,14 @@ describe('Users Controller', () => {
 					expect(entity.passwordResetExpiration).to.be.a('Date');
 					expect(
 						moment(entity.passwordResetExpiration)
-						.diff(moment().add(1, 'd'), 'm'))
-						.to.be.lessThan(1);
+							.diff(moment().add(1, 'd'), 'm')).to.be.lessThan(1);
 					done();
 				})
-				.catch(done);
+				.catch(done)
+				.finally(() => {
+					mailerSpy.restore();
+					templatingSpy.restore();
+				});
 		});
 
 		it('Will return 204 even if the user account does not exist', done => {
@@ -714,8 +732,7 @@ describe('Users Controller', () => {
 
 			user.save()
 				.then(() => {
-					// TODO: Stub mailer instead.
-					stub = sinon.stub(User, 'findByUsername');
+					stub = sinon.stub(mailer, 'sendMail');
 					stub.rejects('nope');
 				})
 				.then(() => request(App).post(`/users/${ user.username }/resetPassword`))

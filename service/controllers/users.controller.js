@@ -4,7 +4,9 @@ import { badRequest, conflict, forbidden, serverError } from '../utils/error-res
 import { ChangePasswordSchema, UserAccountSchema, UsernameSchema } from '../validation/user';
 import { logError } from '../logger';
 import Joi from 'joi';
+import mailer from '../mail/mailer';
 import moment from 'moment';
+import templates from '../mail/templates';
 import User, { cleanUpUser } from '../data/user';
 import uuid from 'uuid/v4';
 
@@ -156,15 +158,36 @@ export function ChangePassword(req, res) {
 }
 
 export function RequestPasswordReset(req, res) {
+	let token = null;
+	let userEntity = null;
+
 	User.findByUsername(req.params.username)
 		.then(user => {
 			if (!user) {
 				return;
 			}
 
-			user.passwordResetToken = uuid();
+			userEntity = user;
+			token = uuid();
+			user.passwordResetToken = token;
 			user.passwordResetExpiration = moment().add(1, 'd').utc().toDate();
 			return user.save();
+		})
+		.then(entity => {
+			if (!entity) {
+				return;
+			}
+
+			const mailTemplate = templates.ResetPasswordEmail(
+				userEntity.username,
+				userEntity.username,
+				token);
+
+			return mailer.sendMail({
+				to: userEntity.email,
+				subject: 'Reset BottomTime password',
+				html: mailTemplate
+			});
 		})
 		.then(() => {
 			res.sendStatus(204);

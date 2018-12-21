@@ -9,6 +9,7 @@ const config = {
 	sessionSecret: process.env.BT_SESSION_SECRET || 'bottom_time',
 	siteUrl: process.env.BT_SITE_URL || 'http://localhost:29201/',
 	supportEmail: process.env.BT_SUPPORT_EMAIL || 'support@bottomtime.ca',
+	doNotReplyEmail: 'no-reply@bottomtime.ca',
 
 	mongoEndpoint: process.env.BT_MONGO_ENDPOINT || 'mongodb://localhost/dev',
 
