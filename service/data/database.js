@@ -7,7 +7,7 @@ mongoose.Promise = require('bluebird');
 mongoose.connect(
 	config.mongoEndpoint,
 	{
-		autoIndex: process.env.NODE_ENV !== 'production',
+		autoIndex: config.nodeEnv !== 'production',
 		useNewUrlParser: true,
 		useCreateIndex: true,
 		keepAlive: true,
@@ -15,7 +15,7 @@ mongoose.connect(
 	})
 	.catch(err => {
 		log.fatal('Failed to connect to MongoDB database:', err);
-		process.exit(13);
+		throw err;
 	});
 
 export default mongoose;

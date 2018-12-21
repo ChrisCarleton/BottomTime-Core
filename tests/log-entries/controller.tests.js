@@ -1,14 +1,13 @@
 import _ from 'lodash';
 import { App } from '../../service/server';
 import Bluebird from 'bluebird';
-import { cleanUpLogEntry } from '../../service/data/clean-up';
 import mongoose from 'mongoose';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
-import LogEntry from '../../service/data/log-entry';
+import LogEntry, { cleanUpLogEntry } from '../../service/data/log-entry';
 import sinon from 'sinon';
 
-let stub;
+let stub = null;
 
 describe('Logs Controller', () => {
 	afterEach(done => {
@@ -28,10 +27,8 @@ describe('Logs Controller', () => {
 			const fake = fakeLogEntry();
 			const logEntry = new LogEntry(fake);
 			logEntry.save()
-				.then(entry => {
-					return request(App)
-						.get(`/logs/${entry.id}`);
-				})
+				.then(entry => request(App)
+					.get(`/logs/${ entry.id }`))
 				.then(res => {
 					expect(res.status).to.equal(200);
 					expect(res.body).to.exist;
@@ -46,7 +43,7 @@ describe('Logs Controller', () => {
 		it('Will return Not Found if entry does not exist', done => {
 			const fakeId = 'a99e1685d476a4fdce40d599';
 			request(App)
-				.get(`/logs/${fakeId}`)
+				.get(`/logs/${ fakeId }`)
 				.then(res => {
 					expect(res.status).to.equal(404);
 					done();
@@ -55,12 +52,12 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Server Error if something goes wrong', done => {
-			stub = sinon.stub(LogEntry, "findById")
+			stub = sinon.stub(LogEntry, 'findById');
 			stub.rejects('nope');
 
 			const fakeId = 'a99e1685d476a4fdce40d599';
 			request(App)
-				.get(`/logs/${fakeId}`)
+				.get(`/logs/${ fakeId }`)
 				.then(res => {
 					expect(res.status).to.equal(500);
 					expect(res.body.logId).to.exist;
@@ -78,13 +75,13 @@ describe('Logs Controller', () => {
 			const fake = fakeLogEntry();
 			request(App)
 				.post('/logs')
-				.send([fake])
+				.send([ fake ])
 				.then(res => {
 					expect(res.status).to.equal(201);
 					expect(res.body).to.exist;
 					expect(res.body).to.be.an('Array');
 					expect(res.body.length).to.equal(1);
-					
+
 					fake.entryId = res.body[0].entryId;
 					expect(res.body[0]).to.eql(fake);
 					done();
@@ -169,7 +166,7 @@ describe('Logs Controller', () => {
 
 			request(App)
 				.post('/logs')
-				.send([fake])
+				.send([ fake ])
 				.then(res => {
 					expect(res.status).to.equal(500);
 					expect(res.body.status).to.equal(500);
@@ -186,7 +183,7 @@ describe('Logs Controller', () => {
 		it('Will update the log entry', done => {
 			const fake = fakeLogEntry();
 			const originalEntry = new LogEntry(fake);
-			let entryId;
+			let entryId = null;
 
 			originalEntry.save()
 				.then(entry => {
@@ -195,13 +192,13 @@ describe('Logs Controller', () => {
 					fake.maxDepth = 139.5;
 
 					return request(App)
-						.put(`/logs/${entryId}`)
+						.put(`/logs/${ entryId }`)
 						.send(fake);
 				})
 				.then(res => {
 					expect(res.status).to.equal(200);
 					return request(App)
-						.get(`/logs/${entryId}`);
+						.get(`/logs/${ entryId }`);
 				})
 				.then(res => {
 					fake.entryId = entryId;
@@ -216,7 +213,7 @@ describe('Logs Controller', () => {
 			fake.entryId = 'b5ca1b72aa445300db582a03';
 
 			request(App)
-				.put(`/logs/${fake.entryId}`)
+				.put(`/logs/${ fake.entryId }`)
 				.send(fake)
 				.then(res => {
 					expect(res.status).to.equal(404);
@@ -229,7 +226,7 @@ describe('Logs Controller', () => {
 		it('Will return Bad Request if update is invalid', done => {
 			const fake = fakeLogEntry();
 			const originalEntry = new LogEntry(fake);
-			let entryId;
+			let entryId = null;
 
 			originalEntry.save()
 				.then(entity => {
@@ -237,7 +234,7 @@ describe('Logs Controller', () => {
 					fake.site = null;
 
 					return request(App)
-						.put(`/logs/${entryId}`)
+						.put(`/logs/${ entryId }`)
 						.send(fake);
 				})
 				.then(res => {
@@ -253,7 +250,7 @@ describe('Logs Controller', () => {
 		it('Will return Server Error if database fails', done => {
 			const fake = fakeLogEntry();
 			const originalEntry = new LogEntry(fake);
-			let entryId;
+			let entryId = null;
 
 			originalEntry.save()
 				.then(entry => {
@@ -263,9 +260,9 @@ describe('Logs Controller', () => {
 
 					stub = sinon.stub(mongoose.Model.prototype, 'save');
 					stub.rejects('nope');
-				
+
 					return request(App)
-						.put(`/logs/${entryId}`)
+						.put(`/logs/${ entryId }`)
 						.send(fake);
 				})
 				.then(res => {
@@ -290,11 +287,10 @@ describe('Logs Controller', () => {
 					fake.entryId = entity.id;
 
 					return request(App)
-						.del(`/logs/${fake.entryId}`);
+						.del(`/logs/${ fake.entryId }`);
 				})
 				.then(res => {
 					expect(res.status).to.equal(204);
-					
 					return LogEntry.findById(fake.entryId);
 				})
 				.then(res => {
@@ -308,7 +304,7 @@ describe('Logs Controller', () => {
 			const entryId = '7916e401d28648cc662f8977';
 
 			request(App)
-				.del(`/logs/${entryId}`)
+				.del(`/logs/${ entryId }`)
 				.then(res => {
 					expect(res.status).to.equal(404);
 					done();
@@ -322,13 +318,13 @@ describe('Logs Controller', () => {
 
 			entry.save()
 				.then(entity => {
-					fake.entryId = entity._id.toString();
+					fake.entryId = entity.id;
 
-					stub = sinon.stub(LogEntry, 'deleteOne')
+					stub = sinon.stub(LogEntry, 'deleteOne');
 					stub.rejects('nope');
 
 					return request(App)
-						.del(`/logs/${fake.entryId}`);
+						.del(`/logs/${ fake.entryId }`);
 				})
 				.then(res => {
 					expect(res.status).to.equal(500);
@@ -353,7 +349,7 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([logEntries[0].save(), logEntries[1].save(), logEntries[2].save()])
+			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
 				.then(res => {
 					fakes[0].entryId = res[0].id;
 					fakes[1].entryId = res[1].id;
@@ -364,7 +360,7 @@ describe('Logs Controller', () => {
 					fakes[2].site = 'Local swimming pool';
 
 					return request(App)
-						.put(`/logs`)
+						.put('/logs')
 						.send(fakes);
 				})
 				.then(res => {
@@ -375,7 +371,7 @@ describe('Logs Controller', () => {
 					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
 				})
 				.then(res => {
-					expect(_.map(res, r => { return cleanUpLogEntry(r); })).to.eql(fakes);
+					expect(_.map(res, r => cleanUpLogEntry(r))).to.eql(fakes);
 					done();
 				})
 				.catch(done);
@@ -392,7 +388,7 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[1])
 			];
 
-			Bluebird.all([logEntries[0].save(), logEntries[1].save()])
+			Bluebird.all([ logEntries[0].save(), logEntries[1].save() ])
 				.then(res => {
 					fakes[0].entryId = res[0].id;
 					fakes[1].entryId = res[1].id;
@@ -403,7 +399,7 @@ describe('Logs Controller', () => {
 					fakes[2].site = 'Local swimming pool';
 
 					return request(App)
-						.put(`/logs`)
+						.put('/logs')
 						.send(fakes);
 				})
 				.then(res => {
@@ -414,7 +410,7 @@ describe('Logs Controller', () => {
 					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
 				})
 				.then(res => {
-					expect(_.map(res, r => { return cleanUpLogEntry(r); }))
+					expect(_.map(res, r => cleanUpLogEntry(r)))
 						.to.eql(_.take(fakes, 2));
 					done();
 				})
@@ -429,7 +425,7 @@ describe('Logs Controller', () => {
 			];
 
 			request(App)
-				.put(`/logs`)
+				.put('/logs')
 				.send(fakes)
 				.then(res => {
 					expect(res.status).to.equal(200);
@@ -447,7 +443,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if the array is empty', done => {
 			request(App)
-				.put(`/logs`)
+				.put('/logs')
 				.send([])
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -458,7 +454,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if the message body is empty', done => {
 			request(App)
-				.put(`/logs`)
+				.put('/logs')
 				.then(res => {
 					expect(res.status).to.equal(400);
 					done();
@@ -476,7 +472,7 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[1])
 			];
 
-			Bluebird.all([logEntries[0].save(), logEntries[1].save()])
+			Bluebird.all([ logEntries[0].save(), logEntries[1].save() ])
 				.then(res => {
 					fakes[0].entryId = res[0].id;
 					fakes[1].entryId = res[1].id;
@@ -490,7 +486,7 @@ describe('Logs Controller', () => {
 					modified[1].maxDepth = -23;
 
 					return request(App)
-						.put(`/logs`)
+						.put('/logs')
 						.send(modified);
 				})
 				.then(res => {
@@ -498,7 +494,7 @@ describe('Logs Controller', () => {
 					return LogEntry.find({ _id: { $in: _.map(fakes, e => e.entryId) } });
 				})
 				.then(res => {
-					expect(_.map(res, r => { return cleanUpLogEntry(r); })).to.eql(fakes);
+					expect(_.map(res, r => cleanUpLogEntry(r))).to.eql(fakes);
 					done();
 				})
 				.catch(done);
@@ -513,14 +509,14 @@ describe('Logs Controller', () => {
 				logEntries[i] = new LogEntry(fakes[i]);
 			}
 
-			Bluebird.all(_.map(logEntries, e => { return e.save() }))
+			Bluebird.all(_.map(logEntries, e => e.save()))
 				.then(res => {
 					for (let i = 0; i < res.length; i++) {
 						fakes[i].entryId = res[i].id;
 					}
 
 					return request(App)
-						.put(`/logs`)
+						.put('/logs')
 						.send(fakes);
 				})
 				.then(res => {
@@ -542,7 +538,7 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([logEntries[0].save(), logEntries[1].save(), logEntries[2].save()])
+			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
 				.then(res => {
 					fakes[0].entryId = res[0].id;
 					fakes[1].entryId = res[1].id;
@@ -556,7 +552,7 @@ describe('Logs Controller', () => {
 					stub.rejects('nope');
 
 					return request(App)
-						.put(`/logs`)
+						.put('/logs')
 						.send(fakes);
 				})
 				.then(res => {
@@ -582,12 +578,10 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([logEntries[0].save(), logEntries[1].save(), logEntries[2].save()])
-				.then(() => {
-					return request(App)
-						.del(`/logs`)
-						.send([logEntries[0].id, logEntries[1].id, logEntries[2].id]);
-				})
+			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
+				.then(() => request(App)
+					.del('/logs')
+					.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]))
 				.then(res => {
 					expect(res.status).to.equal(200);
 
@@ -618,16 +612,15 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([
+			Bluebird
+				.all([
 					logEntries[0].save(),
 					logEntries[1].save(),
-					logEntries[2].save()],
-					'a2603a50e9ea2b2ce68c8147')
-				.then(() => {
-					return request(App)
-						.del(`/logs`)
-						.send([logEntries[0].id, logEntries[1].id, logEntries[2].id]);
-				})
+					logEntries[2].save()
+				], 'a2603a50e9ea2b2ce68c8147')
+				.then(() => request(App)
+					.del('/logs')
+					.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]))
 				.then(res => {
 					expect(res.status).to.equal(200);
 
@@ -654,7 +647,7 @@ describe('Logs Controller', () => {
 			];
 
 			request(App)
-				.del(`/logs`)
+				.del('/logs')
 				.send(entryIds)
 				.then(res => {
 					expect(res.status).to.equal(200);
@@ -665,7 +658,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if array is empty', done => {
 			request(App)
-				.del(`/logs`)
+				.del('/logs')
 				.send([])
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -678,7 +671,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if request payload is empty', done => {
 			request(App)
-				.del(`/logs`)
+				.del('/logs')
 				.then(res => {
 					expect(res.status).to.equal(400);
 					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
@@ -690,7 +683,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if entry ID list is invalid', done => {
 			request(App)
-				.del(`/logs`)
+				.del('/logs')
 				.send({ omg: 'wat?' })
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -713,14 +706,14 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([logEntries[0].save(), logEntries[1].save(), logEntries[2].save()])
+			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
 				.then(() => {
 					stub = sinon.stub(LogEntry, 'deleteMany');
 					stub.rejects('nope');
 
 					return request(App)
-						.del(`/logs`)
-						.send([logEntries[0].id, logEntries[1].id, logEntries[2].id]);
+						.del('/logs')
+						.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]);
 				})
 				.then(res => {
 					expect(res.status).to.equal(500);

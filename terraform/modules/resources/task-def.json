@@ -18,8 +18,12 @@
 			}
 		},
 		"environment": [
+			{ "name": "BT_GOOGLE_CLIENT_ID", "value": "${google_id}" },
+			{ "name": "BT_GOOGLE_CLIENT_SECRET", "value": "${google_secret}" },
 			{ "name": "BT_LOG_LEVEL", "value": "${log_level}" },
 			{ "name": "BT_MONGO_ENDPOINT", "value": "${mongodb}" },
+			{ "name": "BT_SESSION_SECRET", "value": "${session_secret}" },
+			{ "name": "BT_SITE_URL", "value": "${domain_name}" },
 			{ "name": "BT_SMTP_HOST", "value": "${smtp_host}" },
 			{ "name": "BT_SMTP_PASSWORD", "value": "${smtp_auth_password}" },
 			{ "name": "BT_SMTP_PORT", "value": "${smtp_port}" },

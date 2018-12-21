@@ -1,24 +1,27 @@
+/* eslint no-process-exit: 0 */
+
 import applyAuth from './auth';
 import bodyParser from 'body-parser';
 import containerMetadata from './utils/container-metadata';
 import compression from 'compression';
 import config from './config';
+import database from './data/database';
 import express from 'express';
 import glob from 'glob';
 import http from 'http';
 import log, { requestLogger } from './logger';
-import { notFound } from './utils/error-response';
+import moment from 'moment';
+import { notFound, serverErrorMiddleware } from './utils/error-response';
 import path from 'path';
-import { serverErrorMiddleware } from './utils/error-response';
 import session from 'express-session';
 
 // Wire up process-wide event handlers.
 process.on('unhandledRejection', (reason, p) => {
 	log.fatal('Catastrophic failure - unhandled rejection! Details:', {
-		reason: reason,
+		reason,
 		promise: p,
 		ecsInstanceId: containerMetadata.ContainerInstanceARN,
-		ecsTaskId: containerMetadata.TaskARN	
+		ecsTaskId: containerMetadata.TaskARN
 	});
 	process.exit(187);
 });
@@ -38,13 +41,16 @@ process.on('uncaughtException', err => {
 
 // Express middleware
 const app = express();
+const MongoDbStore = require('connect-mongo')(session);
 
 app.use(compression());
 app.use(serverErrorMiddleware);
 app.use(session({
 	resave: true,
 	saveUninitialized: false,
-	secret: config.sessionSecret
+	secret: config.sessionSecret,
+	store: new MongoDbStore({ mongooseConnection: database.connection }),
+	cookie: moment.duration(3, 'd')
 }));
 app.use(bodyParser.json());
 applyAuth(app);
@@ -64,7 +70,7 @@ app.all('*', (req, res) => {
 // Launch server
 const server = http.createServer(app);
 server.listen(config.port);
-log.info(`Service is now listening on port ${config.port}.`);
+log.info(`Service is now listening on port ${ config.port }.`);
 
 export const App = app;
 export const Server = server;

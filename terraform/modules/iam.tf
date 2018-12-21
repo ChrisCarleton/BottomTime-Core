@@ -189,6 +189,6 @@ EOF
 }
 
 resource "aws_iam_instance_profile" "instance" {
-	name = "BottomTime-Instance-Profile"
+	name = "BottomTime-Instance-Role-${var.region}-${var.env}"
 	role = "${aws_iam_role.instance.id}"
 }

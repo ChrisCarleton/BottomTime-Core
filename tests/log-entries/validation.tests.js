@@ -4,38 +4,36 @@ import faker from 'faker';
 import Joi from 'joi';
 import { NewEntrySchema, UpdateEntrySchema } from '../../service/validation/log-entry';
 
-let logEntry;
+let logEntry = null;
 
 function validateUpdate(expectedError) {
-	Joi.validate(logEntry, UpdateEntrySchema, null, (err) => {
-		if (expectedError) {
-			expect(err.details.length).to.equal(1);
-			return expect(err.details[0].type).to.equal(expectedError);
-		}
-
-		expect(err).to.not.exist;
-	});
+	const isValid = Joi.validate(logEntry, UpdateEntrySchema);
+	if (expectedError) {
+		expect(isValid.error.details.length).to.equal(1);
+		expect(isValid.error.details[0].type).to.equal(expectedError);
+	} else {
+		expect(isValid.error).to.not.exist;
+	}
 }
 
 function validateCreate(expectedError) {
-	Joi.validate(logEntry, NewEntrySchema, null, (err) => {
-		if (expectedError) {
-			expect(err.details.length).to.equal(1);
-			return expect(err.details[0].type).to.equal(expectedError);
-		}
-
-		expect(err).to.not.exist;
-	});
+	const isValid = Joi.validate(logEntry, NewEntrySchema);
+	if (expectedError) {
+		expect(isValid.error.details.length).to.equal(1);
+		expect(isValid.error.details[0].type).to.equal(expectedError);
+	} else {
+		expect(isValid.error).to.not.exist;
+	}
 }
 
-describe('Log entry validation' , () => {
-	
+describe('Log entry validation', () => {
+
 	beforeEach(() => {
 		logEntry = fakeLogEntry();
 	});
 
 	it('Update requires an entry Id', () => {
-		logEntry.entryId = undefined;
+		delete logEntry.entryId;
 		validateUpdate('any.required');
 	});
 
@@ -46,11 +44,11 @@ describe('Log entry validation' , () => {
 
 	it('Entry time is a valid ISO date', () => {
 		logEntry.entryTime = 'Tuesday?';
-		validateCreate('date.isoDate');
+		validateCreate('string.isoDate');
 	});
 
 	it('Entry time is required', () => {
-		logEntry.entryTime = undefined;
+		delete logEntry.entryTime;
 		validateCreate('any.required');
 	});
 
@@ -71,13 +69,13 @@ describe('Log entry validation' , () => {
 	});
 
 	it('Total time cannot be zero', () => {
-		logEntry.bottomTime = undefined;
+		delete logEntry.bottomTime;
 		logEntry.totalTime = 0;
 		validateCreate('number.positive');
 	});
 
 	it('Total time cannot be negative', () => {
-		logEntry.bottomTime = undefined;
+		delete logEntry.bottomTime;
 		logEntry.totalTime = -4;
 		validateCreate('number.positive');
 	});
@@ -88,7 +86,7 @@ describe('Log entry validation' , () => {
 	});
 
 	it('Total time cannot be less than bottom time', () => {
-		logEntry.bottomTime = logEntry.bottomTime + 5;
+		logEntry.bottomTime += 5;
 		logEntry.totalTime = logEntry.bottomTime - 5;
 		validateCreate('number.min');
 	});
