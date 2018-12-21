@@ -1,11 +1,39 @@
 import bcrypt from 'bcrypt';
 import Bluebird from 'bluebird';
 import { badRequest, conflict, forbidden, serverError } from '../utils/error-response';
+import { ChangePasswordSchema, UserAccountSchema, UsernameSchema } from '../validation/user';
 import { logError } from '../logger';
 import Joi from 'joi';
 import moment from 'moment';
 import User, { cleanUpUser } from '../data/user';
-import { UserAccountSchema, UsernameSchema } from '../validation/user';
+
+export function RequireAccountPermission(req, res, next) {
+	if (!req.user) {
+		return forbidden(res, 'You must be authenticated to perform this action');
+	}
+
+	if (req.user.role !== 'admin' && req.user.usernameLower !== req.params.username.toLowerCase()) {
+		return forbidden(
+			res,
+			'You do not have permission to change the password for the desired account');
+	}
+
+	User.findByUsername(req.params.username)
+		.then(user => {
+			if (!user) {
+				return forbidden(
+					res,
+					'You do not have permission to change the password for the desired account');
+			}
+
+			req.account = user;
+			next();
+		})
+		.catch(err => {
+			const logId = logError('Failed to retrieve user account from database', err);
+			serverError(res, logId);
+		});
+}
 
 export function CreateUserAccount(req, res) {
 	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema);
@@ -49,8 +77,8 @@ export function CreateUserAccount(req, res) {
 
 	Bluebird
 		.all([
-			User.findOne({ usernameLower: req.params.username.toLowerCase() }),
-			User.findOne({ emailLower: req.body.email.toLowerCase() })
+			User.findByUsername(req.params.username),
+			User.findByEmail(req.body.email)
 		])
 		.then(conflicts => {
 			if (conflicts[0]) {
@@ -98,7 +126,32 @@ export function ChangeEmail(req, res) {
 }
 
 export function ChangePassword(req, res) {
-	res.sendStatus(501);
+	const isValid = Joi.validate(req.body, ChangePasswordSchema);
+	if (isValid.error) {
+		return badRequest(
+			'Request was invalid. Mostly likely, the new password did not meet strength requirements.',
+			isValid.error,
+			res);
+	}
+
+	if (req.user.role !== 'admin'
+		&& req.account.passwordHash
+		&& !bcrypt.compareSync(req.body.oldPassword, req.account.passwordHash)) {
+
+		return forbidden(
+			res,
+			'Unable to change the password. Old password was incorrect.');
+	}
+
+	req.account.passwordHash = bcrypt.hashSync(req.body.newPassword, 10);
+	req.account.save()
+		.then(() => {
+			res.sendStatus(204);
+		})
+		.catch(err => {
+			const logId = logError('Failed to save new password', err);
+			serverError(res, logId);
+		});
 }
 
 export function RequestPasswordReset(req, res) {

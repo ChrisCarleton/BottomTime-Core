@@ -36,7 +36,7 @@ passport.deserializeUser((id, done) => {
 });
 
 passport.use(new LocalStrategy((username, password, done) => {
-	User.findOne({ usernameLower: username.toLowerCase() })
+	User.findByUsername(username)
 		.then(user => {
 			if (!user || !user.passwordHash || !bcrypt.compareSync(password, user.passwordHash)) {
 				return done(null, false);

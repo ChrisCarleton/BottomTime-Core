@@ -41,6 +41,14 @@ const userSchema = mongoose.Schema({
 	}
 });
 
+userSchema.statics.findByUsername = function (username, done) {
+	return this.findOne({ usernameLower: username.toLowerCase() }, done);
+};
+
+userSchema.statics.findByEmail = function (email, done) {
+	return this.findOne({ emailLower: email.toLowerCase() }, done);
+};
+
 export default mongoose.model('User', userSchema);
 
 export function cleanUpUser(user) {
