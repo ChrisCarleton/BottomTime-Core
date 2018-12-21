@@ -48,7 +48,7 @@ resource "aws_autoscaling_group" "main" {
 	tags = [
 		{
 			key = "Name"
-			value = "BottomTime Application Instance"
+			value = "BottomTime Application Instance - ${var.env}"
 			propagate_at_launch = true
 		}
 	]
