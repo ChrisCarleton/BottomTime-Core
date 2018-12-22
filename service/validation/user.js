@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
 const PasswordStrengthRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*.]).*$/;
+const PasswordValidation = Joi.string().regex(PasswordStrengthRegex).min(7).max(50).required();
 
 export const LoginSchema = Joi.object().keys({
 	username: Joi.string().max(50).required(),
@@ -16,21 +17,16 @@ export const UsernameSchema = Joi
 
 export const UserAccountSchema = Joi.object().keys({
 	email: Joi.string().email().required(),
-	password: Joi
-		.string()
-		.regex(PasswordStrengthRegex)
-		.min(7)
-		.max(50)
-		.required(),
+	password: PasswordValidation,
 	role: Joi.string().valid([ 'user', 'admin' ]).required()
 }).required();
 
 export const ChangePasswordSchema = Joi.object().keys({
 	oldPassword: Joi.string(),
-	newPassword: Joi
-		.string()
-		.regex(PasswordStrengthRegex)
-		.min(7)
-		.max(50)
-		.required()
+	newPassword: PasswordValidation
+}).required();
+
+export const ConfirmResetPasswordSchema = Joi.object().keys({
+	resetToken: Joi.string().uuid().required(),
+	newPassword: PasswordValidation
 }).required();

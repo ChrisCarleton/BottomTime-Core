@@ -1,7 +1,12 @@
 import bcrypt from 'bcrypt';
 import Bluebird from 'bluebird';
 import { badRequest, conflict, forbidden, serverError } from '../utils/error-response';
-import { ChangePasswordSchema, UserAccountSchema, UsernameSchema } from '../validation/user';
+import {
+	ConfirmResetPasswordSchema,
+	ChangePasswordSchema,
+	UserAccountSchema,
+	UsernameSchema
+} from '../validation/user';
 import { logError } from '../logger';
 import Joi from 'joi';
 import mailer from '../mail/mailer';
@@ -199,5 +204,49 @@ export function RequestPasswordReset(req, res) {
 }
 
 export function ConfirmPasswordReset(req, res) {
-	res.sendStatus(501);
+	const failureMessage = 'You are not permitted to reset the password on the request account';
+
+	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema);
+	if (isUsernameValid.error) {
+		return badRequest(
+			'Unable to reset password. The username specified in the request URL is invalid',
+			isUsernameValid.error,
+			res);
+	}
+
+	const isRequestValid = Joi.validate(req.body, ConfirmResetPasswordSchema);
+	if (isRequestValid.error) {
+		return badRequest(
+			'Unable to reset password. The request was invalid. See details.',
+			isRequestValid.error,
+			res);
+	}
+
+	User.findByUsername(req.params.username)
+		.then(user => {
+			if (!user
+				|| !user.passwordResetToken
+				|| user.passwordResetToken !== req.body.resetToken
+				|| !user.passwordResetExpiration
+				|| moment().diff(moment(user.passwordResetExpiration), 's') >= 0) {
+
+				return forbidden(res, failureMessage);
+			}
+
+			user.passwordHash = bcrypt.hashSync(req.body.newPassword, 10);
+			user.passwordResetToken = null;
+			user.passwordResetExpiration = null;
+			return user.save();
+		})
+		.then(entity => {
+			if (!entity) {
+				return;
+			}
+
+			res.sendStatus(204);
+		})
+		.catch(err => {
+			const logId = logError('Failed to update user\'s password in the database', err);
+			serverError(res, logId);
+		});
 }

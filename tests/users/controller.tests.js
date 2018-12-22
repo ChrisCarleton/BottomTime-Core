@@ -10,6 +10,7 @@ import mongoose from 'mongoose';
 import templates from '../../service/mail/templates';
 import sinon from 'sinon';
 import User from '../../service/data/user';
+import uuid from 'uuid/v4';
 
 function fakeCreateAccount() {
 	const firstName = faker.name.firstName();
@@ -741,6 +742,198 @@ describe('Users Controller', () => {
 					expect(res.body.status).to.equal(500);
 					expect(res.body.logId).to.exist;
 					expect(res.body.errorId).to.equal(ErrorIds.serverError);
+					done();
+				})
+				.catch(done);
+		});
+	});
+
+	describe('POST /users/:username/confirmResetPassword', () => {
+		it('Will update the user\'s password', done => {
+			const user = new User(fakeUser());
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+			user.passwordResetToken = uuid();
+			user.passwordResetExpiration = moment().add(6, 'h').utc().toDate();
+
+			user.save()
+				.then(() => request(App)
+					.post(`/users/${ user.username }/confirmResetPassword`)
+					.send({
+						resetToken: user.passwordResetToken,
+						newPassword
+					}))
+				.then(res => {
+					expect(res.status).to.equal(204);
+					return User.findByUsername(user.username);
+				})
+				.then(entity => {
+					expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.true;
+					expect(entity.passwordResetToken).to.not.exist;
+					expect(entity.passwordResetExpiration).to.not.exist;
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Forbidden if reset token is not set', done => {
+			const user = new User(fakeUser());
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+
+			user.save()
+				.then(() => request(App)
+					.post(`/users/${ user.username }/confirmResetPassword`)
+					.send({
+						resetToken: uuid(),
+						newPassword
+					}))
+				.then(res => {
+					expect(res.status).to.equal(403);
+					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+					return User.findByUsername(user.username);
+				})
+				.then(entity => {
+					expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.false;
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Forbidden if reset token is expired', done => {
+			const user = new User(fakeUser());
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+			user.passwordResetToken = uuid();
+			user.passwordResetExpiration = moment().subtract(6, 'h').utc().toDate();
+
+			user.save()
+				.then(() => request(App)
+					.post(`/users/${ user.username }/confirmResetPassword`)
+					.send({
+						resetToken: user.passwordResetToken,
+						newPassword
+					}))
+				.then(res => {
+					expect(res.status).to.equal(403);
+					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+					return User.findByUsername(user.username);
+				})
+				.then(entity => {
+					expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.false;
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Forbidden if reset token is incorrect', done => {
+			const user = new User(fakeUser());
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+			user.passwordResetToken = uuid();
+			user.passwordResetExpiration = moment().add(6, 'h').utc().toDate();
+
+			user.save()
+				.then(() => request(App)
+					.post(`/users/${ user.username }/confirmResetPassword`)
+					.send({
+						resetToken: uuid(),
+						newPassword
+					}))
+				.then(res => {
+					expect(res.status).to.equal(403);
+					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+					return User.findByUsername(user.username);
+				})
+				.then(entity => {
+					expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.false;
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Forbidden if user account does not exist', done => {
+			const user = fakeUser();
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+
+			request(App)
+				.post(`/users/${ user.username }/confirmResetPassword`)
+				.send({
+					resetToken: uuid(),
+					newPassword
+				})
+				.then(res => {
+					expect(res.status).to.equal(403);
+					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Bad Request if request body is empty', done => {
+			const user = fakeUser();
+
+			request(App)
+				.post(`/users/${ user.username }/confirmResetPassword`)
+				.then(res => {
+					expect(res.status).to.equal(400);
+					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Bad Request if request body is invalid', done => {
+			request(App)
+				.post('/users/Jim.Coates/confirmResetPassword')
+				.send({
+					resetToken: uuid(),
+					newPassword: 'aeg932qhq3rpgn*&Y)&Y',
+					wat: 'dunno'
+				})
+				.then(res => {
+					expect(res.status).to.equal(400);
+					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Bad Request if username is invalid', done => {
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+
+			request(App)
+				.post('/users/$TOtally!NOTValid/confirmResetPassword')
+				.send({
+					resetToken: uuid(),
+					newPassword
+				})
+				.then(res => {
+					expect(res.status).to.equal(400);
+					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Will return Server Error if there is a problem updating the database', done => {
+			const user = new User(fakeUser());
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+			user.passwordResetToken = uuid();
+			user.passwordResetExpiration = moment().add(6, 'h').utc().toDate();
+
+			user.save()
+				.then(() => {
+					stub = sinon.stub(mongoose.Model.prototype, 'save');
+					stub.rejects('nope');
+					return request(App)
+						.post(`/users/${ user.username }/confirmResetPassword`)
+						.send({
+							resetToken: user.passwordResetToken,
+							newPassword
+						});
+				})
+				.then(res => {
+					expect(res.status).to.equal(500);
+					expect(res.body.status).to.equal(500);
+					expect(res.body.errorId).to.equal(ErrorIds.serverError);
+					expect(res.body.logId).to.exist;
 					done();
 				})
 				.catch(done);

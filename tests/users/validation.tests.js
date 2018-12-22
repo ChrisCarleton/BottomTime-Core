@@ -3,12 +3,14 @@ import faker from 'faker';
 import Joi from 'joi';
 import {
 	ChangePasswordSchema,
+	ConfirmResetPasswordSchema,
 	UserAccountSchema,
 	UsernameSchema
 } from '../../service/validation/user';
 
 let account = null;
 let changePassword = null;
+let resetPassword = null;
 
 function testExpectedError(err, expectedError) {
 	if (expectedError) {
@@ -31,6 +33,11 @@ function validateAccount(expectedError) {
 
 function validateChangePassword(expectedError) {
 	const err = Joi.validate(changePassword, ChangePasswordSchema);
+	testExpectedError(err, expectedError);
+}
+
+function validateConfirmPasswordReset(expectedError) {
+	const err = Joi.validate(resetPassword, ConfirmResetPasswordSchema);
 	testExpectedError(err, expectedError);
 }
 
@@ -166,5 +173,64 @@ describe('Change Password Validation', () => {
 	it('New password must contain a special character', () => {
 		changePassword.newPassword = 'aCCssdf3838';
 		validateChangePassword('string.regex.base');
+	});
+});
+
+describe('Confirm Reset Password Validation', () => {
+	beforeEach(() => {
+		resetPassword = {
+			resetToken: faker.random.uuid(),
+			newPassword: faker.internet.password(18, false, null, '*@1Az')
+		};
+	});
+
+	it('Token is required', () => {
+		delete resetPassword.resetToken;
+		validateConfirmPasswordReset('any.required');
+	});
+
+	it('Token must be a string', () => {
+		resetPassword.resetToken = 23;
+		validateConfirmPasswordReset('string.base');
+	});
+
+	it('Token must be a uuid', () => {
+		resetPassword.resetToken = 'hey!';
+		validateConfirmPasswordReset('string.guid');
+	});
+
+	it('New password is required', () => {
+		delete resetPassword.newPassword;
+		validateConfirmPasswordReset('any.required');
+	});
+
+	it('New password must be at least 7 characters long', () => {
+		resetPassword.newPassword = '2!sHrt';
+		validateConfirmPasswordReset('string.min');
+	});
+
+	it('New password must be no more than 50 characters long', () => {
+		resetPassword.newPassword = 'OMfG!!!__WAy.2-freakin.lonG!!!~Why.is_thisP@ssw3rdSOBIG!~Ican\'tBElieveITTTT!!';
+		validateConfirmPasswordReset('string.max');
+	});
+
+	it('New password must contain an uppercase letter', () => {
+		resetPassword.newPassword = 'aassdf3838..!#$@';
+		validateConfirmPasswordReset('string.regex.base');
+	});
+
+	it('New password must contain a lowercase letter', () => {
+		resetPassword.newPassword = 'IGV*OGO3838..!#$@';
+		validateConfirmPasswordReset('string.regex.base');
+	});
+
+	it('New password must contain a number', () => {
+		resetPassword.newPassword = 'aassdfIUBOI..!#$@';
+		validateConfirmPasswordReset('string.regex.base');
+	});
+
+	it('New password must contain a special character', () => {
+		resetPassword.newPassword = 'aCCssdf3838';
+		validateConfirmPasswordReset('string.regex.base');
 	});
 });
