@@ -204,8 +204,6 @@ export function RequestPasswordReset(req, res) {
 }
 
 export function ConfirmPasswordReset(req, res) {
-	const failureMessage = 'You are not permitted to reset the password on the request account';
-
 	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema);
 	if (isUsernameValid.error) {
 		return badRequest(
@@ -230,7 +228,9 @@ export function ConfirmPasswordReset(req, res) {
 				|| !user.passwordResetExpiration
 				|| moment().diff(moment(user.passwordResetExpiration), 's') >= 0) {
 
-				return forbidden(res, failureMessage);
+				return forbidden(
+					res,
+					'You are not permitted to reset the password on the request account');
 			}
 
 			user.passwordHash = bcrypt.hashSync(req.body.newPassword, 10);

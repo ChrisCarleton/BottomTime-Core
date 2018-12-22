@@ -26,7 +26,7 @@ describe('Mailer', () => {
 				html: '<p>Yo!</p>'
 			})
 			.then(() => done('Should not have succeeded.'))
-			.catch(err => {
+			.catch(() => {
 				done();
 			});
 	});

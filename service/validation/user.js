@@ -1,7 +1,8 @@
 import Joi from 'joi';
 
 const PasswordStrengthRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*.]).*$/;
-const PasswordValidation = Joi.string().regex(PasswordStrengthRegex).min(7).max(50).required();
+
+export const PasswordValidation = Joi.string().regex(PasswordStrengthRegex).min(7).max(50).required();
 
 export const LoginSchema = Joi.object().keys({
 	username: Joi.string().max(50).required(),
