@@ -13,12 +13,11 @@ let stub = null;
 describe('Logs Controller', () => {
 	let admin = null;
 	let user1 = null;
-	let user2 = null;
 
 	before(done => {
-		Bluebird.all([ createAccount('admin'), createAccount(), createAccount() ])
+		Bluebird.all([ createAccount('admin'), createAccount() ])
 			.then(results => {
-				[ admin, user1, user2 ] = results;
+				[ admin, user1 ] = results;
 				done();
 			})
 			.catch(done);
@@ -27,7 +26,6 @@ describe('Logs Controller', () => {
 	after(() => {
 		admin.agent.close();
 		user1.agent.close();
-		user2.agent.close();
 	});
 
 	afterEach(done => {
