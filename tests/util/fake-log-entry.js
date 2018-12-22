@@ -1,6 +1,6 @@
 import faker from 'faker';
 
-export default () => {
+export default userId => {
 	const bottomTime = faker.random.number({ min: 10, max: 70 });
 	const totalTime = faker.random.number({ min: bottomTime, max: bottomTime + 8 });
 
@@ -8,6 +8,7 @@ export default () => {
 	const maxDepth = faker.random.number({ min: averageDepth, max: averageDepth + 30 });
 
 	return {
+		userId,
 		entryTime: faker.date.past(3).toISOString(),
 		bottomTime,
 		totalTime,

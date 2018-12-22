@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { App } from '../../service/server';
 import Bluebird from 'bluebird';
+import createAccount from '../util/create-fake-account';
 import mongoose from 'mongoose';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
@@ -10,6 +11,25 @@ import sinon from 'sinon';
 let stub = null;
 
 describe('Logs Controller', () => {
+	let admin = null;
+	let user1 = null;
+	let user2 = null;
+
+	before(done => {
+		Bluebird.all([ createAccount('admin'), createAccount(), createAccount() ])
+			.then(results => {
+				[ admin, user1, user2 ] = results;
+				done();
+			})
+			.catch(done);
+	});
+
+	after(() => {
+		admin.agent.close();
+		user1.agent.close();
+		user2.agent.close();
+	});
+
 	afterEach(done => {
 		// Clean up sinon stubs.
 		if (stub) {
@@ -21,14 +41,16 @@ describe('Logs Controller', () => {
 		LogEntry.deleteMany({}, done);
 	});
 
-	describe('GET /logs/:logId', () => {
+	describe('GET /users/:username/logs/:logId', () => {
 
 		it('Will fetch the requested log entry', done => {
-			const fake = fakeLogEntry();
+			const fake = fakeLogEntry(user1.user.id);
 			const logEntry = new LogEntry(fake);
+			delete fake.userId;
+
 			logEntry.save()
 				.then(entry => request(App)
-					.get(`/logs/${ entry.id }`))
+					.get(`/users/${ user1.user.username }/logs/${ entry.id }`))
 				.then(res => {
 					expect(res.status).to.equal(200);
 					expect(res.body).to.exist;
@@ -57,7 +79,7 @@ describe('Logs Controller', () => {
 
 			const fakeId = 'a99e1685d476a4fdce40d599';
 			request(App)
-				.get(`/logs/${ fakeId }`)
+				.get(`/users/${ user1.user.username }/logs/${ fakeId }`)
 				.then(res => {
 					expect(res.status).to.equal(500);
 					expect(res.body.logId).to.exist;
@@ -69,12 +91,14 @@ describe('Logs Controller', () => {
 
 	});
 
-	describe('POST /logs', () => {
+	describe('POST /users/:username/logs', () => {
 
 		it('Will create a new record', done => {
 			const fake = fakeLogEntry();
+			delete fake.userId;
+
 			request(App)
-				.post('/logs')
+				.post(`/users/${ user1.user.username }/logs`)
 				.send([ fake ])
 				.then(res => {
 					expect(res.status).to.equal(201);
@@ -96,8 +120,12 @@ describe('Logs Controller', () => {
 				fakeLogEntry()
 			];
 
+			delete fakes[0].userId;
+			delete fakes[1].userId;
+			delete fakes[2].userId;
+
 			request(App)
-				.post('/logs')
+				.post(`/users/${ user1.user.username }/logs`)
 				.send(fakes)
 				.then(res => {
 					expect(res.status).to.equal(201);
@@ -122,7 +150,7 @@ describe('Logs Controller', () => {
 
 			fakes[1].averageDepth = -1;
 			request(App)
-				.post('/logs')
+				.post(`/users/${ user1.user.username }/logs`)
 				.send(fakes)
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -135,7 +163,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if array is empty', done => {
 			request(App)
-				.post('/logs')
+				.post(`/users/${ user1.user.username }/logs`)
 				.send([])
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -148,7 +176,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if request payload is empty', done => {
 			request(App)
-				.post('/logs')
+				.post(`/users/${ user1.user.username }/logs`)
 				.then(res => {
 					expect(res.status).to.equal(400);
 					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
@@ -165,7 +193,7 @@ describe('Logs Controller', () => {
 			stub.rejects('nope');
 
 			request(App)
-				.post('/logs')
+				.post(`/users/${ user1.user.username }/logs`)
 				.send([ fake ])
 				.then(res => {
 					expect(res.status).to.equal(500);
@@ -178,10 +206,10 @@ describe('Logs Controller', () => {
 
 	});
 
-	describe('PUT /logs/:logId', () => {
+	describe('PUT /users/:username/logs/:logId', () => {
 
 		it('Will update the log entry', done => {
-			const fake = fakeLogEntry();
+			const fake = fakeLogEntry(user1.user.id);
 			const originalEntry = new LogEntry(fake);
 			let entryId = null;
 
@@ -190,15 +218,16 @@ describe('Logs Controller', () => {
 					entryId = entry.id;
 					fake.location = 'Some new location';
 					fake.maxDepth = 139.5;
+					delete fake.userId;
 
 					return request(App)
-						.put(`/logs/${ entryId }`)
+						.put(`/users/${ user1.user.username }/logs/${ entryId }`)
 						.send(fake);
 				})
 				.then(res => {
 					expect(res.status).to.equal(200);
 					return request(App)
-						.get(`/logs/${ entryId }`);
+						.get(`/users/${ user1.user.username }/logs/${ entryId }`);
 				})
 				.then(res => {
 					fake.entryId = entryId;
@@ -213,7 +242,7 @@ describe('Logs Controller', () => {
 			fake.entryId = 'b5ca1b72aa445300db582a03';
 
 			request(App)
-				.put(`/logs/${ fake.entryId }`)
+				.put(`/users/${ user1.user.username }/logs/${ fake.entryId }`)
 				.send(fake)
 				.then(res => {
 					expect(res.status).to.equal(404);
@@ -224,7 +253,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Bad Request if update is invalid', done => {
-			const fake = fakeLogEntry();
+			const fake = fakeLogEntry(user1.user.id);
 			const originalEntry = new LogEntry(fake);
 			let entryId = null;
 
@@ -232,9 +261,10 @@ describe('Logs Controller', () => {
 				.then(entity => {
 					entryId = entity.id;
 					fake.site = null;
+					delete fake.userId;
 
 					return request(App)
-						.put(`/logs/${ entryId }`)
+						.put(`/users/${ user1.user.username }/logs/${ entryId }`)
 						.send(fake);
 				})
 				.then(res => {
@@ -248,7 +278,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Server Error if database fails', done => {
-			const fake = fakeLogEntry();
+			const fake = fakeLogEntry(user1.user.id);
 			const originalEntry = new LogEntry(fake);
 			let entryId = null;
 
@@ -257,12 +287,13 @@ describe('Logs Controller', () => {
 					entryId = entry.id;
 					fake.location = 'Some new location';
 					fake.maxDepth = 139.5;
+					delete fake.userId;
 
 					stub = sinon.stub(mongoose.Model.prototype, 'save');
 					stub.rejects('nope');
 
 					return request(App)
-						.put(`/logs/${ entryId }`)
+						.put(`/users/${ user1.user.username }/logs/${ entryId }`)
 						.send(fake);
 				})
 				.then(res => {
@@ -276,10 +307,10 @@ describe('Logs Controller', () => {
 
 	});
 
-	describe('DELETE /logs/:logId', () => {
+	describe('DELETE /users/:username/logs/:logId', () => {
 
 		it('Will delete the specified log entry', done => {
-			const fake = fakeLogEntry();
+			const fake = fakeLogEntry(user1.user.id);
 			const entry = new LogEntry(fake);
 
 			entry.save()
@@ -287,7 +318,7 @@ describe('Logs Controller', () => {
 					fake.entryId = entity.id;
 
 					return request(App)
-						.del(`/logs/${ fake.entryId }`);
+						.del(`/users/${ user1.user.username }/logs/${ fake.entryId }`);
 				})
 				.then(res => {
 					expect(res.status).to.equal(204);
@@ -304,7 +335,7 @@ describe('Logs Controller', () => {
 			const entryId = '7916e401d28648cc662f8977';
 
 			request(App)
-				.del(`/logs/${ entryId }`)
+				.del(`/user/${ user1.user.username }/logs/${ entryId }`)
 				.then(res => {
 					expect(res.status).to.equal(404);
 					done();
@@ -313,7 +344,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Server Error if the database fails', done => {
-			const fake = fakeLogEntry();
+			const fake = fakeLogEntry(user1.user.id);
 			const entry = new LogEntry(fake);
 
 			entry.save()
@@ -324,7 +355,7 @@ describe('Logs Controller', () => {
 					stub.rejects('nope');
 
 					return request(App)
-						.del(`/logs/${ fake.entryId }`);
+						.del(`/users/${ user1.user.username }/logs/${ fake.entryId }`);
 				})
 				.then(res => {
 					expect(res.status).to.equal(500);
@@ -336,12 +367,12 @@ describe('Logs Controller', () => {
 		});
 	});
 
-	describe('PUT /logs', () => {
+	describe('PUT /users/:username/logs', () => {
 		it('Will update records', done => {
 			const fakes = [
-				fakeLogEntry(),
-				fakeLogEntry(),
-				fakeLogEntry()
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
 				new LogEntry(fakes[0]),
@@ -355,12 +386,16 @@ describe('Logs Controller', () => {
 					fakes[1].entryId = res[1].id;
 					fakes[2].entryId = res[2].id;
 
+					delete fakes[0].userId;
+					delete fakes[1].userId;
+					delete fakes[2].userId;
+
 					fakes[0].weight = { amount: 69.4 };
 					fakes[1].maxDepth = 300;
 					fakes[2].site = 'Local swimming pool';
 
 					return request(App)
-						.put('/logs')
+						.put(`/users/${ user1.user.id }/logs`)
 						.send(fakes);
 				})
 				.then(res => {
@@ -379,9 +414,9 @@ describe('Logs Controller', () => {
 
 		it('Will succeed if one of the records is missing', done => {
 			const fakes = [
-				fakeLogEntry(),
-				fakeLogEntry(),
-				fakeLogEntry()
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
 				new LogEntry(fakes[0]),
@@ -394,12 +429,16 @@ describe('Logs Controller', () => {
 					fakes[1].entryId = res[1].id;
 					fakes[2].entryId = '51c6d4fc8fbf1b3e1244b3ed';
 
+					delete fakes[0].userId;
+					delete fakes[1].userId;
+					delete fakes[2].userId;
+
 					fakes[0].weight = { amount: 69.4 };
 					fakes[1].maxDepth = 300;
 					fakes[2].site = 'Local swimming pool';
 
 					return request(App)
-						.put('/logs')
+						.put(`/users/${ user1.user.id }/logs`)
 						.send(fakes);
 				})
 				.then(res => {
@@ -425,7 +464,7 @@ describe('Logs Controller', () => {
 			];
 
 			request(App)
-				.put('/logs')
+				.put(`/users/${ user1.user.id }/logs`)
 				.send(fakes)
 				.then(res => {
 					expect(res.status).to.equal(200);
@@ -443,7 +482,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if the array is empty', done => {
 			request(App)
-				.put('/logs')
+				.put(`/users/${ user1.user.id }/logs`)
 				.send([])
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -454,7 +493,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if the message body is empty', done => {
 			request(App)
-				.put('/logs')
+				.put(`/users/${ user1.user.id }/logs`)
 				.then(res => {
 					expect(res.status).to.equal(400);
 					done();
@@ -464,8 +503,8 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if one of the records is invalid', done => {
 			const fakes = [
-				fakeLogEntry(),
-				fakeLogEntry()
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
 				new LogEntry(fakes[0]),
@@ -477,6 +516,9 @@ describe('Logs Controller', () => {
 					fakes[0].entryId = res[0].id;
 					fakes[1].entryId = res[1].id;
 
+					delete fakes[0].userId;
+					delete fakes[1].userId;
+
 					const modified = [
 						{ ...fakes[0] },
 						{ ...fakes[1] }
@@ -486,7 +528,7 @@ describe('Logs Controller', () => {
 					modified[1].maxDepth = -23;
 
 					return request(App)
-						.put('/logs')
+						.put(`/users/${ user1.user.id }/logs`)
 						.send(modified);
 				})
 				.then(res => {
@@ -505,7 +547,7 @@ describe('Logs Controller', () => {
 			const logEntries = [];
 
 			for (let i = 0; i < 101; i++) {
-				fakes[i] = fakeLogEntry();
+				fakes[i] = fakeLogEntry(user1.user.id);
 				logEntries[i] = new LogEntry(fakes[i]);
 			}
 
@@ -513,10 +555,11 @@ describe('Logs Controller', () => {
 				.then(res => {
 					for (let i = 0; i < res.length; i++) {
 						fakes[i].entryId = res[i].id;
+						delete fakes[i].userId;
 					}
 
 					return request(App)
-						.put('/logs')
+						.put(`/users/${ user1.user.id }/logs`)
 						.send(fakes);
 				})
 				.then(res => {
@@ -528,9 +571,9 @@ describe('Logs Controller', () => {
 
 		it('Will return Server Error if the database fails', done => {
 			const fakes = [
-				fakeLogEntry(),
-				fakeLogEntry(),
-				fakeLogEntry()
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
 				new LogEntry(fakes[0]),
@@ -544,6 +587,10 @@ describe('Logs Controller', () => {
 					fakes[1].entryId = res[1].id;
 					fakes[2].entryId = res[2].id;
 
+					delete fakes[0].userId;
+					delete fakes[1].userId;
+					delete fakes[2].userId;
+
 					fakes[0].weight = { amount: 69.4 };
 					fakes[1].maxDepth = 300;
 					fakes[2].site = 'Local swimming pool';
@@ -552,7 +599,7 @@ describe('Logs Controller', () => {
 					stub.rejects('nope');
 
 					return request(App)
-						.put('/logs')
+						.put(`/users/${ user1.user.id }/logs`)
 						.send(fakes);
 				})
 				.then(res => {
@@ -565,12 +612,12 @@ describe('Logs Controller', () => {
 		});
 	});
 
-	describe('DELETE /logs', () => {
+	describe('DELETE /users/:username/logs', () => {
 		it('Will delete the specified log entries', done => {
 			const fakes = [
-				fakeLogEntry(),
-				fakeLogEntry(),
-				fakeLogEntry()
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
 				new LogEntry(fakes[0]),
@@ -580,7 +627,7 @@ describe('Logs Controller', () => {
 
 			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
 				.then(() => request(App)
-					.del('/logs')
+					.del(`/users/${ user1.user.id }/logs`)
 					.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]))
 				.then(res => {
 					expect(res.status).to.equal(200);
@@ -602,9 +649,9 @@ describe('Logs Controller', () => {
 
 		it('Will delete even if an entry is not found', done => {
 			const fakes = [
-				fakeLogEntry(),
-				fakeLogEntry(),
-				fakeLogEntry()
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
 				new LogEntry(fakes[0]),
@@ -619,7 +666,7 @@ describe('Logs Controller', () => {
 					logEntries[2].save()
 				], 'a2603a50e9ea2b2ce68c8147')
 				.then(() => request(App)
-					.del('/logs')
+					.del(`/users/${ user1.user.id }/logs`)
 					.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]))
 				.then(res => {
 					expect(res.status).to.equal(200);
@@ -647,7 +694,7 @@ describe('Logs Controller', () => {
 			];
 
 			request(App)
-				.del('/logs')
+				.del(`/users/${ user1.user.id }/logs`)
 				.send(entryIds)
 				.then(res => {
 					expect(res.status).to.equal(200);
@@ -658,7 +705,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if array is empty', done => {
 			request(App)
-				.del('/logs')
+				.del(`/users/${ user1.user.id }/logs`)
 				.send([])
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -671,7 +718,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if request payload is empty', done => {
 			request(App)
-				.del('/logs')
+				.del(`/users/${ user1.user.id }/logs`)
 				.then(res => {
 					expect(res.status).to.equal(400);
 					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
@@ -683,7 +730,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if entry ID list is invalid', done => {
 			request(App)
-				.del('/logs')
+				.del(`/users/${ user1.user.id }/logs`)
 				.send({ omg: 'wat?' })
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -696,9 +743,9 @@ describe('Logs Controller', () => {
 
 		it('Will return Server Error if the database fails', done => {
 			const fakes = [
-				fakeLogEntry(),
-				fakeLogEntry(),
-				fakeLogEntry()
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
 				new LogEntry(fakes[0]),
@@ -712,7 +759,7 @@ describe('Logs Controller', () => {
 					stub.rejects('nope');
 
 					return request(App)
-						.del('/logs')
+						.del(`/users/${ user1.user.id }/logs`)
 						.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]);
 				})
 				.then(res => {

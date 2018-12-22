@@ -38,6 +38,11 @@ const userSchema = mongoose.Schema({
 		type: Boolean,
 		required: true,
 		default: false
+	},
+	profile: {
+		firstName: String,
+		lastName: String,
+		logsVisibility: String
 	}
 });
 

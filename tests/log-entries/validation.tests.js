@@ -30,6 +30,7 @@ describe('Log entry validation', () => {
 
 	beforeEach(() => {
 		logEntry = fakeLogEntry();
+		delete logEntry.userId;
 	});
 
 	it('Update requires an entry Id', () => {

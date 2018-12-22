@@ -24,6 +24,7 @@ module.exports = {
 		"consistent-return": 0,
 		"global-require": 0,
 		"id-length": 0,
+		"id-match": [2, "^[a-zA-Z_][a-zA-Z0-9_]*$"],
 		"indent": [2, "tab"],
 		"no-sync": 0,
 		"no-tabs": 0,

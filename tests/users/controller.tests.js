@@ -1,5 +1,6 @@
 import { App } from '../../service/server';
 import bcrypt from 'bcrypt';
+import createAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect, request } from 'chai';
 import faker from 'faker';
@@ -23,28 +24,6 @@ function fakeCreateAccount() {
 			role: 'user'
 		}
 	};
-}
-
-function createAccount(role = 'user') {
-	const password = faker.internet.password(18, false, null, '*@1Az');
-	const fake = fakeUser(password);
-	fake.role = role;
-
-	const user = new User(fake);
-	const result = {
-		agent: request.agent(App)
-	};
-
-	return user.save()
-		.then(entity => {
-			result.user = entity;
-			return result.agent.post('/auth/login')
-				.send({
-					username: entity.username,
-					password
-				});
-		})
-		.then(() => result);
 }
 
 let stub = null;
