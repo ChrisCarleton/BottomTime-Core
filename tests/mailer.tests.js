@@ -18,4 +18,17 @@ describe('Mailer', () => {
 			})
 			.catch(done);
 	});
+
+	it('Rejects if message is not sent', done => {
+		mailer
+			.sendMail({
+				subject: 'Ha! No "to" line! Good luck!',
+				html: '<p>Yo!</p>'
+			})
+			.then(() => done('Should not have succeeded.'))
+			.catch(err => {
+				done();
+			});
+	});
+
 });
