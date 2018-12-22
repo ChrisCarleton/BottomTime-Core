@@ -28,6 +28,7 @@ data "template_file" "task_def" {
 		smtp_host = "${var.smtp_host}"
 		smtp_port = "${var.smtp_port}"
 		smtp_use_tls = "${var.smtp_use_tls}"
+		support_email = "${var.support_email}"
 	}
 }
 

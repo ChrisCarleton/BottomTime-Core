@@ -5,4 +5,7 @@ import nodemailer from 'nodemailer';
 export default nodemailer.createTransport({
 	...config.smtp,
 	logger: log
+},
+{
+	from: config.doNotReplyEmail
 });
