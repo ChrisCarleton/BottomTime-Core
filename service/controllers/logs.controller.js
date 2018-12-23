@@ -66,7 +66,7 @@ export function UpdateLogs(req, res) {
 		entries[e.entryId] = e;
 	});
 
-	LogEntry.find({ _id: { $in: Object.keys(entries) } })
+	LogEntry.find({ _id: { $in: Object.keys(entries) }, userId: req.account.id })
 		.then(foundEntries => {
 			for (let i = 0; i < foundEntries.length; i++) {
 				assignLogEntry(foundEntries[i], entries[foundEntries[i].id]);
@@ -146,6 +146,7 @@ export function RetrieveUserAccount(req, res, next) {
 	User.findByUsername(req.params.username)
 		.then(user => {
 			if (!user) {
+				console.log('not found:', req.params.username)
 				return notFound(req, res);
 			}
 
@@ -183,6 +184,10 @@ export function RetrieveLogEntry(req, res, next) {
 }
 
 export function AssertLogBookReadPermission(req, res, next) {
+	if (req.user && req.user.role === 'admin') {
+		return next();
+	}
+
 	if (req.account.logsVisibility === 'public') {
 		return next();
 	}

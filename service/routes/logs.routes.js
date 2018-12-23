@@ -1,26 +1,26 @@
 import {
 	AssertLogBookReadPermission,
 	AssertLogBookWritePermission,
-	ListLogs,
-	GetLog,
 	CreateLogs,
-	UpdateLog,
-	UpdateLogs,
 	DeleteLog,
 	DeleteLogs,
+	GetLog,
+	ListLogs,
 	RetrieveLogEntry,
-	RetrieveUserAccount
+	RetrieveUserAccount,
+	UpdateLog,
+	UpdateLogs
 } from '../controllers/logs.controller';
 
 module.exports = app => {
 	app.route('/users/:username/logs')
-		.get(ListLogs)
-		.post(RetrieveUserAccount, CreateLogs)
-		.put(UpdateLogs)
-		.delete(DeleteLogs);
+		.get(RetrieveUserAccount, AssertLogBookReadPermission, ListLogs)
+		.post(RetrieveUserAccount, AssertLogBookWritePermission, CreateLogs)
+		.put(RetrieveUserAccount, AssertLogBookWritePermission, UpdateLogs)
+		.delete(RetrieveUserAccount, AssertLogBookWritePermission, DeleteLogs);
 
 	app.route('/users/:username/logs/:logId([a-f0-9]{24})')
 		.get(RetrieveLogEntry, AssertLogBookReadPermission, GetLog)
-		.put(RetrieveLogEntry, UpdateLog)
-		.delete(RetrieveLogEntry, DeleteLog);
+		.put(RetrieveLogEntry, AssertLogBookWritePermission, UpdateLog)
+		.delete(RetrieveLogEntry, AssertLogBookWritePermission, DeleteLog);
 };

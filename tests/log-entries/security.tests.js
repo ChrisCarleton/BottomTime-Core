@@ -121,23 +121,89 @@ describe('Log Entry Security', () => {
 		});
 
 		it('Anonmyous users cannot view logs when log books are private', done => {
-			done();
+			const fake = fakeLogEntry(user3.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => request(App).get(`/users/${ user3.user.username }/logs/${ entity.id }`))
+				.then(res => {
+					expect(res.status).to.equal(403);
+					expect(res.body.status).to.equal(403);
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Admins can view logs when log books are private', done => {
-			done();
+			const fake = fakeLogEntry(user3.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => {
+					fake.entryId = entity.id;
+					delete fake.userId;
+					return admin.agent.get(`/users/${ user3.user.username }/logs/${ entity.id }`);
+				})
+				.then(res => {
+					expect(res.status).to.equal(200);
+					expect(res.body).to.eql(fake);
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Admins can view logs when log books are friends-only', done => {
-			done();
+			const fake = fakeLogEntry(user2.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => {
+					fake.entryId = entity.id;
+					delete fake.userId;
+					return admin.agent.get(`/users/${ user2.user.username }/logs/${ entity.id }`);
+				})
+				.then(res => {
+					expect(res.status).to.equal(200);
+					expect(res.body).to.eql(fake);
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Admins can view logs when log books are public', done => {
-			done();
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => {
+					fake.entryId = entity.id;
+					delete fake.userId;
+					return admin.agent.get(`/users/${ user1.user.username }/logs/${ entity.id }`);
+				})
+				.then(res => {
+					expect(res.status).to.equal(200);
+					expect(res.body).to.eql(fake);
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Users can view logs when log books are pulbic', done => {
-			done();
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => {
+					fake.entryId = entity.id;
+					delete fake.userId;
+					return user2.agent.get(`/users/${ user1.user.username }/logs/${ entity.id }`);
+				})
+				.then(res => {
+					expect(res.status).to.equal(200);
+					expect(res.body).to.eql(fake);
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Users can view logs from friends\' "friends-only" log book', done => {
@@ -151,7 +217,17 @@ describe('Log Entry Security', () => {
 		});
 
 		it('Users cannot view logs from private log books', done => {
-			done();
+			const fake = fakeLogEntry(user3.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => user1.agent.get(`/users/${ user3.user.username }/logs/${ entity.id }`))
+				.then(res => {
+					expect(res.status).to.equal(403);
+					expect(res.body.status).to.equal(403);
+					done();
+				})
+				.catch(done);
 		});
 	});
 
