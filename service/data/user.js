@@ -39,10 +39,14 @@ const userSchema = mongoose.Schema({
 		required: true,
 		default: false
 	},
+	logsVisibility: {
+		type: String,
+		required: true,
+		default: 'friends-only'
+	},
 	profile: {
 		firstName: String,
-		lastName: String,
-		logsVisibility: String
+		lastName: String
 	}
 });
 

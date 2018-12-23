@@ -534,6 +534,8 @@ describe('Logs Controller', () => {
 					return LogEntry.find({ _id: { $in: _.map(fakes, e => e.entryId) } });
 				})
 				.then(res => {
+					delete fakes[0].userId;
+					delete fakes[1].userId;
 					expect(_.map(res, r => cleanUpLogEntry(r))).to.eql(fakes);
 					done();
 				})

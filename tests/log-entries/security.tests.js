@@ -1,5 +1,9 @@
+import { App } from '../../service/server';
 import Bluebird from 'bluebird';
 import createAccount from '../util/create-fake-account';
+import { expect, request } from 'chai';
+import fakeLogEntry from '../util/fake-log-entry';
+import LogEntry from '../../service/data/log-entry';
 
 describe('Log Entry Security', () => {
 	let admin = null;
@@ -8,7 +12,13 @@ describe('Log Entry Security', () => {
 	let user3 = null;
 
 	before(done => {
-		Bluebird.all([ createAccount('admin'), createAccount(), createAccount(), createAccount() ])
+		Bluebird
+			.all([
+				createAccount('admin'),
+				createAccount(),
+				createAccount('user', 'friends-only'),
+				createAccount('user', 'private')
+			])
 			.then(results => {
 				[ admin, user1, user2, user3 ] = results;
 				done();
@@ -24,12 +34,90 @@ describe('Log Entry Security', () => {
 	});
 
 	describe('GET /users/:username/logs/:logId', () => {
-		it('Anonymous users can view logs when log books are public.', done => {
-			done();
+		it('Returns Not Found if user does not exist', done => {
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => {
+					return admin
+						.agent
+						.get(`/users/not_a_user/logs/${ entity.id }`)
+				})
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Returns Not Found if log entry does not belong to the specified user', done => {
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => {
+					return admin
+						.agent
+						.get(`/users/${ user2.user.username }/logs/${ entity.id }`)
+				})
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Returns Not Found if log entry does not exist', done => {
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => {
+					return admin
+						.agent
+						.get(`/users/${ user2.user.username }/logs/9d0f6ea0d0bc16aaef4e6de3`)
+				})
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Anonymous users can view logs when log books are public', done => {
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => {
+					fake.entryId = entity.id;
+					delete fake.userId;
+					return request(App).get(`/users/${ user1.user.username }/logs/${ entity.id }`);
+				})
+				.then(res => {
+					expect(res.status).to.equal(200);
+					expect(res.body).to.eql(fake);
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Anonymous users cannot view logs when log books are friends-only', done => {
-			done();
+			const fake = fakeLogEntry(user2.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => request(App).get(`/users/${ user2.user.username }/logs/${ entity.id }`))
+				.then(res => {
+					expect(res.status).to.equal(403);
+					expect(res.body.status).to.equal(403);
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Anonmyous users cannot view logs when log books are private', done => {

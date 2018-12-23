@@ -4,9 +4,9 @@ import fakeUser from './fake-user';
 import { request } from 'chai';
 import User from '../../service/data/user';
 
-export default function (role = 'user') {
+export default function (role = 'user', logsVisibility = 'public') {
 	const password = faker.internet.password(18, false, null, '*@1Az');
-	const fake = fakeUser(password);
+	const fake = fakeUser(password, logsVisibility);
 	fake.role = role;
 
 	const user = new User(fake);

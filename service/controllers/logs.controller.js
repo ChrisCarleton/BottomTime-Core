@@ -1,10 +1,11 @@
 import _ from 'lodash';
-import { badRequest, serverError } from '../utils/error-response';
+import { badRequest, serverError, notFound, forbidden } from '../utils/error-response';
 import Bluebird from 'bluebird';
 import Joi from 'joi';
 import { logError } from '../logger';
 import LogEntry, { assignLogEntry, cleanUpLogEntry } from '../data/log-entry';
 import { NewEntrySchema, EntryId, UpdateEntrySchema } from '../validation/log-entry';
+import User from '../data/user';
 
 export function ListLogs(req, res) {
 	LogEntry.find({})
@@ -32,7 +33,10 @@ export function CreateLogs(req, res) {
 			res);
 	}
 
-	const logEntries = _.map(req.body, e => new LogEntry(e).save());
+	const logEntries = _.map(req.body, e => {
+		e.userId = req.account.id;
+		return new LogEntry(e).save();
+	});
 
 	Bluebird.all(logEntries)
 		.then(entries => {
@@ -138,18 +142,54 @@ export function DeleteLog(req, res) {
 		});
 }
 
-export function RetrieveLogEntry(req, res, next) {
-	LogEntry.findById(req.params.logId)
-		.then(entry => {
-			if (!entry) {
-				return res.sendStatus(404);
+export function RetrieveUserAccount(req, res, next) {
+	User.findByUsername(req.params.username)
+		.then(user => {
+			if (!user) {
+				return notFound(req, res);
 			}
 
-			req.logEntry = entry;
+			req.account = user;
+			next();
+		})
+		.catch(err => {
+			const logId = logError('Failed to retrieve user account from the database.', err);
+			serverError(res, logId);
+		});
+}
+
+export function RetrieveLogEntry(req, res, next) {
+	Bluebird.all([
+			User.findByUsername(req.params.username),
+			LogEntry.findById(req.params.logId)
+		])
+		.then(results => {
+			[ req.account, req.logEntry ] = results;
+
+			if (!req.account
+				|| !req.logEntry
+				|| req.account.id !== req.logEntry.userId.toString() ) {
+
+				return notFound(req, res);
+			}
+
 			return next();
 		})
 		.catch(err => {
+			console.error
 			const logId = logError('Failed to search database for log entry', err);
 			serverError(res, logId);
 		});
+}
+
+export function AssertLogBookReadPermission(req, res, next) {
+	if (req.account.logsVisibility === 'public') {
+		return next();
+	}
+
+	forbidden(res, 'You are not permitted to view this log entry');
+}
+
+export function AssertLogBookWritePermission(req, res, next) {
+	next();
 }
