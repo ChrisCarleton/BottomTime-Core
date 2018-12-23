@@ -95,7 +95,7 @@ describe('Logs Controller', () => {
 			const fake = fakeLogEntry();
 			delete fake.userId;
 
-			request(App)
+			user1.agent
 				.post(`/users/${ user1.user.username }/logs`)
 				.send([ fake ])
 				.then(res => {
@@ -122,7 +122,7 @@ describe('Logs Controller', () => {
 			delete fakes[1].userId;
 			delete fakes[2].userId;
 
-			request(App)
+			user1.agent
 				.post(`/users/${ user1.user.username }/logs`)
 				.send(fakes)
 				.then(res => {
@@ -147,7 +147,7 @@ describe('Logs Controller', () => {
 			];
 
 			fakes[1].averageDepth = -1;
-			request(App)
+			user1.agent
 				.post(`/users/${ user1.user.username }/logs`)
 				.send(fakes)
 				.then(res => {
@@ -160,7 +160,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Bad Request if array is empty', done => {
-			request(App)
+			user1.agent
 				.post(`/users/${ user1.user.username }/logs`)
 				.send([])
 				.then(res => {
@@ -173,7 +173,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Bad Request if request payload is empty', done => {
-			request(App)
+			user1.agent
 				.post(`/users/${ user1.user.username }/logs`)
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -190,7 +190,7 @@ describe('Logs Controller', () => {
 			stub = sinon.stub(mongoose.Model.prototype, 'save');
 			stub.rejects('nope');
 
-			request(App)
+			user1.agent
 				.post(`/users/${ user1.user.username }/logs`)
 				.send([ fake ])
 				.then(res => {
@@ -218,7 +218,7 @@ describe('Logs Controller', () => {
 					fake.maxDepth = 139.5;
 					delete fake.userId;
 
-					return request(App)
+					return user1.agent
 						.put(`/users/${ user1.user.username }/logs/${ entryId }`)
 						.send(fake);
 				})
@@ -239,7 +239,7 @@ describe('Logs Controller', () => {
 			const fake = fakeLogEntry();
 			fake.entryId = 'b5ca1b72aa445300db582a03';
 
-			request(App)
+			user1.agent
 				.put(`/users/${ user1.user.username }/logs/${ fake.entryId }`)
 				.send(fake)
 				.then(res => {
@@ -261,7 +261,7 @@ describe('Logs Controller', () => {
 					fake.site = null;
 					delete fake.userId;
 
-					return request(App)
+					return user1.agent
 						.put(`/users/${ user1.user.username }/logs/${ entryId }`)
 						.send(fake);
 				})
@@ -290,7 +290,7 @@ describe('Logs Controller', () => {
 					stub = sinon.stub(mongoose.Model.prototype, 'save');
 					stub.rejects('nope');
 
-					return request(App)
+					return user1.agent
 						.put(`/users/${ user1.user.username }/logs/${ entryId }`)
 						.send(fake);
 				})
@@ -315,7 +315,7 @@ describe('Logs Controller', () => {
 				.then(entity => {
 					fake.entryId = entity.id;
 
-					return request(App)
+					return user1.agent
 						.del(`/users/${ user1.user.username }/logs/${ fake.entryId }`);
 				})
 				.then(res => {
@@ -332,7 +332,7 @@ describe('Logs Controller', () => {
 		it('Will return Not Found if the log entry does not exist', done => {
 			const entryId = '7916e401d28648cc662f8977';
 
-			request(App)
+			user1.agent
 				.del(`/user/${ user1.user.username }/logs/${ entryId }`)
 				.then(res => {
 					expect(res.status).to.equal(404);
@@ -352,7 +352,7 @@ describe('Logs Controller', () => {
 					stub = sinon.stub(LogEntry, 'deleteOne');
 					stub.rejects('nope');
 
-					return request(App)
+					return user1.agent
 						.del(`/users/${ user1.user.username }/logs/${ fake.entryId }`);
 				})
 				.then(res => {
@@ -392,7 +392,7 @@ describe('Logs Controller', () => {
 					fakes[1].maxDepth = 300;
 					fakes[2].site = 'Local swimming pool';
 
-					return request(App)
+					return user1.agent
 						.put(`/users/${ user1.user.username }/logs`)
 						.send(fakes);
 				})
@@ -435,7 +435,7 @@ describe('Logs Controller', () => {
 					fakes[1].maxDepth = 300;
 					fakes[2].site = 'Local swimming pool';
 
-					return request(App)
+					return user1.agent
 						.put(`/users/${ user1.user.username }/logs`)
 						.send(fakes);
 				})
@@ -461,7 +461,7 @@ describe('Logs Controller', () => {
 				{ entryId: '7b201421444172c41ecdf766', ...fakeLogEntry() }
 			];
 
-			request(App)
+			user1.agent
 				.put(`/users/${ user1.user.username }/logs`)
 				.send(fakes)
 				.then(res => {
@@ -479,7 +479,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Bad Request if the array is empty', done => {
-			request(App)
+			user1.agent
 				.put(`/users/${ user1.user.username }/logs`)
 				.send([])
 				.then(res => {
@@ -490,7 +490,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Bad Request if the message body is empty', done => {
-			request(App)
+			user1.agent
 				.put(`/users/${ user1.user.username }/logs`)
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -525,7 +525,7 @@ describe('Logs Controller', () => {
 					modified[0].weight = { amount: 69.4 };
 					modified[1].maxDepth = -23;
 
-					return request(App)
+					return user1.agent
 						.put(`/users/${ user1.user.username }/logs`)
 						.send(modified);
 				})
@@ -558,7 +558,7 @@ describe('Logs Controller', () => {
 						delete fakes[i].userId;
 					}
 
-					return request(App)
+					return user1.agent
 						.put(`/users/${ user1.user.username }/logs`)
 						.send(fakes);
 				})
@@ -598,7 +598,7 @@ describe('Logs Controller', () => {
 					stub = sinon.stub(mongoose.Model.prototype, 'save');
 					stub.rejects('nope');
 
-					return request(App)
+					return user1.agent
 						.put(`/users/${ user1.user.username }/logs`)
 						.send(fakes);
 				})
@@ -626,7 +626,7 @@ describe('Logs Controller', () => {
 			];
 
 			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
-				.then(() => request(App)
+				.then(() => user1.agent
 					.del(`/users/${ user1.user.username }/logs`)
 					.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]))
 				.then(res => {
@@ -665,7 +665,7 @@ describe('Logs Controller', () => {
 					logEntries[1].save(),
 					logEntries[2].save()
 				], 'a2603a50e9ea2b2ce68c8147')
-				.then(() => request(App)
+				.then(() => user1.agent
 					.del(`/users/${ user1.user.username }/logs`)
 					.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]))
 				.then(res => {
@@ -693,7 +693,7 @@ describe('Logs Controller', () => {
 				'113caa26363c46a29e95b0ce'
 			];
 
-			request(App)
+			user1.agent
 				.del(`/users/${ user1.user.username }/logs`)
 				.send(entryIds)
 				.then(res => {
@@ -704,7 +704,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Bad Request if array is empty', done => {
-			request(App)
+			user1.agent
 				.del(`/users/${ user1.user.username }/logs`)
 				.send([])
 				.then(res => {
@@ -717,7 +717,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Bad Request if request payload is empty', done => {
-			request(App)
+			user1.agent
 				.del(`/users/${ user1.user.username }/logs`)
 				.then(res => {
 					expect(res.status).to.equal(400);
@@ -729,7 +729,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Bad Request if entry ID list is invalid', done => {
-			request(App)
+			user1.agent
 				.del(`/users/${ user1.user.username }/logs`)
 				.send({ omg: 'wat?' })
 				.then(res => {
@@ -758,7 +758,7 @@ describe('Logs Controller', () => {
 					stub = sinon.stub(LogEntry, 'deleteMany');
 					stub.rejects('nope');
 
-					return request(App)
+					return user1.agent
 						.del(`/users/${ user1.user.username }/logs`)
 						.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]);
 				})

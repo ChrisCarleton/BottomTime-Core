@@ -177,7 +177,6 @@ export function RetrieveLogEntry(req, res, next) {
 			return next();
 		})
 		.catch(err => {
-			console.error
 			const logId = logError('Failed to search database for log entry', err);
 			serverError(res, logId);
 		});
@@ -196,5 +195,10 @@ export function AssertLogBookReadPermission(req, res, next) {
 }
 
 export function AssertLogBookWritePermission(req, res, next) {
+	if (!req.user) {
+		return forbidden(
+			res,
+			'You are not permitted to create or update entries in the specified log book');
+	}
 	next();
 }

@@ -1,9 +1,11 @@
+import _ from 'lodash';
 import { App } from '../../service/server';
 import Bluebird from 'bluebird';
 import createAccount from '../util/create-fake-account';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import LogEntry from '../../service/data/log-entry';
+import { ErrorIds } from '../../service/utils/error-response';
 
 describe('Log Entry Security', () => {
 	let admin = null;
@@ -232,8 +234,48 @@ describe('Log Entry Security', () => {
 	});
 
 	describe('PUT /users/:username/logs/:logId', () => {
-		it('Anonymous users cannot put logs in any log books', done => {
+		it('Returns not found of user does not exist', done => {
 			done();
+		});
+
+		it('Returns Not Found if log entry does not exist', done => {
+			done();
+		});
+
+		it('Anonymous users cannot put logs in any log books', done => {
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user3.user.id)
+			];
+
+			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+				.then(entries => {
+					fakes.forEach(f => {
+						delete f.userId;
+					});
+
+					return Bluebird.all([
+						request(App)
+							.put(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
+							.send(fakes[0]),
+						request(App)
+							.put(`/users/${ user2.user.username }/logs/${ entries[1].id }`)
+							.send(fakes[1]),
+						request(App)
+							.put(`/users/${ user3.user.username }/logs/${ entries[2].id }`)
+							.send(fakes[2]),
+					]);
+				})
+				.then(res => {
+					res.forEach(r => {
+						expect(r.status).to.equal(403);
+						expect(r.body.status).to.equal(403);
+						expect(r.body.errorId).to.equal(ErrorIds.forbidden);
+					});
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Admins can put logs in other user\'s log books', done => {
