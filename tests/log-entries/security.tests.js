@@ -229,7 +229,7 @@ describe('Log Entry Security', () => {
 
 	describe('PUT /users/:username/logs/:logId', () => {
 
-		it('Returns not found of user does not exist', done => {
+		it('Returns Not Found if user does not exist', done => {
 			const fake = fakeLogEntry(user3.user.id);
 			const logEntry = new LogEntry(fake);
 
@@ -261,7 +261,7 @@ describe('Log Entry Security', () => {
 				.catch(done);
 		});
 
-		it('Returns 404 if log entry does not belong to specified user', done => {
+		it('Returns Not Found if log entry does not belong to specified user', done => {
 			const fake = fakeLogEntry(user3.user.id);
 			const logEntry = new LogEntry(fake);
 
@@ -391,16 +391,165 @@ describe('Log Entry Security', () => {
 	});
 
 	describe('DELETE /users/:username/logs/:logId', () => {
+
+		it('Returns Not Found if user does not exist', done => {
+			const fake = fakeLogEntry(user3.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => user3.agent
+					.del(`/users/not_a_user/logs/${ entity.id }`)
+					.send(fake))
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Returns Not Found if log entry does not exist', done => {
+			const fake = fakeLogEntry();
+
+			user3.agent
+				.del(`/users/${ user3.user.username }/logs/53f48ed59d19233c0be8d3c8`)
+				.send(fake)
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Returns Not Found if log entry does not belong to specified user', done => {
+			const fake = fakeLogEntry(user3.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => user1.agent
+					.del(`/users/${ user1.user.username }/logs/${ entity.id }`)
+					.send(fake))
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+					done();
+				})
+				.catch(done);
+
+		});
+
 		it('Anonymous users cannot delete logs from any log books', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user3.user.id),
+				fakeLogEntry(admin.user.id)
+			];
+
+			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+				.then(entries => {
+					fakes.forEach(f => {
+						delete f.userId;
+					});
+
+					return Bluebird.all([
+						request(App)
+							.del(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
+							.send(fakes[0]),
+						request(App)
+							.del(`/users/${ user2.user.username }/logs/${ entries[1].id }`)
+							.send(fakes[1]),
+						request(App)
+							.del(`/users/${ user3.user.username }/logs/${ entries[2].id }`)
+							.send(fakes[2]),
+						request(App)
+							.del(`/users/${ admin.user.username }/logs/${ entries[3].id }`)
+							.send(fakes[3])
+					]);
+				})
+				.then(res => {
+					res.forEach(r => {
+						expect(r.status).to.equal(403);
+						expect(r.body.status).to.equal(403);
+						expect(r.body.errorId).to.equal(ErrorIds.forbidden);
+					});
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Admins can delete logs from other user\'s log books', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user3.user.id)
+			];
+
+			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+				.then(entries => {
+					fakes.forEach(f => {
+						delete f.userId;
+					});
+
+					return Bluebird.all([
+						admin.agent
+							.del(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
+							.send(fakes[0]),
+						admin.agent
+							.del(`/users/${ user2.user.username }/logs/${ entries[1].id }`)
+							.send(fakes[1]),
+						admin.agent
+							.del(`/users/${ user3.user.username }/logs/${ entries[2].id }`)
+							.send(fakes[2])
+					]);
+				})
+				.then(res => {
+					for (let i = 0; i < fakes.length; i++) {
+						expect(res[i].status).to.equal(204);
+					}
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Users cannot delete logs from other user\'s log books', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(admin.user.id)
+			];
+
+			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+				.then(entries => {
+					fakes.forEach(f => {
+						delete f.userId;
+					});
+
+					return Bluebird.all([
+						user3.agent
+							.del(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
+							.send(fakes[0]),
+						user3.agent
+							.del(`/users/${ user2.user.username }/logs/${ entries[1].id }`)
+							.send(fakes[1]),
+						user3.agent
+							.del(`/users/${ admin.user.username }/logs/${ entries[2].id }`)
+							.send(fakes[2])
+					]);
+				})
+				.then(res => {
+					res.forEach(r => {
+						expect(r.status).to.equal(403);
+						expect(r.body.status).to.equal(403);
+						expect(r.body.errorId).to.equal(ErrorIds.forbidden);
+					});
+					done();
+				})
+				.catch(done);
 		});
 	});
 
