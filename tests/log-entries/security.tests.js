@@ -41,11 +41,9 @@ describe('Log Entry Security', () => {
 			const logEntry = new LogEntry(fake);
 
 			logEntry.save()
-				.then(entity => {
-					return admin
-						.agent
-						.get(`/users/not_a_user/logs/${ entity.id }`)
-				})
+				.then(entity => admin
+					.agent
+					.get(`/users/not_a_user/logs/${ entity.id }`))
 				.then(res => {
 					expect(res.status).to.equal(404);
 					expect(res.body.status).to.equal(404);
@@ -59,11 +57,9 @@ describe('Log Entry Security', () => {
 			const logEntry = new LogEntry(fake);
 
 			logEntry.save()
-				.then(entity => {
-					return admin
-						.agent
-						.get(`/users/${ user2.user.username }/logs/${ entity.id }`)
-				})
+				.then(entity => admin
+					.agent
+					.get(`/users/${ user2.user.username }/logs/${ entity.id }`))
 				.then(res => {
 					expect(res.status).to.equal(404);
 					expect(res.body.status).to.equal(404);
@@ -77,11 +73,9 @@ describe('Log Entry Security', () => {
 			const logEntry = new LogEntry(fake);
 
 			logEntry.save()
-				.then(entity => {
-					return admin
-						.agent
-						.get(`/users/${ user2.user.username }/logs/9d0f6ea0d0bc16aaef4e6de3`)
-				})
+				.then(() => admin
+					.agent
+					.get(`/users/${ user2.user.username }/logs/9d0f6ea0d0bc16aaef4e6de3`))
 				.then(res => {
 					expect(res.status).to.equal(404);
 					expect(res.body.status).to.equal(404);
@@ -234,19 +228,63 @@ describe('Log Entry Security', () => {
 	});
 
 	describe('PUT /users/:username/logs/:logId', () => {
+
 		it('Returns not found of user does not exist', done => {
-			done();
+			const fake = fakeLogEntry(user3.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => user3.agent
+					.put(`/users/not_a_user/logs/${ entity.id }`)
+					.send(fake))
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Returns Not Found if log entry does not exist', done => {
-			done();
+			const fake = fakeLogEntry();
+
+			user3.agent
+				.put(`/users/${ user3.user.username }/logs/53f48ed59d19233c0be8d3c8`)
+				.send(fake)
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Returns 404 if log entry does not belong to specified user', done => {
+			const fake = fakeLogEntry(user3.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => user1.agent
+					.put(`/users/${ user1.user.username }/logs/${ entity.id }`)
+					.send(fake))
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+					done();
+				})
+				.catch(done);
+
 		});
 
 		it('Anonymous users cannot put logs in any log books', done => {
 			const fakes = [
 				fakeLogEntry(user1.user.id),
 				fakeLogEntry(user2.user.id),
-				fakeLogEntry(user3.user.id)
+				fakeLogEntry(user3.user.id),
+				fakeLogEntry(admin.user.id)
 			];
 
 			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
@@ -265,6 +303,9 @@ describe('Log Entry Security', () => {
 						request(App)
 							.put(`/users/${ user3.user.username }/logs/${ entries[2].id }`)
 							.send(fakes[2]),
+						request(App)
+							.put(`/users/${ admin.user.username }/logs/${ entries[3].id }`)
+							.send(fakes[3])
 					]);
 				})
 				.then(res => {
@@ -279,11 +320,73 @@ describe('Log Entry Security', () => {
 		});
 
 		it('Admins can put logs in other user\'s log books', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user3.user.id)
+			];
+
+			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+				.then(entries => {
+					fakes.forEach(f => {
+						delete f.userId;
+					});
+
+					return Bluebird.all([
+						admin.agent
+							.put(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
+							.send(fakes[0]),
+						admin.agent
+							.put(`/users/${ user2.user.username }/logs/${ entries[1].id }`)
+							.send(fakes[1]),
+						admin.agent
+							.put(`/users/${ user3.user.username }/logs/${ entries[2].id }`)
+							.send(fakes[2])
+					]);
+				})
+				.then(res => {
+					for (let i = 0; i < fakes.length; i++) {
+						expect(res[i].status).to.equal(200);
+					}
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Users cannot put logs in other user\'s log books', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(admin.user.id)
+			];
+
+			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+				.then(entries => {
+					fakes.forEach(f => {
+						delete f.userId;
+					});
+
+					return Bluebird.all([
+						user3.agent
+							.put(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
+							.send(fakes[0]),
+						user3.agent
+							.put(`/users/${ user2.user.username }/logs/${ entries[1].id }`)
+							.send(fakes[1]),
+						user3.agent
+							.put(`/users/${ admin.user.username }/logs/${ entries[2].id }`)
+							.send(fakes[2])
+					]);
+				})
+				.then(res => {
+					res.forEach(r => {
+						expect(r.status).to.equal(403);
+						expect(r.body.status).to.equal(403);
+						expect(r.body.errorId).to.equal(ErrorIds.forbidden);
+					});
+					done();
+				})
+				.catch(done);
 		});
 	});
 

@@ -146,7 +146,6 @@ export function RetrieveUserAccount(req, res, next) {
 	User.findByUsername(req.params.username)
 		.then(user => {
 			if (!user) {
-				console.log('not found:', req.params.username)
 				return notFound(req, res);
 			}
 
@@ -160,7 +159,8 @@ export function RetrieveUserAccount(req, res, next) {
 }
 
 export function RetrieveLogEntry(req, res, next) {
-	Bluebird.all([
+	Bluebird.all(
+		[
 			User.findByUsername(req.params.username),
 			LogEntry.findById(req.params.logId)
 		])
@@ -169,7 +169,7 @@ export function RetrieveLogEntry(req, res, next) {
 
 			if (!req.account
 				|| !req.logEntry
-				|| req.account.id !== req.logEntry.userId.toString() ) {
+				|| req.account.id !== req.logEntry.userId.toString()) {
 
 				return notFound(req, res);
 			}
@@ -195,10 +195,18 @@ export function AssertLogBookReadPermission(req, res, next) {
 }
 
 export function AssertLogBookWritePermission(req, res, next) {
+	const forbiddenMessage = 'You are not permitted to create or update entries in the specified log book';
 	if (!req.user) {
 		return forbidden(
 			res,
-			'You are not permitted to create or update entries in the specified log book');
+			forbiddenMessage);
 	}
+
+	if (req.user.id !== req.account.id && req.user.role !== 'admin') {
+		return forbidden(
+			res,
+			forbiddenMessage);
+	}
+
 	next();
 }
