@@ -230,6 +230,54 @@ describe('Log Entry Security', () => {
 	describe('PUT /users/:username/logs/:logId', () => {
 
 		it('Returns Not Found if user does not exist', done => {
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => admin
+					.agent
+					.put(`/users/not_a_user/logs/${ entity.id }`))
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Returns Not Found if log entry does not belong to the specified user', done => {
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => admin
+					.agent
+					.put(`/users/${ user2.user.username }/logs/${ entity.id }`))
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Returns Not Found if log entry does not exist', done => {
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(() => admin
+					.agent
+					.put(`/users/${ user2.user.username }/logs/9d0f6ea0d0bc16aaef4e6de3`))
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Returns Not Found if user does not exist', done => {
 			const fake = fakeLogEntry(user3.user.id);
 			const logEntry = new LogEntry(fake);
 
@@ -393,6 +441,54 @@ describe('Log Entry Security', () => {
 	describe('DELETE /users/:username/logs/:logId', () => {
 
 		it('Returns Not Found if user does not exist', done => {
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => admin
+					.agent
+					.del(`/users/not_a_user/logs/${ entity.id }`))
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Returns Not Found if log entry does not belong to the specified user', done => {
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => admin
+					.agent
+					.del(`/users/${ user2.user.username }/logs/${ entity.id }`))
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Returns Not Found if log entry does not exist', done => {
+			const fake = fakeLogEntry(user1.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(() => admin
+					.agent
+					.del(`/users/${ user2.user.username }/logs/9d0f6ea0d0bc16aaef4e6de3`))
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Returns Not Found if user does not exist', done => {
 			const fake = fakeLogEntry(user3.user.id);
 			const logEntry = new LogEntry(fake);
 
@@ -554,16 +650,113 @@ describe('Log Entry Security', () => {
 	});
 
 	describe('POST /users/:username/logs', () => {
+
+		it('Returns Not Found if user does not exist', done => {
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+
+			admin.agent
+				.post('/users/not_a_user/logs')
+				.send(fakes)
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+
+					return user1.agent
+						.post('/users/not_a_user/logs')
+						.send(fakes);
+				})
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+					done();
+				})
+				.catch(done);
+		});
+
 		it('Anonymous users cannot upload logs', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+
+			Bluebird.all(
+				[
+					request(App).post(`/users/${ user1.user.username }/logs`).send(fakes),
+					request(App).post(`/users/${ user2.user.username }/logs`).send(fakes),
+					request(App).post(`/users/${ user3.user.username }/logs`).send(fakes),
+					request(App).post(`/users/${ admin.user.username }/logs`).send(fakes)
+				])
+				.then(res => {
+					res.forEach(r => {
+						expect(r.status).to.equal(403);
+						expect(r.body.status).to.equal(403);
+						expect(r.body.errorId).to.equal(ErrorIds.forbidden);
+					});
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Admins can upload logs to any user\'s log book', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+
+			Bluebird.all(
+				[
+					admin.agent.post(`/users/${ user1.user.username }/logs`).send(fakes),
+					admin.agent.post(`/users/${ user2.user.username }/logs`).send(fakes),
+					admin.agent.post(`/users/${ user3.user.username }/logs`).send(fakes),
+					admin.agent.post(`/users/${ admin.user.username }/logs`).send(fakes)
+				])
+				.then(res => {
+					delete fakes[0].userId;
+					delete fakes[1].userId;
+
+					for (let i = 0; i < 4; i++) {
+						expect(res[i].status).to.equal(201);
+						expect(res[i].body).to.be.an('Array');
+
+						res[i].body.forEach(e => {
+							expect(e.entryId).to.match(/^[0-9a-f]{24}$/i);
+							delete e.entryId;
+						});
+
+						expect(res[i].body).to.eql(fakes);
+					}
+
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Users cannot upload logs to other user\'s log books', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(),
+				fakeLogEntry()
+			];
+
+			Bluebird.all(
+				[
+					user1.agent.post(`/users/${ user2.user.username }/logs`).send(fakes),
+					user1.agent.post(`/users/${ user3.user.username }/logs`).send(fakes),
+					user1.agent.post(`/users/${ admin.user.username }/logs`).send(fakes)
+				])
+				.then(res => {
+					res.forEach(r => {
+						expect(r.status).to.equal(403);
+						expect(r.body.status).to.equal(403);
+						expect(r.body.errorId).to.equal(ErrorIds.forbidden);
+					});
+					done();
+				})
+				.catch(done);
 		});
 	});
 
