@@ -80,7 +80,7 @@ describe('Log Entry Security', () => {
 			logEntry.save()
 				.then(() => admin
 					.agent
-					.get(`/users/${ user2.user.username }/logs/9d0f6ea0d0bc16aaef4e6de3`))
+					.get(`/users/${ user2.user.username }/logs/${ fakeMongoId() }`))
 				.then(res => {
 					expect(res.status).to.equal(404);
 					expect(res.body.status).to.equal(404);
@@ -273,7 +273,7 @@ describe('Log Entry Security', () => {
 			logEntry.save()
 				.then(() => admin
 					.agent
-					.put(`/users/${ user2.user.username }/logs/9d0f6ea0d0bc16aaef4e6de3`))
+					.put(`/users/${ user2.user.username }/logs/${ fakeMongoId() }`))
 				.then(res => {
 					expect(res.status).to.equal(404);
 					expect(res.body.status).to.equal(404);
@@ -303,7 +303,7 @@ describe('Log Entry Security', () => {
 			const fake = fakeLogEntry();
 
 			user3.agent
-				.put(`/users/${ user3.user.username }/logs/53f48ed59d19233c0be8d3c8`)
+				.put(`/users/${ user3.user.username }/logs/${ fakeMongoId() }`)
 				.send(fake)
 				.then(res => {
 					expect(res.status).to.equal(404);
@@ -484,7 +484,7 @@ describe('Log Entry Security', () => {
 			logEntry.save()
 				.then(() => admin
 					.agent
-					.del(`/users/${ user2.user.username }/logs/9d0f6ea0d0bc16aaef4e6de3`))
+					.del(`/users/${ user2.user.username }/logs/${ fakeMongoId() }`))
 				.then(res => {
 					expect(res.status).to.equal(404);
 					expect(res.body.status).to.equal(404);
@@ -514,7 +514,7 @@ describe('Log Entry Security', () => {
 			const fake = fakeLogEntry();
 
 			user3.agent
-				.del(`/users/${ user3.user.username }/logs/53f48ed59d19233c0be8d3c8`)
+				.del(`/users/${ user3.user.username }/logs/${ fakeMongoId() }`)
 				.send(fake)
 				.then(res => {
 					expect(res.status).to.equal(404);
@@ -769,8 +769,8 @@ describe('Log Entry Security', () => {
 
 		it('Returns Not Found if user does not exist', done => {
 			const fakes = [
-				fakeLogEntry('eb61806280942d55edfb6db0'),
-				fakeLogEntry('d2c3b91d0439f9a6d4369c14')
+				fakeLogEntry(fakeMongoId()),
+				fakeLogEntry(fakeMongoId())
 			];
 
 			admin.agent

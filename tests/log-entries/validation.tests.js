@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
+import fakeMongoId from '../util/fake-mongo-id';
 import faker from 'faker';
 import Joi from 'joi';
 import { NewEntrySchema, UpdateEntrySchema } from '../../service/validation/log-entry';
@@ -39,7 +40,7 @@ describe('Log entry validation', () => {
 	});
 
 	it('Create does not allow an entry Id', () => {
-		logEntry.entryId = '088fc3b2787d4aa6f4e024d3';
+		logEntry.entryId = fakeMongoId();
 		validateCreate('object.allowUnknown');
 	});
 

@@ -5,6 +5,7 @@ import createAccount from '../util/create-fake-account';
 import mongoose from 'mongoose';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
+import fakeMongoId from '../util/fake-mongo-id';
 import LogEntry, { cleanUpLogEntry } from '../../service/data/log-entry';
 import sinon from 'sinon';
 
@@ -61,7 +62,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Not Found if entry does not exist', done => {
-			const fakeId = 'a99e1685d476a4fdce40d599';
+			const fakeId = fakeMongoId();
 			request(App)
 				.get(`/logs/${ fakeId }`)
 				.then(res => {
@@ -75,7 +76,7 @@ describe('Logs Controller', () => {
 			stub = sinon.stub(LogEntry, 'findById');
 			stub.rejects('nope');
 
-			const fakeId = 'a99e1685d476a4fdce40d599';
+			const fakeId = fakeMongoId();
 			request(App)
 				.get(`/users/${ user1.user.username }/logs/${ fakeId }`)
 				.then(res => {
@@ -237,7 +238,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Not Found if the log engry does not exit', done => {
 			const fake = fakeLogEntry();
-			fake.entryId = 'b5ca1b72aa445300db582a03';
+			fake.entryId = fakeMongoId();
 
 			user1.agent
 				.put(`/users/${ user1.user.username }/logs/${ fake.entryId }`)
@@ -330,7 +331,7 @@ describe('Logs Controller', () => {
 		});
 
 		it('Will return Not Found if the log entry does not exist', done => {
-			const entryId = '7916e401d28648cc662f8977';
+			const entryId = fakeMongoId();
 
 			user1.agent
 				.del(`/user/${ user1.user.username }/logs/${ entryId }`)
@@ -425,7 +426,7 @@ describe('Logs Controller', () => {
 				.then(res => {
 					fakes[0].entryId = res[0].id;
 					fakes[1].entryId = res[1].id;
-					fakes[2].entryId = '51c6d4fc8fbf1b3e1244b3ed';
+					fakes[2].entryId = fakeMongoId();
 
 					delete fakes[0].userId;
 					delete fakes[1].userId;
@@ -456,9 +457,9 @@ describe('Logs Controller', () => {
 
 		it('Will return an empty array if none of the records can be found', done => {
 			const fakes = [
-				{ entryId: '29af670e6738361f4f34be16', ...fakeLogEntry() },
-				{ entryId: 'ab2e0cf79f5f34c6014292f1', ...fakeLogEntry() },
-				{ entryId: '7b201421444172c41ecdf766', ...fakeLogEntry() }
+				{ entryId: fakeMongoId(), ...fakeLogEntry() },
+				{ entryId: fakeMongoId(), ...fakeLogEntry() },
+				{ entryId: fakeMongoId(), ...fakeLogEntry() }
 			];
 
 			user1.agent
@@ -664,7 +665,7 @@ describe('Logs Controller', () => {
 					logEntries[0].save(),
 					logEntries[1].save(),
 					logEntries[2].save()
-				], 'a2603a50e9ea2b2ce68c8147')
+				], fakeMongoId())
 				.then(() => user1.agent
 					.del(`/users/${ user1.user.username }/logs`)
 					.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]))
@@ -688,9 +689,9 @@ describe('Logs Controller', () => {
 
 		it('Will succeed even if no entries are found', done => {
 			const entryIds = [
-				'3fcb29793936e7c81d222432',
-				'cac63fdf32b968e8bdc2ef76',
-				'113caa26363c46a29e95b0ce'
+				fakeMongoId(),
+				fakeMongoId(),
+				fakeMongoId()
 			];
 
 			user1.agent
