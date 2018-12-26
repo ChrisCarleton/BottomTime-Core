@@ -4,6 +4,7 @@ import Bluebird from 'bluebird';
 import createAccount from '../util/create-fake-account';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
+import fakeMongoId from '../util/fake-mongo-id';
 import LogEntry from '../../service/data/log-entry';
 import { ErrorIds } from '../../service/utils/error-response';
 
@@ -940,16 +941,152 @@ describe('Log Entry Security', () => {
 	});
 
 	describe('DELETE /users/:username/logs', () => {
+
+		it('Returns Not Found if user does not exist', done => {
+			const fakeIds = [
+				fakeMongoId(),
+				fakeMongoId()
+			];
+
+			admin.agent
+				.del('/users/not_a_user/logs')
+				.send(fakeIds)
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+
+					return user1.agent
+						.del('/users/not_a_user/logs')
+						.send(fakeIds);
+				})
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+					done();
+				})
+				.catch(done);
+		});
+
 		it('Anonymous users cannot delete logs', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user3.user.id),
+				fakeLogEntry(user3.user.id),
+				fakeLogEntry(admin.user.id),
+				fakeLogEntry(admin.user.id)
+			];
+
+			const savePromises = [];
+			fakes.forEach(fake => {
+				savePromises.push(new LogEntry(fake).save());
+			});
+
+			Bluebird.all(savePromises)
+				.then(entries => Bluebird
+					.all([
+						request(App)
+							.del(`/users/${ user1.user.username }/logs`)
+							.send([ entries[0].id, entries[1].id ]),
+						request(App)
+							.del(`/users/${ user2.user.username }/logs`)
+							.send([ entries[2].id, entries[3].id ]),
+						request(App)
+							.del(`/users/${ user3.user.username }/logs`)
+							.send([ entries[4].id, entries[5].id ]),
+						request(App)
+							.del(`/users/${ admin.user.username }/logs`)
+							.send([ entries[6].id, entries[7].id ])
+					]))
+				.then(res => {
+					res.forEach(r => {
+						expect(r.status).to.equal(403);
+						expect(r.body.status).to.equal(403);
+						expect(r.body.errorId).to.equal(ErrorIds.forbidden);
+					});
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Admins can delete logs from any user\'s log book', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user3.user.id),
+				fakeLogEntry(user3.user.id)
+			];
+
+			const savePromises = [];
+			fakes.forEach(fake => {
+				savePromises.push(new LogEntry(fake).save());
+			});
+
+			Bluebird.all(savePromises)
+				.then(entries => Bluebird
+					.all([
+						admin.agent
+							.del(`/users/${ user1.user.username }/logs`)
+							.send([ entries[0].id, entries[1].id ]),
+						admin.agent
+							.del(`/users/${ user2.user.username }/logs`)
+							.send([ entries[2].id, entries[3].id ]),
+						admin.agent
+							.del(`/users/${ user3.user.username }/logs`)
+							.send([ entries[4].id, entries[5].id ])
+					]))
+				.then(res => {
+					for (let i = 0; i < res.length; i++) {
+						expect(res[i].status).to.equal(200);
+					}
+					done();
+				})
+				.catch(done);
 		});
 
 		it('Users cannot delete logs from other user\'s log books', done => {
-			done();
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(admin.user.id),
+				fakeLogEntry(admin.user.id)
+			];
+
+			const savePromises = [];
+			fakes.forEach(fake => {
+				savePromises.push(new LogEntry(fake).save());
+			});
+
+			Bluebird.all(savePromises)
+				.then(entries => Bluebird
+					.all([
+						user3.agent
+							.del(`/users/${ user1.user.username }/logs`)
+							.send([ entries[0].id, entries[1].id ]),
+						user3.agent
+							.del(`/users/${ user2.user.username }/logs`)
+							.send([ entries[2].id, entries[3].id ]),
+						user3.agent
+							.del(`/users/${ admin.user.username }/logs`)
+							.send([ entries[4].id, entries[5].id ])
+					]))
+				.then(res => {
+					res.forEach(r => {
+						expect(r.status).to.equal(403);
+						expect(r.body.status).to.equal(403);
+						expect(r.body.errorId).to.equal(ErrorIds.forbidden);
+					});
+					done();
+				})
+				.catch(done);
 		});
 	});
 });
