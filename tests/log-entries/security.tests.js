@@ -35,6 +35,10 @@ describe('Log Entry Security', () => {
 		user3.agent.close();
 	});
 
+	afterEach(done => {
+		LogEntry.deleteMany({}, done);
+	});
+
 	describe('GET /users/:username/logs/:logId', () => {
 		it('Returns Not Found if user does not exist', done => {
 			const fake = fakeLogEntry(user1.user.id);
@@ -761,16 +765,177 @@ describe('Log Entry Security', () => {
 	});
 
 	describe('PUT /users/:username/logs', () => {
-		it('Anonymous users cannot upload logs', done => {
-			done();
+
+		it('Returns Not Found if user does not exist', done => {
+			const fakes = [
+				fakeLogEntry('eb61806280942d55edfb6db0'),
+				fakeLogEntry('d2c3b91d0439f9a6d4369c14')
+			];
+
+			admin.agent
+				.put('/users/not_a_user/logs')
+				.send(fakes)
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+
+					return user1.agent
+						.post('/users/not_a_user/logs')
+						.send(fakes);
+				})
+				.then(res => {
+					expect(res.status).to.equal(404);
+					expect(res.body.status).to.equal(404);
+					expect(res.body.errorId).to.equal(ErrorIds.notFound);
+					done();
+				})
+				.catch(done);
 		});
 
-		it('Admins can upload logs to any user\'s log book', done => {
-			done();
+		it('Anonymous users cannot update logs', done => {
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user3.user.id),
+				fakeLogEntry(user3.user.id),
+				fakeLogEntry(admin.user.id),
+				fakeLogEntry(admin.user.id)
+			];
+
+			const savePromises = [];
+			fakes.forEach(fake => {
+				savePromises.push(new LogEntry(fake).save());
+			});
+
+			Bluebird.all(savePromises)
+				.then(entities => {
+					const expected = _.map(entities, e => ({
+						entryId: e.id,
+						...fakeLogEntry()
+					}));
+
+					return Bluebird.all([
+						request(App)
+							.put(`/users/${ user1.user.username }/logs`)
+							.send([ expected[0], expected[1] ]),
+						request(App)
+							.put(`/users/${ user2.user.username }/logs`)
+							.send([ expected[2], expected[3] ]),
+						request(App)
+							.put(`/users/${ user3.user.username }/logs`)
+							.send([ expected[4], expected[5] ]),
+						request(App)
+							.put(`/users/${ admin.user.username }/logs`)
+							.send([ expected[6], expected[7] ])
+					]);
+				})
+				.then(res => {
+					res.forEach(r => {
+						expect(r.status).to.equal(403);
+						expect(r.body.status).to.equal(403);
+						expect(r.body.errorId).to.equal(ErrorIds.forbidden);
+					});
+					done();
+				})
+				.catch(done);
 		});
 
-		it('Users cannot upload logs to other user\'s log books', done => {
-			done();
+		it('Admins can update logs in any user\'s log book', done => {
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user3.user.id),
+				fakeLogEntry(user3.user.id)
+			];
+			let expected = null;
+
+			const savePromises = [];
+			fakes.forEach(fake => {
+				savePromises.push(new LogEntry(fake).save());
+			});
+
+			Bluebird.all(savePromises)
+				.then(entities => {
+					expected = _.map(entities, e => {
+						const newData = {
+							entryId: e.id,
+							...fakeLogEntry()
+						};
+
+						delete newData.userId;
+						return newData;
+					});
+
+					return Bluebird.all([
+						admin.agent
+							.put(`/users/${ user1.user.username }/logs`)
+							.send([ expected[0], expected[1] ]),
+						admin.agent
+							.put(`/users/${ user2.user.username }/logs`)
+							.send([ expected[2], expected[3] ]),
+						admin.agent
+							.put(`/users/${ user3.user.username }/logs`)
+							.send([ expected[4], expected[5] ])
+					]);
+				})
+				.then(res => {
+					for (let i = 0; i < res.length; i++) {
+						expect(res[i].status).to.equal(200);
+						expect(res[i].body).to.eql([ expected[i * 2], expected[(i * 2) + 1] ]);
+					}
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Users cannot update logs in other user\'s log books', done => {
+			const fakes = [
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user1.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(user2.user.id),
+				fakeLogEntry(admin.user.id),
+				fakeLogEntry(admin.user.id)
+			];
+
+			const savePromises = [];
+			fakes.forEach(fake => {
+				savePromises.push(new LogEntry(fake).save());
+			});
+
+			Bluebird.all(savePromises)
+				.then(entities => {
+					const expected = _.map(entities, e => ({
+						entryId: e.id,
+						...fakeLogEntry()
+					}));
+
+					return Bluebird.all([
+						user3.agent
+							.put(`/users/${ user1.user.username }/logs`)
+							.send([ expected[0], expected[1] ]),
+						user3.agent
+							.put(`/users/${ user2.user.username }/logs`)
+							.send([ expected[2], expected[3] ]),
+						user3.agent
+							.put(`/users/${ admin.user.username }/logs`)
+							.send([ expected[4], expected[5] ])
+					]);
+				})
+				.then(res => {
+					res.forEach(r => {
+						expect(r.status).to.equal(403);
+						expect(r.body.status).to.equal(403);
+						expect(r.body.errorId).to.equal(ErrorIds.forbidden);
+					});
+					done();
+				})
+				.catch(done);
 		});
 	});
 
