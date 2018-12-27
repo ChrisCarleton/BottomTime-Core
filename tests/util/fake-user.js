@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import faker from 'faker';
 
-export default password => {
+export default (password, logsVisibility = 'friends-only') => {
 	const firstName = faker.name.firstName();
 	const lastName = faker.name.lastName();
 	const username = faker.internet.userName(firstName, lastName);
@@ -14,6 +14,9 @@ export default password => {
 		username,
 		email,
 		createdAt: faker.date.past(5),
-		passwordHash: bcrypt.hashSync(password, 5)
+		passwordHash: bcrypt.hashSync(password, 5),
+		logsVisibility,
+		firstName,
+		lastName
 	};
 };

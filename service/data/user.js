@@ -38,7 +38,14 @@ const userSchema = mongoose.Schema({
 		type: Boolean,
 		required: true,
 		default: false
-	}
+	},
+	logsVisibility: {
+		type: String,
+		required: true,
+		default: 'friends-only'
+	},
+	firstName: String,
+	lastName: String
 });
 
 userSchema.statics.findByUsername = function (username, done) {
