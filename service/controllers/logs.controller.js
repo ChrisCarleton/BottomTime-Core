@@ -183,7 +183,7 @@ export function RetrieveLogEntry(req, res, next) {
 }
 
 export function AssertLogBookReadPermission(req, res, next) {
-	if (req.user && req.user.role === 'admin') {
+	if (req.user && (req.user.role === 'admin' || req.user.id === req.account.id)) {
 		return next();
 	}
 
@@ -191,7 +191,7 @@ export function AssertLogBookReadPermission(req, res, next) {
 		return next();
 	}
 
-	forbidden(res, 'You are not permitted to view this log entry');
+	forbidden(res, 'You are not permitted to perform the requested action on this log entry');
 }
 
 export function AssertLogBookWritePermission(req, res, next) {

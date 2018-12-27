@@ -48,7 +48,7 @@ describe('Logs Controller', () => {
 			delete fake.userId;
 
 			logEntry.save()
-				.then(entry => request(App)
+				.then(entry => user1.agent
 					.get(`/users/${ user1.user.username }/logs/${ entry.id }`))
 				.then(res => {
 					expect(res.status).to.equal(200);
@@ -225,11 +225,12 @@ describe('Logs Controller', () => {
 				})
 				.then(res => {
 					expect(res.status).to.equal(200);
-					return request(App)
+					return user1.agent
 						.get(`/users/${ user1.user.username }/logs/${ entryId }`);
 				})
 				.then(res => {
 					fake.entryId = entryId;
+					expect(res.status).to.equal(200);
 					expect(res.body).to.eql(fake);
 					done();
 				})

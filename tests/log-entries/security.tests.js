@@ -18,7 +18,7 @@ describe('Log Entry Security', () => {
 		Bluebird
 			.all([
 				createAccount('admin'),
-				createAccount(),
+				createAccount('user', 'public'),
 				createAccount('user', 'friends-only'),
 				createAccount('user', 'private')
 			])
@@ -162,6 +162,42 @@ describe('Log Entry Security', () => {
 					fake.entryId = entity.id;
 					delete fake.userId;
 					return admin.agent.get(`/users/${ user2.user.username }/logs/${ entity.id }`);
+				})
+				.then(res => {
+					expect(res.status).to.equal(200);
+					expect(res.body).to.eql(fake);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Users can view their own private logs', done => {
+			const fake = fakeLogEntry(user3.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => {
+					fake.entryId = entity.id;
+					delete fake.userId;
+					return user3.agent.get(`/users/${ user3.user.username }/logs/${ entity.id }`);
+				})
+				.then(res => {
+					expect(res.status).to.equal(200);
+					expect(res.body).to.eql(fake);
+					done();
+				})
+				.catch(done);
+		});
+
+		it('Users can view their own friends-only logs', done => {
+			const fake = fakeLogEntry(user2.user.id);
+			const logEntry = new LogEntry(fake);
+
+			logEntry.save()
+				.then(entity => {
+					fake.entryId = entity.id;
+					delete fake.userId;
+					return user2.agent.get(`/users/${ user2.user.username }/logs/${ entity.id }`);
 				})
 				.then(res => {
 					expect(res.status).to.equal(200);
