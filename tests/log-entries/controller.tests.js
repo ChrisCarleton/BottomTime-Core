@@ -8,6 +8,7 @@ import fakeLogEntry from '../util/fake-log-entry';
 import fakeMongoId from '../util/fake-mongo-id';
 import LogEntry, { cleanUpLogEntry } from '../../service/data/log-entry';
 import sinon from 'sinon';
+import User from '../../service/data/user';
 
 let stub = null;
 
@@ -24,9 +25,10 @@ describe('Logs Controller', () => {
 			.catch(done);
 	});
 
-	after(() => {
+	after(done => {
 		admin.agent.close();
 		user1.agent.close();
+		User.deleteMany({}, done);
 	});
 
 	afterEach(done => {

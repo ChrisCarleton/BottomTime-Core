@@ -2,11 +2,12 @@ import _ from 'lodash';
 import { App } from '../../service/server';
 import Bluebird from 'bluebird';
 import createAccount from '../util/create-fake-account';
+import { ErrorIds } from '../../service/utils/error-response';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import fakeMongoId from '../util/fake-mongo-id';
 import LogEntry from '../../service/data/log-entry';
-import { ErrorIds } from '../../service/utils/error-response';
+import User from '../../service/data/user';
 
 describe('Log Entry Security', () => {
 	let admin = null;
@@ -29,11 +30,12 @@ describe('Log Entry Security', () => {
 			.catch(done);
 	});
 
-	after(() => {
+	after(done => {
 		admin.agent.close();
 		user1.agent.close();
 		user2.agent.close();
 		user3.agent.close();
+		User.deleteMany({}, done);
 	});
 
 	afterEach(done => {
@@ -74,13 +76,7 @@ describe('Log Entry Security', () => {
 		});
 
 		it('Returns Not Found if log entry does not exist', done => {
-			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
-
-			logEntry.save()
-				.then(() => admin
-					.agent
-					.get(`/users/${ user2.user.username }/logs/${ fakeMongoId() }`))
+			admin.agent.get(`/users/${ user2.user.username }/logs/${ fakeMongoId() }`)
 				.then(res => {
 					expect(res.status).to.equal(404);
 					expect(res.body.status).to.equal(404);
@@ -225,7 +221,7 @@ describe('Log Entry Security', () => {
 				.catch(done);
 		});
 
-		it('Users can view logs when log books are pulbic', done => {
+		it('Users can view logs when log books are public', done => {
 			const fake = fakeLogEntry(user1.user.id);
 			const logEntry = new LogEntry(fake);
 
@@ -271,13 +267,7 @@ describe('Log Entry Security', () => {
 	describe('PUT /users/:username/logs/:logId', () => {
 
 		it('Returns Not Found if user does not exist', done => {
-			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
-
-			logEntry.save()
-				.then(entity => admin
-					.agent
-					.put(`/users/not_a_user/logs/${ entity.id }`))
+			admin.agent.put(`/users/not_a_user/logs/${ fakeMongoId() }`)
 				.then(res => {
 					expect(res.status).to.equal(404);
 					expect(res.body.status).to.equal(404);
@@ -482,13 +472,7 @@ describe('Log Entry Security', () => {
 	describe('DELETE /users/:username/logs/:logId', () => {
 
 		it('Returns Not Found if user does not exist', done => {
-			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
-
-			logEntry.save()
-				.then(entity => admin
-					.agent
-					.del(`/users/not_a_user/logs/${ entity.id }`))
+			admin.agent.del(`/users/not_a_user/logs/${ fakeMongoId() }`)
 				.then(res => {
 					expect(res.status).to.equal(404);
 					expect(res.body.status).to.equal(404);
@@ -514,13 +498,7 @@ describe('Log Entry Security', () => {
 		});
 
 		it('Returns Not Found if log entry does not exist', done => {
-			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
-
-			logEntry.save()
-				.then(() => admin
-					.agent
-					.del(`/users/${ user2.user.username }/logs/${ fakeMongoId() }`))
+			admin.agent.del(`/users/${ user2.user.username }/logs/${ fakeMongoId() }`)
 				.then(res => {
 					expect(res.status).to.equal(404);
 					expect(res.body.status).to.equal(404);
@@ -777,7 +755,7 @@ describe('Log Entry Security', () => {
 				.catch(done);
 		});
 
-		it('Users cannot upload logs to other user\'s log books', done => {
+		it('Users cannot upload logs to other users\' log books', done => {
 			const fakes = [
 				fakeLogEntry(),
 				fakeLogEntry()
@@ -891,12 +869,7 @@ describe('Log Entry Security', () => {
 			];
 			let expected = null;
 
-			const savePromises = [];
-			fakes.forEach(fake => {
-				savePromises.push(new LogEntry(fake).save());
-			});
-
-			Bluebird.all(savePromises)
+			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entities => {
 					expected = _.map(entities, e => {
 						const newData = {
@@ -940,12 +913,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			const savePromises = [];
-			fakes.forEach(fake => {
-				savePromises.push(new LogEntry(fake).save());
-			});
-
-			Bluebird.all(savePromises)
+			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entities => {
 					const expected = _.map(entities, e => ({
 						entryId: e.id,
@@ -1017,12 +985,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			const savePromises = [];
-			fakes.forEach(fake => {
-				savePromises.push(new LogEntry(fake).save());
-			});
-
-			Bluebird.all(savePromises)
+			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entries => Bluebird
 					.all([
 						request(App)
@@ -1059,12 +1022,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(user3.user.id)
 			];
 
-			const savePromises = [];
-			fakes.forEach(fake => {
-				savePromises.push(new LogEntry(fake).save());
-			});
-
-			Bluebird.all(savePromises)
+			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entries => Bluebird
 					.all([
 						admin.agent
@@ -1096,12 +1054,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			const savePromises = [];
-			fakes.forEach(fake => {
-				savePromises.push(new LogEntry(fake).save());
-			});
-
-			Bluebird.all(savePromises)
+			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entries => Bluebird
 					.all([
 						user3.agent
