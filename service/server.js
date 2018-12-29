@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import containerMetadata from './utils/container-metadata';
 import compression from 'compression';
 import config from './config';
+import cors from 'cors';
 import database from './data/database';
 import express from 'express';
 import glob from 'glob';
@@ -45,6 +46,7 @@ const MongoDbStore = require('connect-mongo')(session);
 
 app.use(compression());
 app.use(serverErrorMiddleware);
+app.use(cors());
 app.use(session({
 	resave: true,
 	saveUninitialized: false,

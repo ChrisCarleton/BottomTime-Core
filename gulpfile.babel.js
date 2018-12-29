@@ -32,6 +32,12 @@ function test() {
 
 function serve(done) {
 	devServer.start();
+	log('Dev server started.');
+	done();
+}
+
+function watch(done) {
+	devServer.start();
 	gulp.watch([ 'service/**/*.js' ], file => {
 		devServer.start.bind(devServer);
 		log(`Changes detected to ${ file }; Dev server restarted.`);
@@ -48,4 +54,4 @@ gulp.task('test', test);
 
 gulp.task('serve', serve);
 
-gulp.task('default', serve);
+gulp.task('default', watch);
