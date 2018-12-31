@@ -35,7 +35,7 @@ variable "google_client_secret" {
 
 variable "instance_type" {
 	type = "string"
-	default = "t3.micro"
+	default = "t3.small"
 }
 
 variable "latency_low_threshold" {
