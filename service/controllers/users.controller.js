@@ -120,6 +120,7 @@ export function CreateUserAccount(req, res) {
 					return serverError(res, logId);
 				}
 
+				req.log.info('Created account for and logged in user ', entity.username);
 				res.status(201).json(cleanUpUser(entity));
 			});
 		})
