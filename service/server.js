@@ -45,9 +45,7 @@ const app = express();
 const MongoDbStore = require('connect-mongo')(session);
 
 app.use(compression());
-app.use(modRewrite([
-	'^/api/(.*) /$1'
-]));
+app.use(modRewrite([ '^/api/(.*) /$1' ]));
 app.use(serverErrorMiddleware);
 app.use(session({
 	resave: true,
