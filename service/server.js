@@ -10,6 +10,7 @@ import express from 'express';
 import glob from 'glob';
 import http from 'http';
 import log, { requestLogger } from './logger';
+import modRewrite from 'connect-modrewrite';
 import moment from 'moment';
 import { notFound, serverErrorMiddleware } from './utils/error-response';
 import path from 'path';
@@ -44,6 +45,7 @@ const app = express();
 const MongoDbStore = require('connect-mongo')(session);
 
 app.use(compression());
+app.use(modRewrite([ '^/api/(.*) /$1' ]));
 app.use(serverErrorMiddleware);
 app.use(session({
 	resave: true,
