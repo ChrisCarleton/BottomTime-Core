@@ -2,49 +2,49 @@ import Bluebird from 'bluebird';
 import database from '../data/database';
 import { logError } from '../logger';
 
-function GetMongoDbHealth() {
+async function GetMongoDbHealth() {
 	const response = {
 		name: 'MongoDB'
 	};
 
-	return database.connection.db.stats()
-		.then(() => ({
+	try {
+		await database.connection.db.stats();
+		return {
 			...response,
 			health: 'healthy',
 			details: 'MongoDB is responding to requests.'
-		}))
-		.catch(err => {
-			logError('Health check failure.', err);
-			return {
-				...response,
-				health: 'unhealthy',
-				details: 'There was a problem connecting to and/or querying the database.'
-			};
-		});
+		};
+	} catch (err) {
+		logError('Health check failure.', err);
+		return {
+			...response,
+			health: 'unhealthy',
+			details: 'There was a problem connecting to and/or querying the database.'
+		};
+	}
 }
 
-export function GetHealth(req, res) {
-	Bluebird.all([ GetMongoDbHealth() ])
-		.then(components => {
-			let health = 'healthy';
-			let status = 200;
-			for (let i = 0; i < components.length; i++) {
-				if (components[i].health === 'unhealthy') {
-					health = 'unhealthy';
-					status = 500;
-					break;
-				}
+export async function GetHealth(req, res) {
+	const components = await Bluebird.all([ GetMongoDbHealth() ]);
+	let health = 'healthy';
+	let status = 200;
 
-				if (components[i].health === 'warn') {
-					health = 'warn';
-				}
-			}
+	for (let i = 0; i < components.length; i++) {
+		if (components[i].health === 'unhealthy') {
+			health = 'unhealthy';
+			status = 500;
+			break;
+		}
 
-			res.status(status).json({
-				status: health,
-				components
-			});
-		});
+		if (components[i].health === 'warn') {
+			health = 'warn';
+		}
+	}
+
+	res.status(status).json({
+		status: health,
+		components
+	});
 }
 
 export function GetVersion(req, res) {

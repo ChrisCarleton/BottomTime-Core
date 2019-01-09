@@ -15,7 +15,7 @@ import templates from '../mail/templates';
 import User, { cleanUpUser } from '../data/user';
 import uuid from 'uuid/v4';
 
-export function RequireAccountPermission(req, res, next) {
+export async function RequireAccountPermission(req, res, next) {
 	if (!req.user) {
 		return forbidden(res, 'You must be authenticated to perform this action');
 	}
@@ -26,185 +26,188 @@ export function RequireAccountPermission(req, res, next) {
 			'You do not have permission to change the password for the desired account');
 	}
 
-	User.findByUsername(req.params.username)
-		.then(user => {
-			if (!user) {
-				return forbidden(
-					res,
-					'You do not have permission to change the password for the desired account');
-			}
+	try {
+		const user = await User.findByUsername(req.params.username);
+		if (!user) {
+			return forbidden(
+				res,
+				'You do not have permission to change the password for the desired account');
+		}
 
-			req.account = user;
-			next();
-		})
-		.catch(err => {
-			const logId = logError('Failed to retrieve user account from database', err);
-			serverError(res, logId);
-		});
+		req.account = user;
+		return next();
+	} catch (err) {
+		const logId = logError('Failed to retrieve user account from database', err);
+		serverError(res, logId);
+	}
 }
 
-export function CreateUserAccount(req, res) {
+function validateCreateUserAccount(req, res) {
 	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema);
 	const isBodyValid = Joi.validate(req.body, UserAccountSchema);
 
 	if (isUsernameValid.error) {
-		return badRequest(
+		badRequest(
 			'Username is invlaid - unable to create user account.',
 			isUsernameValid.error.details,
 			res);
+		return false;
 	}
 
 	if (isBodyValid.error) {
-		return badRequest(
+		badRequest(
 			'Unable to create user account. Validation errors follow.',
 			isBodyValid.error.details,
 			res);
+		return false;
 	}
 
 	if (!req.user && req.body.role !== 'user') {
-		return forbidden(
+		forbidden(
 			res,
 			'Anonymous users can only create accounts with the role set to "user".');
+		return false;
 	}
 
 	if (req.user && req.user.role !== 'admin') {
-		return forbidden(
+		forbidden(
 			res,
 			`You are already signed in as "${ req.user.username }" and are not authorized to create a new account.`);
+		return false;
 	}
 
-	const user = new User({
-		email: req.body.email,
-		role: req.body.role,
-		username: req.params.username,
-		usernameLower: req.params.username.toLowerCase(),
-		emailLower: req.body.email.toLowerCase(),
-		passwordHash: bcrypt.hashSync(req.body.password, 10),
-		createdAt: moment().utc().toDate()
-	});
+	return true;
+}
 
-	Bluebird
-		.all([
-			User.findByUsername(req.params.username),
-			User.findByEmail(req.body.email)
-		])
-		.then(conflicts => {
-			if (conflicts[0]) {
-				return conflict(
-					res,
-					'username',
-					'The account could not be created because the specified username is already taken.');
-			}
+export async function CreateUserAccount(req, res) {
+	if (!validateCreateUserAccount(req, res)) {
+		return;
+	}
 
-			if (conflicts[1]) {
-				return conflict(
-					res,
-					'email',
-					'The account could not be created because the specified email address is already taken.');
-			}
-
-			return user.save();
-		})
-		.then(entity => {
-			if (!entity) {
-				return;
-			}
-
-			if (req.user && req.user.role === 'admin') {
-				return res.status(201).json(cleanUpUser(req.user));
-			}
-
-			req.login(entity, err => {
-				if (err) {
-					const logId = logError('Failed to sign in user due to server error', err);
-					return serverError(res, logId);
-				}
-
-				req.log.info('Created account for and logged in user ', entity.username);
-				res.status(201).json(cleanUpUser(entity));
-			});
-		})
-		.catch(err => {
-			const logId = logError('Failed to create user account due to server error', err);
-			serverError(res, logId);
+	try {
+		const user = new User({
+			email: req.body.email,
+			role: req.body.role,
+			username: req.params.username,
+			usernameLower: req.params.username.toLowerCase(),
+			emailLower: req.body.email.toLowerCase(),
+			passwordHash: await bcrypt.hash(req.body.password, 10),
+			createdAt: moment().utc().toDate()
 		});
+
+		const [ usernameConflict, emailConflict ] = await Bluebird.all(
+			[
+				User.findByUsername(req.params.username),
+				User.findByEmail(req.body.email)
+			]
+		);
+
+		if (usernameConflict) {
+			return conflict(
+				res,
+				'username',
+				'The account could not be created because the specified username is already taken.');
+		}
+
+		if (emailConflict) {
+			return conflict(
+				res,
+				'email',
+				'The account could not be created because the specified email address is already taken.');
+		}
+
+		const entity = await user.save();
+
+		if (req.user && req.user.role === 'admin') {
+			return res.status(201).json(cleanUpUser(req.user));
+		}
+
+		req.login(entity, err => {
+			if (err) {
+				const logId = logError('Failed to sign in user due to server error', err);
+				return serverError(res, logId);
+			}
+
+			req.log.info('Created account for and logged in user ', entity.username);
+			res.status(201).json(cleanUpUser(entity));
+		});
+	} catch (err) {
+		const logId = logError('Failed to create user account due to server error', err);
+		serverError(res, logId);
+	}
 }
 
 export function ChangeEmail(req, res) {
 	res.sendStatus(501);
 }
 
-export function ChangePassword(req, res) {
-	const isValid = Joi.validate(req.body, ChangePasswordSchema);
-	if (isValid.error) {
-		return badRequest(
-			'Request was invalid. Mostly likely, the new password did not meet strength requirements.',
-			isValid.error,
-			res);
+export async function ChangePassword(req, res) {
+	try {
+		const isValid = Joi.validate(req.body, ChangePasswordSchema);
+		if (isValid.error) {
+			return badRequest(
+				'Request was invalid. Mostly likely, the new password did not meet strength requirements.',
+				isValid.error,
+				res);
+		}
+
+		if (req.user.role !== 'admin'
+			&& req.account.passwordHash
+			&& !(await bcrypt.compare(req.body.oldPassword, req.account.passwordHash))) {
+
+			return forbidden(
+				res,
+				'Unable to change the password. Old password was incorrect.');
+		}
+
+		req.account.passwordHash = await bcrypt.hash(req.body.newPassword, 10);
+		await req.account.save();
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = logError('Failed to save new password', err);
+		serverError(res, logId);
 	}
-
-	if (req.user.role !== 'admin'
-		&& req.account.passwordHash
-		&& !bcrypt.compareSync(req.body.oldPassword, req.account.passwordHash)) {
-
-		return forbidden(
-			res,
-			'Unable to change the password. Old password was incorrect.');
-	}
-
-	req.account.passwordHash = bcrypt.hashSync(req.body.newPassword, 10);
-	req.account.save()
-		.then(() => {
-			res.sendStatus(204);
-		})
-		.catch(err => {
-			const logId = logError('Failed to save new password', err);
-			serverError(res, logId);
-		});
 }
 
-export function RequestPasswordReset(req, res) {
-	let token = null;
-	let userEntity = null;
+export async function RequestPasswordReset(req, res) {
+	try {
+		let token = null;
+		let userEntity = null;
 
-	User.findByUsername(req.params.username)
-		.then(user => {
-			if (!user) {
-				return;
-			}
+		const user = await User.findByUsername(req.params.username);
+		if (!user) {
+			return res.sendStatus(204);
+		}
 
-			userEntity = user;
-			token = uuid();
-			user.passwordResetToken = token;
-			user.passwordResetExpiration = moment().add(1, 'd').utc().toDate();
-			return user.save();
-		})
-		.then(entity => {
-			if (!entity) {
-				return;
-			}
+		userEntity = user;
+		token = uuid();
+		user.passwordResetToken = token;
+		user.passwordResetExpiration = moment().add(1, 'd').utc().toDate();
 
-			const mailTemplate = templates.ResetPasswordEmail(
-				userEntity.username,
-				userEntity.username,
-				token);
+		const entity = await user.save();
+		if (!entity) {
+			return res.sendStatus(204);
+		}
 
-			return mailer.sendMail({
-				to: userEntity.email,
-				subject: 'Reset BottomTime password',
-				html: mailTemplate
-			});
-		})
-		.then(() => {
-			res.sendStatus(204);
-		})
-		.catch(err => {
-			const logId = logError('Failed establish password reset window. See details.', err);
-			serverError(res, logId);
+		const mailTemplate = templates.ResetPasswordEmail(
+			userEntity.username,
+			userEntity.username,
+			token);
+
+		await mailer.sendMail({
+			to: userEntity.email,
+			subject: 'Reset BottomTime password',
+			html: mailTemplate
 		});
+
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = logError('Failed establish password reset window. See details.', err);
+		serverError(res, logId);
+	}
 }
 
-export function ConfirmPasswordReset(req, res) {
+export async function ConfirmPasswordReset(req, res) {
 	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema);
 	if (isUsernameValid.error) {
 		return badRequest(
@@ -221,33 +224,30 @@ export function ConfirmPasswordReset(req, res) {
 			res);
 	}
 
-	User.findByUsername(req.params.username)
-		.then(user => {
-			if (!user
-				|| !user.passwordResetToken
-				|| user.passwordResetToken !== req.body.resetToken
-				|| !user.passwordResetExpiration
-				|| moment().diff(moment(user.passwordResetExpiration), 's') >= 0) {
+	try {
+		const user = await User.findByUsername(req.params.username);
 
-				return forbidden(
-					res,
-					'You are not permitted to reset the password on the request account');
-			}
+		if (!user
+			|| !user.passwordResetToken
+			|| user.passwordResetToken !== req.body.resetToken
+			|| !user.passwordResetExpiration
+			|| moment().diff(moment(user.passwordResetExpiration), 's') >= 0) {
 
-			user.passwordHash = bcrypt.hashSync(req.body.newPassword, 10);
-			user.passwordResetToken = null;
-			user.passwordResetExpiration = null;
-			return user.save();
-		})
-		.then(entity => {
-			if (!entity) {
-				return;
-			}
+			return forbidden(
+				res,
+				'You are not permitted to reset the password on the request account');
+		}
 
-			res.sendStatus(204);
-		})
-		.catch(err => {
-			const logId = logError('Failed to update user\'s password in the database', err);
-			serverError(res, logId);
-		});
+		user.passwordHash = await bcrypt.hash(req.body.newPassword, 10);
+		user.passwordResetToken = null;
+		user.passwordResetExpiration = null;
+
+		await user.save();
+
+		res.sendStatus(204);
+
+	} catch (err) {
+		const logId = logError('Failed to update user\'s password in the database', err);
+		serverError(res, logId);
+	}
 }

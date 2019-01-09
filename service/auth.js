@@ -12,39 +12,42 @@ passport.serializeUser((user, done) => {
 	done(null, user.id);
 });
 
-passport.deserializeUser((id, done) => {
-	User.findById(id)
-		.then(user => done(null, user))
-		.catch(err => {
-			/*
-				TODO: I don't have a good way of making Passport return a proper standardised. 500
-				error response. For now, I'm just logging the error and returning no user. The request
-				will be handled downstream as if the user is not logged.
+passport.deserializeUser(async (id, done) => {
+	try {
+		const user = await User.findById(id);
+		return done(null, user);
+	} catch (err) {
+		/*
+			TODO: I don't have a good way of making Passport return a proper standardised. 500
+			error response. For now, I'm just logging the error and returning no user. The request
+			will be handled downstream as if the user is not logged.
 
-				See https://github.com/ChrisCarleton/BottomTime-Core/issues/7 for more on this issue.
-			*/
-			logError('Failed to deserialize user session.', err);
-			// done({
-			// 	errorId: ErrorIds.serverError,
-			// 	logId: logId,
-			// 	status: 500,
-			// 	message: 'A server error occurred.',
-			// 	details: 'Your request could not be completed at this time. Please try again later.'
-			// });
-			done(null, false);
-		});
+			See https://github.com/ChrisCarleton/BottomTime-Core/issues/7 for more on this issue.
+		*/
+		logError('Failed to deserialize user session.', err);
+		// done({
+		// 	errorId: ErrorIds.serverError,
+		// 	logId: logId,
+		// 	status: 500,
+		// 	message: 'A server error occurred.',
+		// 	details: 'Your request could not be completed at this time. Please try again later.'
+		// });
+		return done(null, false);
+	}
 });
 
-passport.use(new LocalStrategy((username, password, done) => {
-	User.findByUsername(username)
-		.then(user => {
-			if (!user || !user.passwordHash || !bcrypt.compareSync(password, user.passwordHash)) {
-				return done(null, false);
-			}
+passport.use(new LocalStrategy(async (username, password, done) => {
+	try {
+		const user = await User.findByUsername(username);
 
-			done(null, user);
-		})
-		.catch(done);
+		if (!user || !user.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
+			return done(null, false);
+		}
+
+		return done(null, user);
+	} catch (err) {
+		return done(err);
+	}
 }));
 
 passport.use(new GoogleStrategy({
