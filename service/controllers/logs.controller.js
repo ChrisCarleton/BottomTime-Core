@@ -7,179 +7,173 @@ import LogEntry, { assignLogEntry, cleanUpLogEntry } from '../data/log-entry';
 import { NewEntrySchema, EntryId, UpdateEntrySchema } from '../validation/log-entry';
 import User from '../data/user';
 
-export function ListLogs(req, res) {
-	LogEntry.find({})
-		.then(result => {
-			res.json(_.map(result, r => cleanUpLogEntry(r)));
-		})
-		.catch(err => {
-			const logId = logError(
-				'Failed to query database records',
-				err);
-			serverError(res, logId);
-		});
+export async function ListLogs(req, res) {
+	try {
+		const entries = await LogEntry.find({});
+		res.json(_.map(entries, r => cleanUpLogEntry(r)));
+	} catch (err) {
+		const logId = logError(
+			'Failed to query database records',
+			err);
+		serverError(res, logId);
+	}
 }
 
 export function GetLog(req, res) {
 	res.json(cleanUpLogEntry(req.logEntry));
 }
 
-export function CreateLogs(req, res) {
-	const isValid = Joi.validate(req.body, Joi.array().min(1).items(NewEntrySchema));
-	if (isValid.error) {
-		return badRequest(
-			'Could not create log entries. Validation failed.',
-			isValid.error,
-			res);
+export async function CreateLogs(req, res) {
+	try {
+		const isValid = Joi.validate(req.body, Joi.array().min(1).items(NewEntrySchema));
+		if (isValid.error) {
+			return badRequest(
+				'Could not create log entries. Validation failed.',
+				isValid.error,
+				res);
+		}
+
+		const logEntries = _.map(req.body, e => {
+			e.userId = req.account.id;
+			return new LogEntry(e).save();
+		});
+
+		const entries = await Bluebird.all(logEntries);
+		res.status(201).json(_.map(entries, e => cleanUpLogEntry(e)));
+	} catch (err) {
+		const logId = logError(
+			'Failed to create database records',
+			err);
+		serverError(res, logId);
 	}
-
-	const logEntries = _.map(req.body, e => {
-		e.userId = req.account.id;
-		return new LogEntry(e).save();
-	});
-
-	Bluebird.all(logEntries)
-		.then(entries => {
-			res
-				.status(201)
-				.json(_.map(entries, e => cleanUpLogEntry(e)));
-		})
-		.catch(err => {
-			const logId = logError(
-				'Failed to create database records',
-				err);
-			serverError(res, logId);
-		});
 }
 
-export function UpdateLogs(req, res) {
-	const isValid = Joi.validate(req.body, Joi.array().min(1).max(100).items(UpdateEntrySchema));
-	if (isValid.error) {
-		return badRequest(
-			'Could not update log entries. Validation failed.',
-			isValid.error,
-			res);
+export async function UpdateLogs(req, res) {
+	try {
+		const isValid = Joi.validate(req.body, Joi.array().min(1).max(100).items(UpdateEntrySchema));
+		if (isValid.error) {
+			return badRequest(
+				'Could not update log entries. Validation failed.',
+				isValid.error,
+				res);
+		}
+
+		const entries = {};
+		req.body.forEach(e => {
+			entries[e.entryId] = e;
+		});
+
+		const foundEntries = await LogEntry.find({
+			_id: { $in: Object.keys(entries) },
+			userId: req.account.id
+		});
+
+		for (let i = 0; i < foundEntries.length; i++) {
+			assignLogEntry(foundEntries[i], entries[foundEntries[i].id]);
+		}
+
+		const result = await Bluebird.all(_.map(foundEntries, e => e.save()));
+		res.json(_.map(result, r => cleanUpLogEntry(r)));
+	} catch (err) {
+		const logId = logError(
+			'Failed to update database records',
+			err);
+		serverError(res, logId);
 	}
-
-	const entries = {};
-	req.body.forEach(e => {
-		entries[e.entryId] = e;
-	});
-
-	LogEntry.find({ _id: { $in: Object.keys(entries) }, userId: req.account.id })
-		.then(foundEntries => {
-			for (let i = 0; i < foundEntries.length; i++) {
-				assignLogEntry(foundEntries[i], entries[foundEntries[i].id]);
-			}
-
-			return Bluebird.all(_.map(foundEntries, e => e.save()));
-		})
-		.then(result => {
-			res.json(_.map(result, r => cleanUpLogEntry(r)));
-		})
-		.catch(err => {
-			const logId = logError(
-				'Failed to update database records',
-				err);
-			serverError(res, logId);
-		});
 }
 
-export function UpdateLog(req, res) {
-	const isValid = Joi.validate(req.body, NewEntrySchema);
-	if (isValid.error) {
-		return badRequest(
-			'Could not update log entry. Validation failed.',
-			isValid.error,
-			res);
+export async function UpdateLog(req, res) {
+	try {
+		const isValid = Joi.validate(req.body, NewEntrySchema);
+		if (isValid.error) {
+			return badRequest(
+				'Could not update log entry. Validation failed.',
+				isValid.error,
+				res);
+		}
+
+		assignLogEntry(req.logEntry, req.body);
+
+		await req.logEntry.save();
+		res.sendStatus(200);
+	} catch (err) {
+		const logId = logError(
+			`Failed to update database record for log entry ${ req.body.entryId }`,
+			err);
+		serverError(res, logId);
 	}
-
-	assignLogEntry(req.logEntry, req.body);
-
-	req.logEntry.save()
-		.then(() => {
-			res.sendStatus(200);
-		})
-		.catch(err => {
-			const logId = logError(
-				`Failed to update database record for log entry ${ req.body.entryId }`,
-				err);
-			serverError(res, logId);
-		});
 }
 
-export function DeleteLogs(req, res) {
-	const isValid = Joi.validate(req.body, Joi.array().items(EntryId));
-	if (isValid.error) {
-		return badRequest(
-			'Could not delete log entries. Validation failed.',
-			isValid.error,
-			res);
+export async function DeleteLogs(req, res) {
+	try {
+		const isValid = Joi.validate(req.body, Joi.array().items(EntryId));
+		if (isValid.error) {
+			return badRequest(
+				'Could not delete log entries. Validation failed.',
+				isValid.error,
+				res);
+		}
+
+		await LogEntry.deleteMany({ _id: { $in: req.body } });
+		res.sendStatus(200);
+	} catch (err) {
+		const logId = logError(
+			'Failed to delete record for log entries.',
+			err);
+		serverError(res, logId);
 	}
-
-	LogEntry.deleteMany({ _id: { $in: req.body } })
-		.then(() => {
-			res.sendStatus(200);
-		})
-		.catch(err => {
-			const logId = logError(
-				'Failed to delete record for log entries.',
-				err);
-			serverError(res, logId);
-		});
 }
 
-export function DeleteLog(req, res) {
-	LogEntry.deleteOne({ _id: req.logEntry.id })
-		.then(() => {
-			res.sendStatus(204);
-		})
-		.catch(err => {
-			const logId = logError(
-				'Failed to delete record for log entry.',
-				err);
-			serverError(res, logId);
-		});
+export async function DeleteLog(req, res) {
+	try {
+		await LogEntry.deleteOne({ _id: req.logEntry.id });
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = logError(
+			'Failed to delete record for log entry.',
+			err);
+		serverError(res, logId);
+	}
 }
 
-export function RetrieveUserAccount(req, res, next) {
-	User.findByUsername(req.params.username)
-		.then(user => {
-			if (!user) {
-				return notFound(req, res);
-			}
+export async function RetrieveUserAccount(req, res, next) {
+	try {
+		const user = await User.findByUsername(req.params.username);
+		if (!user) {
+			return notFound(req, res);
+		}
 
-			req.account = user;
-			next();
-		})
-		.catch(err => {
-			const logId = logError('Failed to retrieve user account from the database.', err);
-			serverError(res, logId);
-		});
+		req.account = user;
+		return next();
+	} catch (err) {
+		const logId = logError('Failed to retrieve user account from the database.', err);
+		serverError(res, logId);
+	}
 }
 
-export function RetrieveLogEntry(req, res, next) {
-	Bluebird.all(
-		[
-			User.findByUsername(req.params.username),
-			LogEntry.findById(req.params.logId)
-		])
-		.then(results => {
-			[ req.account, req.logEntry ] = results;
+export async function RetrieveLogEntry(req, res, next) {
+	try {
+		const results = await Bluebird.all(
+			[
+				User.findByUsername(req.params.username),
+				LogEntry.findById(req.params.logId)
+			]
+		);
 
-			if (!req.account
-				|| !req.logEntry
-				|| req.account.id !== req.logEntry.userId.toString()) {
+		[ req.account, req.logEntry ] = results;
 
-				return notFound(req, res);
-			}
+		if (!req.account
+			|| !req.logEntry
+			|| req.account.id !== req.logEntry.userId.toString()) {
 
-			return next();
-		})
-		.catch(err => {
-			const logId = logError('Failed to search database for log entry', err);
-			serverError(res, logId);
-		});
+			return notFound(req, res);
+		}
+
+		return next();
+	} catch (err) {
+		const logId = logError('Failed to search database for log entry', err);
+		serverError(res, logId);
+	}
 }
 
 export function AssertLogBookReadPermission(req, res, next) {
