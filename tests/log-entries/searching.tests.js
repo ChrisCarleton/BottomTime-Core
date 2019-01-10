@@ -247,6 +247,12 @@ describe('Log Entry Searching', () => {
 			expect(results).to.have.length(50);
 		});
 
+		it('Will return an empty array if no log entries are found', async () => {
+			const results = await adminUser.agent.get(`/users/${ adminUser.user.username }/logs`);
+			expect(results.body).to.be.an('Array');
+			expect(results.body).to.be.empty;
+		});
+
 		it('Will return Bad Request if query string fails validation', async () => {
 			const result = await friendsOnlyUser.agent
 				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
