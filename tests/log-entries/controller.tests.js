@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import fakeMongoId from '../util/fake-mongo-id';
-import LogEntry, { cleanUpLogEntry } from '../../service/data/log-entry';
+import LogEntry from '../../service/data/log-entry';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
@@ -408,7 +408,7 @@ describe('Logs Controller', () => {
 					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
 				})
 				.then(res => {
-					expect(_.map(res, r => cleanUpLogEntry(r))).to.eql(fakes);
+					expect(_.map(res, r => r.toCleanJSON())).to.eql(fakes);
 					done();
 				})
 				.catch(done);
@@ -451,7 +451,7 @@ describe('Logs Controller', () => {
 					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
 				})
 				.then(res => {
-					expect(_.map(res, r => cleanUpLogEntry(r)))
+					expect(_.map(res, r => r.toCleanJSON()))
 						.to.eql(_.take(fakes, 2));
 					done();
 				})
@@ -540,7 +540,7 @@ describe('Logs Controller', () => {
 				.then(res => {
 					delete fakes[0].userId;
 					delete fakes[1].userId;
-					expect(_.map(res, r => cleanUpLogEntry(r))).to.eql(fakes);
+					expect(_.map(res, r => r.toCleanJSON())).to.eql(fakes);
 					done();
 				})
 				.catch(done);

@@ -3,13 +3,18 @@ import fakeLogEntry from '../util/fake-log-entry';
 import fakeMongoId from '../util/fake-mongo-id';
 import faker from 'faker';
 import Joi from 'joi';
-import { NewEntrySchema, UpdateEntrySchema } from '../../service/validation/log-entry';
+import {
+	EntryQueryParamsSchema,
+	NewEntrySchema,
+	UpdateEntrySchema
+} from '../../service/validation/log-entry';
 
 let logEntry = null;
+let queryString = null;
 
-function validateUpdate(expectedError) {
-	const isValid = Joi.validate(logEntry, UpdateEntrySchema);
+function ensureValid(isValid, expectedError) {
 	if (expectedError) {
+		expect(isValid.error).to.exist;
 		expect(isValid.error.details.length).to.equal(1);
 		expect(isValid.error.details[0].type).to.equal(expectedError);
 	} else {
@@ -17,14 +22,19 @@ function validateUpdate(expectedError) {
 	}
 }
 
+function validateUpdate(expectedError) {
+	const isValid = Joi.validate(logEntry, UpdateEntrySchema);
+	ensureValid(isValid, expectedError);
+}
+
 function validateCreate(expectedError) {
 	const isValid = Joi.validate(logEntry, NewEntrySchema);
-	if (expectedError) {
-		expect(isValid.error.details.length).to.equal(1);
-		expect(isValid.error.details[0].type).to.equal(expectedError);
-	} else {
-		expect(isValid.error).to.not.exist;
-	}
+	ensureValid(isValid, expectedError);
+}
+
+function validateQueryParams(expectedError) {
+	const isValid = Joi.validate(queryString, EntryQueryParamsSchema);
+	ensureValid(isValid, expectedError);
 }
 
 describe('Log entry validation', () => {
@@ -153,4 +163,72 @@ describe('Log entry validation', () => {
 		validateCreate('number.min');
 	});
 
+});
+
+describe('Entry query params validation', () => {
+	beforeEach(() => {
+		queryString = {
+			count: 250,
+			sortBy: 'bottomTime',
+			sortOrder: 'asc'
+		};
+	});
+
+	it('Validation succeeds if request is valid', () => {
+		validateQueryParams();
+	});
+
+	it('Count must be a number', () => {
+		queryString.count = 'thirty-three';
+		validateQueryParams('number.base');
+	});
+
+	it('Count must be at least 1', () => {
+		queryString.count = 0;
+		validateQueryParams('number.min');
+	});
+
+	it('Count must be no more than 1000', () => {
+		queryString.count = 1001;
+		validateQueryParams('number.max');
+	});
+
+	it('Count cannot be fractional', () => {
+		queryString.count = 100.5;
+		validateQueryParams('number.integer');
+	});
+
+	[ 'entryTime', 'maxDepth', 'bottomTime' ].forEach(field => {
+		it(`sortBy can be set to ${ field }`, () => {
+			queryString.sortBy = field;
+			validateQueryParams();
+		});
+	});
+
+	it('sortBy cannot be an invalid value', () => {
+		queryString.sortBy = 'somethingElse';
+		validateQueryParams('any.allowOnly');
+	});
+
+	[ 'asc', 'desc' ].forEach(order => {
+		it(`sortOrder can be set to ${ order }`, () => {
+			queryString.sortOrder = order;
+			validateQueryParams();
+		});
+	});
+
+	it('sortOrder cannot be an invalid value', () => {
+		queryString.sortOrder = 'up';
+		validateQueryParams('any.allowOnly');
+	});
+
+	it('If sortBy is included sortOrder is required', () => {
+		delete queryString.sortOrder;
+		validateQueryParams('object.and');
+	});
+
+	it('If sortOrder is included then sortBy is required', () => {
+		delete queryString.sortBy;
+		validateQueryParams('object.and');
+	});
 });
