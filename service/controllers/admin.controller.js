@@ -1,8 +1,7 @@
 import Bluebird from 'bluebird';
 import database from '../data/database';
-import { logError } from '../logger';
 
-async function GetMongoDbHealth() {
+async function GetMongoDbHealth(req) {
 	const response = {
 		name: 'MongoDB'
 	};
@@ -15,7 +14,7 @@ async function GetMongoDbHealth() {
 			details: 'MongoDB is responding to requests.'
 		};
 	} catch (err) {
-		logError('Health check failure.', err);
+		req.logError('Health check failure.', err);
 		return {
 			...response,
 			health: 'unhealthy',
@@ -25,7 +24,7 @@ async function GetMongoDbHealth() {
 }
 
 export async function GetHealth(req, res) {
-	const components = await Bluebird.all([ GetMongoDbHealth() ]);
+	const components = await Bluebird.all([ GetMongoDbHealth(req) ]);
 	let health = 'healthy';
 	let status = 200;
 

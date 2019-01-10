@@ -1,4 +1,5 @@
-import { logError } from '../logger';
+import containerMetadata from '../utils/container-metadata';
+import uuid from 'uuid/v4';
 
 export const ErrorIds = {
 	badRequest: 'bottom-time/errors/bad-request',
@@ -69,10 +70,22 @@ export function serverError(res, logId) {
 }
 
 export function serverErrorMiddleware(req, res, next) {
+	req.logError = function (message, details) {
+		const logId = uuid();
+		req.log.error({
+			logId,
+			message,
+			details,
+			ecsInstanceId: containerMetadata.ContainerInstanceARN,
+			ecsTaskId: containerMetadata.TaskARN
+		});
+		return logId;
+	};
+
 	try {
 		return next();
 	} catch (err) {
-		const logId = logError(
+		const logId = req.logError(
 			'An unexpected server error has occurred.',
 			err);
 		return serverError(res, logId);
