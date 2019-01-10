@@ -51,7 +51,7 @@ The message body must contain a valid [UserAccount](#useraccount-object) object 
 
 #### Responses
 HTTP Status Code | Details
-- | -
+----- | -----
 **201 Created** | The call succeeded and the new user account has been created. If the user is not authenticated then a session will be created and a cookie will be returned, effectively, signing the user in under their new account.
 **400 Bad Request** | The request was rejected because the request body was empty or the [UserAccount](#useraccount-object) object was invalid, or because the username route parameter was not valid.
 **403 Forbidden** | This is returned if the action being taken is not allowed. See above for details.

@@ -3,14 +3,40 @@ import { badRequest, serverError, notFound, forbidden } from '../utils/error-res
 import Bluebird from 'bluebird';
 import Joi from 'joi';
 import { logError } from '../logger';
-import LogEntry, { assignLogEntry, cleanUpLogEntry } from '../data/log-entry';
-import { NewEntrySchema, EntryId, UpdateEntrySchema } from '../validation/log-entry';
+import LogEntry, { assignLogEntry } from '../data/log-entry';
+import {
+	EntryId,
+	EntryQueryParamsSchema,
+	NewEntrySchema,
+	UpdateEntrySchema
+} from '../validation/log-entry';
 import User from '../data/user';
 
 export async function ListLogs(req, res) {
 	try {
-		const entries = await LogEntry.find({});
-		res.json(_.map(entries, r => cleanUpLogEntry(r)));
+		const isValid = Joi.validate(req.query, EntryQueryParamsSchema);
+		if (isValid.error) {
+			return badRequest(
+				'Could not complete the request. Check the query string parameters and try again.',
+				isValid.error,
+				res);
+		}
+
+		const query = req.query || {};
+		let sortOrder = '-entryTime';
+
+		if (query.sortBy) {
+			sortOrder = `${ query.sortOrder === 'asc' ? '' : '-' }${ query.sortBy }`;
+		}
+
+		const entries = await LogEntry
+			.find({ userId: req.account.id })
+			.select('_id entryTime location site bottomTime maxDepth')
+			.sort(sortOrder)
+			.limit(parseInt(query.count, 10) || 100)
+			.exec();
+
+		res.json(_.map(entries, r => r.toCleanJSON()));
 	} catch (err) {
 		const logId = logError(
 			'Failed to query database records',
@@ -20,7 +46,7 @@ export async function ListLogs(req, res) {
 }
 
 export function GetLog(req, res) {
-	res.json(cleanUpLogEntry(req.logEntry));
+	res.json(req.logEntry.toCleanJSON());
 }
 
 export async function CreateLogs(req, res) {
@@ -39,7 +65,7 @@ export async function CreateLogs(req, res) {
 		});
 
 		const entries = await Bluebird.all(logEntries);
-		res.status(201).json(_.map(entries, e => cleanUpLogEntry(e)));
+		res.status(201).json(_.map(entries, e => e.toCleanJSON()));
 	} catch (err) {
 		const logId = logError(
 			'Failed to create database records',
@@ -73,7 +99,7 @@ export async function UpdateLogs(req, res) {
 		}
 
 		const result = await Bluebird.all(_.map(foundEntries, e => e.save()));
-		res.json(_.map(result, r => cleanUpLogEntry(r)));
+		res.json(_.map(result, r => r.toCleanJSON()));
 	} catch (err) {
 		const logId = logError(
 			'Failed to update database records',

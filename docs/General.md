@@ -72,6 +72,6 @@ the route can be used to diagnose problems.
 
 #### Responses
 HTTP Status Code | Details
-- | -
+----- | -----
 **200 OK** | The node is healthy. The response body will be a [HealthStatus](#healthstatus-object) object which can be parsed for the health of the individual components. Some components may be in a `warn` state. This could mean that some part of the system is experiencing non-critical difficulties at the moment.
 **500 Server Error** | The node is unhealthy. One ore more components are in the `unhealthy` state. The response body will be a [HealthStatus](#healthstatus-object) object which can be used to determine which component of the system is currently failing.

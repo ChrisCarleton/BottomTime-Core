@@ -4,7 +4,7 @@ import fakeUser from './fake-user';
 import { request } from 'chai';
 import User from '../../service/data/user';
 
-export default function (role = 'user', logsVisibility = 'friends-only') {
+export default async function (role = 'user', logsVisibility = 'friends-only') {
 	const password = faker.internet.password(18, false, null, '*@1Az');
 	const fake = fakeUser(password, logsVisibility);
 	fake.role = role;
@@ -14,14 +14,13 @@ export default function (role = 'user', logsVisibility = 'friends-only') {
 		agent: request.agent(App)
 	};
 
-	return user.save()
-		.then(entity => {
-			result.user = entity;
-			return result.agent.post('/auth/login')
-				.send({
-					username: entity.username,
-					password
-				});
-		})
-		.then(() => result);
+	result.user = await user.save();
+	await result.agent
+		.post('/auth/login')
+		.send({
+			username: result.user.username,
+			password
+		});
+
+	return result;
 }
