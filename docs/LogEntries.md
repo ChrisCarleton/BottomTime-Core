@@ -32,7 +32,7 @@ Describes a single log entry from a user's log book.
 
 ### LogEntrySummary Object
 An abbreviated version of a [LogEntry](#logentry-object) object. It contains fewer properties and is
-is suitable to be returned in queries for many log entries.
+suitable to be returned in queries for many log entries.
 
 ```json
 {
@@ -50,14 +50,14 @@ is suitable to be returned in queries for many log entries.
 Queries a user's log book for log entries.
 
 #### Route Parameters
-* **userName** - Name of the user whose log book the entries will be added to.
+* **userName** - Name of the user whose log book the entries will be queried from.
 
 #### Query Parameters
 * **count** - Maximum number of records to return in the query. Can be any number between 1 and 1000.
 * **sortBy** - The field on which the returned entries should be sorted. Allowed values are **entryTime**,
 **bottomTime**, and **maxDepth**. The default is **entryTime**.
 * **sortOrder** - The order in which sorted entries should be returned. Allowed values are **asc**
-(ascending order), and **desc** (descending order.)
+(ascending order), and **desc** (descending order.) The default value is **desc**.
 
 **NOTE:** The **sortBy** and **sortOrder** parameters are a pair. If one is included in the query string,
 then the other is also required.

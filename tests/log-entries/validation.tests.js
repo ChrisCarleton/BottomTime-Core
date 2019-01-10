@@ -15,7 +15,7 @@ let queryString = null;
 function ensureValid(isValid, expectedError) {
 	if (expectedError) {
 		expect(isValid.error).to.exist;
-		expect(isValid.error.details.length).to.equal(1);
+		expect(isValid.error.details).to.have.length(1);
 		expect(isValid.error.details[0].type).to.equal(expectedError);
 	} else {
 		expect(isValid.error).to.not.exist;

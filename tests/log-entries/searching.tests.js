@@ -253,6 +253,14 @@ describe('Log Entry Searching', () => {
 			expect(results.body).to.be.empty;
 		});
 
+		it('Will return Not Found if requested username does not exist', async () => {
+			const result = await friendsOnlyUser.agent.get('/users/Jonny_Nonexistent/logs');
+
+			expect(result.status).to.equal(404);
+			expect(result.body.status).to.equal(404);
+			expect(result.body.errorId).to.equal(ErrorIds.notFound);
+		});
+
 		it('Will return Bad Request if query string fails validation', async () => {
 			const result = await friendsOnlyUser.agent
 				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
