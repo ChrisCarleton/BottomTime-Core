@@ -1,3 +1,8 @@
+variable "allowed_ips" {
+	type = "list"
+	default = ["0.0.0.0/0"]
+}
+
 variable "build_number" {
 	type = "string"
 	default = "latest"
