@@ -60,7 +60,17 @@ export default (password, logsVisibility = 'friends-only') => {
 		occupation: faker.commerce.department(),
 		gender: faker.random.arrayElement([ 'male', 'female', null ]),
 		birthdate: faker.date.past(70),
-		typeOfDiver: String,
+		typeOfDiver: faker.random.arrayElement([
+			'New to diving',
+			'Casual/vacation diver',
+			'Typical diver',
+			'Experienced diver',
+			'Tech diver',
+			'Commercial diver',
+			'Divemaster',
+			'Instructor',
+			'Professional diver'
+		]),
 		startedDiving: faker.random.number({ min: year - 55, max: year }),
 		certificationLevel: faker.random.arrayElement([
 			'Open Water',

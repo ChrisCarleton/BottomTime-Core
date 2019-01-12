@@ -50,7 +50,6 @@ const userSchema = mongoose.Schema({
 	occupation: String,
 	gender: String,
 	birthdate: Date,
-	birthdatePrivacy: String,
 	typeOfDiver: String,
 	startedDiving: Number,
 	certificationLevel: String,
