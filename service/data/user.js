@@ -45,7 +45,18 @@ const userSchema = mongoose.Schema({
 		default: 'friends-only'
 	},
 	firstName: String,
-	lastName: String
+	lastName: String,
+	location: String,
+	occupation: String,
+	gender: String,
+	birthdate: Date,
+	birthdatePrivacy: String,
+	typeOfDiver: String,
+	startedDiving: Number,
+	certificationLevel: String,
+	certificationAgencies: String,
+	specialties: String,
+	about: String
 });
 
 userSchema.statics.findByUsername = function (username, done) {
