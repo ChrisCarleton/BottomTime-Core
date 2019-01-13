@@ -1,5 +1,6 @@
 import createFakeAccount from '../util/create-fake-account';
 import { expect } from 'chai';
+import moment from 'moment';
 import User from '../../service/data/user';
 
 const expectedKeys = [
@@ -59,7 +60,9 @@ describe('Profiles Controller', () => {
 			expect(result.location).to.equal(privateUser.user.location);
 			expect(result.occupation).to.equal(privateUser.user.occupation);
 			expect(result.gender).to.equal(privateUser.user.gender);
-			expect(result.birthdate).to.equal(privateUser.user.birthdate);
+			expect(result.birthdate).to.equal(
+				moment(privateUser.user.birthdate).format('YYYY-MM-DD')
+			);
 			expect(result.typeOfDiver).to.equal(privateUser.user.typeOfDiver);
 			expect(result.startedDiving).to.equal(privateUser.user.startedDiving);
 			expect(result.certificationLevel).to.equal(privateUser.user.certificationLevel);

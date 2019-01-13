@@ -2,9 +2,10 @@ import {
 	GetProfile,
 	UpdateProfile
 } from '../controllers/profiles.controller';
+import { RetrieveUserAccount } from '../controllers/security.controller';
 
 module.exports = app => {
 	app.route('/users/:username/profile')
-		.get(GetProfile)
-		.put(UpdateProfile);
+		.get(RetrieveUserAccount, GetProfile)
+		.put(RetrieveUserAccount, UpdateProfile);
 };
