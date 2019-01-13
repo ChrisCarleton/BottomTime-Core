@@ -11,9 +11,8 @@ import sinon from 'sinon';
 import User from '../../service/data/user';
 
 const expectedKeys = [
-	'email',
 	'memberSince',
-	'logsVisibility',
+	'privacy',
 	'firstName',
 	'lastName',
 	'location',
@@ -31,9 +30,8 @@ const expectedKeys = [
 ];
 
 function compareProfiles(result, user) {
-	expect(result.email).to.equal(user.email);
 	expect(result.memberSince).to.equal(moment(user.createdAt).utc().toISOString());
-	expect(result.logsVisibility).to.equal(user.logsVisibility);
+	expect(result.privacy).to.equal(user.logsVisibility);
 	expect(result.firstName).to.equal(user.firstName);
 	expect(result.lastName).to.equal(user.lastName);
 	expect(result.location).to.equal(user.location);
