@@ -1,6 +1,5 @@
 import { badRequest, serverError, unauthorized } from '../utils/error-response';
 import Joi from 'joi';
-import { logError } from '../logger';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
 import { cleanUpUser } from '../data/user';
@@ -16,7 +15,7 @@ export function AuthenticateUser(req, res, next) {
 		}
 
 		if (err) {
-			const logId = logError(
+			const logId = req.logError(
 				'An error occurred while trying to authenticate a user.',
 				err);
 			return serverError(res, logId);
@@ -31,7 +30,7 @@ export function AuthenticateUser(req, res, next) {
 
 		req.login(user, loginErr => {
 			if (loginErr) {
-				const logId = logError(
+				const logId = req.logError(
 					'An error occurred while trying to authenticate a user.',
 					loginErr);
 				return serverError(res, logId);

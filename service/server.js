@@ -46,6 +46,7 @@ const MongoDbStore = require('connect-mongo')(session);
 
 app.use(compression());
 app.use(modRewrite([ '^/api/(.*) /$1' ]));
+app.use(requestLogger);
 app.use(serverErrorMiddleware);
 app.use(session({
 	resave: true,
@@ -56,7 +57,6 @@ app.use(session({
 }));
 app.use(bodyParser.json());
 applyAuth(app);
-app.use(requestLogger);
 
 // Load routes
 glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {

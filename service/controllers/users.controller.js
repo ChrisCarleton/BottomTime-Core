@@ -7,7 +7,6 @@ import {
 	UserAccountSchema,
 	UsernameSchema
 } from '../validation/user';
-import { logError } from '../logger';
 import Joi from 'joi';
 import mailer from '../mail/mailer';
 import moment from 'moment';
@@ -37,7 +36,7 @@ export async function RequireAccountPermission(req, res, next) {
 		req.account = user;
 		return next();
 	} catch (err) {
-		const logId = logError('Failed to retrieve user account from database', err);
+		const logId = req.logError('Failed to retrieve user account from database', err);
 		serverError(res, logId);
 	}
 }
@@ -124,15 +123,14 @@ export async function CreateUserAccount(req, res) {
 
 		req.login(entity, err => {
 			if (err) {
-				const logId = logError('Failed to sign in user due to server error', err);
-				return serverError(res, logId);
+				throw err;
 			}
 
 			req.log.info('Created account for and logged in user ', entity.username);
 			res.status(201).json(cleanUpUser(entity));
 		});
 	} catch (err) {
-		const logId = logError('Failed to create user account due to server error', err);
+		const logId = req.logError('Failed to create user account due to server error', err);
 		serverError(res, logId);
 	}
 }
@@ -164,7 +162,7 @@ export async function ChangePassword(req, res) {
 		await req.account.save();
 		res.sendStatus(204);
 	} catch (err) {
-		const logId = logError('Failed to save new password', err);
+		const logId = req.logError('Failed to save new password', err);
 		serverError(res, logId);
 	}
 }
@@ -202,7 +200,7 @@ export async function RequestPasswordReset(req, res) {
 
 		res.sendStatus(204);
 	} catch (err) {
-		const logId = logError('Failed establish password reset window. See details.', err);
+		const logId = req.logError('Failed establish password reset window. See details.', err);
 		serverError(res, logId);
 	}
 }
@@ -247,7 +245,7 @@ export async function ConfirmPasswordReset(req, res) {
 		res.sendStatus(204);
 
 	} catch (err) {
-		const logId = logError('Failed to update user\'s password in the database', err);
+		const logId = req.logError('Failed to update user\'s password in the database', err);
 		serverError(res, logId);
 	}
 }
