@@ -185,32 +185,3 @@ export async function RetrieveLogEntry(req, res, next) {
 		serverError(res, logId);
 	}
 }
-
-export function AssertLogBookReadPermission(req, res, next) {
-	if (req.user && (req.user.role === 'admin' || req.user.id === req.account.id)) {
-		return next();
-	}
-
-	if (req.account.logsVisibility === 'public') {
-		return next();
-	}
-
-	forbidden(res, 'You are not permitted to perform the requested action on this log entry');
-}
-
-export function AssertLogBookWritePermission(req, res, next) {
-	const forbiddenMessage = 'You are not permitted to create or update entries in the specified log book';
-	if (!req.user) {
-		return forbidden(
-			res,
-			forbiddenMessage);
-	}
-
-	if (req.user.id !== req.account.id && req.user.role !== 'admin') {
-		return forbidden(
-			res,
-			forbiddenMessage);
-	}
-
-	next();
-}

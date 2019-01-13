@@ -109,7 +109,7 @@ userSchema.methods.getProfileJSON = function () {
 				'about'
 			]
 		),
-		birthdate: this.birthdate ? moment(this.birthdate).format('YYYY-MM-DD') : null
+		birthdate: this.birthdate ? moment(this.birthdate).local().format('YYYY-MM-DD') : null
 	};
 };
 

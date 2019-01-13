@@ -70,7 +70,7 @@ describe('Log Entry Searching', () => {
 			expect(result.body).to.be.an('Array');
 		});
 
-		it('Users can view friends-only log books if they are friends with the owner', async () => {
+		it.skip('Users can view friends-only log books if they are friends with the owner', async () => {
 			// TODO: Test once we have friends logic.
 		});
 
