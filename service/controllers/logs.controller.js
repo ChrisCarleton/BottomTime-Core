@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { badRequest, serverError, notFound, forbidden } from '../utils/error-response';
+import { badRequest, serverError, notFound } from '../utils/error-response';
 import Bluebird from 'bluebird';
 import Joi from 'joi';
 import LogEntry, { assignLogEntry } from '../data/log-entry';

@@ -19,7 +19,6 @@ export async function RetrieveUserAccount(req, res, next) {
 		req.account = user;
 		return next();
 	} catch (err) {
-		console.log(req.logError);
 		const logId = req.logError('Failed to retrieve user account from the database.', err);
 		serverError(res, logId);
 	}
