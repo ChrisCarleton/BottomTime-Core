@@ -2,7 +2,6 @@ import _ from 'lodash';
 import { badRequest, serverError, notFound, forbidden } from '../utils/error-response';
 import Bluebird from 'bluebird';
 import Joi from 'joi';
-import { logError } from '../logger';
 import LogEntry, { assignLogEntry } from '../data/log-entry';
 import {
 	EntryId,
@@ -38,7 +37,7 @@ export async function ListLogs(req, res) {
 
 		res.json(_.map(entries, r => r.toCleanJSON()));
 	} catch (err) {
-		const logId = logError(
+		const logId = req.logError(
 			'Failed to query database records',
 			err);
 		serverError(res, logId);
@@ -67,7 +66,7 @@ export async function CreateLogs(req, res) {
 		const entries = await Bluebird.all(logEntries);
 		res.status(201).json(_.map(entries, e => e.toCleanJSON()));
 	} catch (err) {
-		const logId = logError(
+		const logId = req.logError(
 			'Failed to create database records',
 			err);
 		serverError(res, logId);
@@ -101,7 +100,7 @@ export async function UpdateLogs(req, res) {
 		const result = await Bluebird.all(_.map(foundEntries, e => e.save()));
 		res.json(_.map(result, r => r.toCleanJSON()));
 	} catch (err) {
-		const logId = logError(
+		const logId = req.logError(
 			'Failed to update database records',
 			err);
 		serverError(res, logId);
@@ -123,7 +122,7 @@ export async function UpdateLog(req, res) {
 		await req.logEntry.save();
 		res.sendStatus(200);
 	} catch (err) {
-		const logId = logError(
+		const logId = req.logError(
 			`Failed to update database record for log entry ${ req.body.entryId }`,
 			err);
 		serverError(res, logId);
@@ -143,7 +142,7 @@ export async function DeleteLogs(req, res) {
 		await LogEntry.deleteMany({ _id: { $in: req.body } });
 		res.sendStatus(200);
 	} catch (err) {
-		const logId = logError(
+		const logId = req.logError(
 			'Failed to delete record for log entries.',
 			err);
 		serverError(res, logId);
@@ -155,7 +154,7 @@ export async function DeleteLog(req, res) {
 		await LogEntry.deleteOne({ _id: req.logEntry.id });
 		res.sendStatus(204);
 	} catch (err) {
-		const logId = logError(
+		const logId = req.logError(
 			'Failed to delete record for log entry.',
 			err);
 		serverError(res, logId);
@@ -182,7 +181,7 @@ export async function RetrieveLogEntry(req, res, next) {
 
 		return next();
 	} catch (err) {
-		const logId = logError('Failed to search database for log entry', err);
+		const logId = req.logError('Failed to search database for log entry', err);
 		serverError(res, logId);
 	}
 }
