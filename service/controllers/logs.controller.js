@@ -162,21 +162,6 @@ export async function DeleteLog(req, res) {
 	}
 }
 
-export async function RetrieveUserAccount(req, res, next) {
-	try {
-		const user = await User.findByUsername(req.params.username);
-		if (!user) {
-			return notFound(req, res);
-		}
-
-		req.account = user;
-		return next();
-	} catch (err) {
-		const logId = logError('Failed to retrieve user account from the database.', err);
-		serverError(res, logId);
-	}
-}
-
 export async function RetrieveLogEntry(req, res, next) {
 	try {
 		const results = await Bluebird.all(

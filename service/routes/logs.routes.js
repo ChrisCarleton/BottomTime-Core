@@ -7,10 +7,10 @@ import {
 	GetLog,
 	ListLogs,
 	RetrieveLogEntry,
-	RetrieveUserAccount,
 	UpdateLog,
 	UpdateLogs
 } from '../controllers/logs.controller';
+import { RetrieveUserAccount } from '../controllers/security.controller';
 
 module.exports = app => {
 	app.route('/users/:username/logs')
