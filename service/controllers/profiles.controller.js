@@ -60,17 +60,15 @@ export async function UpdateProfile(req, res) {
 				res);
 		}
 
-		
-
 		Object.assign(req.account, req.body);
-		if (req.body.birthdate !== undefined) {
+		if (typeof (req.body.birthdate) !== 'undefined') {
 			Object.assign(
 				req.account,
 				{
 					birthdate: req.body.birthdate
 						? moment(req.body.birthdate, 'YYYY-MM-DD').toDate()
 						: null
-				}	
+				}
 			);
 		}
 

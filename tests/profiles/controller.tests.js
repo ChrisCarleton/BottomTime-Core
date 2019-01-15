@@ -279,7 +279,7 @@ describe('Profiles Controller', () => {
 		it('Will return Not Found if username does not belong to an existing user', async () => {
 			const fake = fakeProfile();
 			const result = await adminUser.agent
-				.patch(`/users/Made_Up_User/profile`)
+				.patch('/users/Made_Up_User/profile')
 				.send(fake);
 
 			expect(result.status).to.equal(404);
@@ -336,7 +336,7 @@ describe('Profiles Controller', () => {
 				certificationLevel: null,
 				certificationAgencies: null,
 				specialties: null,
-				about: null			
+				about: null
 			};
 
 			const result = await adminUser.agent
@@ -350,7 +350,7 @@ describe('Profiles Controller', () => {
 
 		it('Will not modify fields if they are missing', async () => {
 			const fake = {
-				memberSince: moment(adminUser.user.createdAt).utc().toISOString()		
+				memberSince: moment(adminUser.user.createdAt).utc().toISOString()
 			};
 			const expected = friendsOnlyUser.user.getProfileJSON();
 			const result = await friendsOnlyUser.agent

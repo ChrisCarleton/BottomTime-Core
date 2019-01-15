@@ -36,9 +36,9 @@ function fakeSpecialties() {
 	return selected.join(', ');
 }
 
-export default (logsVisibility) => {
+export default logsVisibility => {
 	const year = moment().year();
-	logsVisibility = logsVisibility 
+	logsVisibility = logsVisibility
 		|| faker.random.arrayElement([ 'public', 'friends-only', 'private' ]);
 
 	return {
