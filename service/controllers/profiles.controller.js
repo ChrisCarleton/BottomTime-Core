@@ -1,5 +1,8 @@
+import { badRequest, serverError } from '../utils/error-response';
 import LogEntry from '../data/log-entry';
-import { serverError } from '../utils/error-response';
+import Joi from 'joi';
+import moment from 'moment';
+import { UpdateProfileSchema } from '../validation/profile';
 
 export async function GetProfile(req, res) {
 	/* eslint-disable no-underscore-dangle */
@@ -44,5 +47,37 @@ export async function GetProfile(req, res) {
 }
 
 export async function UpdateProfile(req, res) {
-	await res.sendStatus(503);
+	try {
+		delete req.body.memberSince;
+		delete req.body.divesLogged;
+		delete req.body.bottomTimeLogged;
+
+		const isValid = Joi.validate(req.body, UpdateProfileSchema);
+		if (isValid.error) {
+			return badRequest(
+				'Unable to update profile information because validation failed',
+				isValid.error,
+				res);
+		}
+
+		
+
+		Object.assign(req.account, req.body);
+		if (req.body.birthdate !== undefined) {
+			Object.assign(
+				req.account,
+				{
+					birthdate: req.body.birthdate
+						? moment(req.body.birthdate, 'YYYY-MM-DD').toDate()
+						: null
+				}	
+			);
+		}
+
+		await req.account.save();
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError('Unable to update user profile', err);
+		serverError(res, logId);
+	}
 }

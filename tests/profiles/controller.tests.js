@@ -5,14 +5,16 @@ import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect, request } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
+import fakeProfile from '../util/fake-profile';
 import LogEntry from '../../service/data/log-entry';
 import moment from 'moment';
+import mongoose from 'mongoose';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
 const expectedKeys = [
 	'memberSince',
-	'privacy',
+	'logsVisibility',
 	'firstName',
 	'lastName',
 	'location',
@@ -31,15 +33,19 @@ const expectedKeys = [
 
 function compareProfiles(result, user) {
 	expect(result.memberSince).to.equal(moment(user.createdAt).utc().toISOString());
-	expect(result.privacy).to.equal(user.logsVisibility);
+	expect(result.logsVisibility).to.equal(user.logsVisibility);
 	expect(result.firstName).to.equal(user.firstName);
 	expect(result.lastName).to.equal(user.lastName);
 	expect(result.location).to.equal(user.location);
 	expect(result.occupation).to.equal(user.occupation);
 	expect(result.gender).to.equal(user.gender);
-	expect(result.birthdate).to.equal(
-		moment(user.birthdate).format('YYYY-MM-DD')
-	);
+	if (result.birthdate) {
+		expect(result.birthdate).to.equal(
+			moment(user.birthdate).format('YYYY-MM-DD')
+		);
+	} else {
+		expect(user.birthdate).to.not.exist;
+	}
 	expect(result.typeOfDiver).to.equal(user.typeOfDiver);
 	expect(result.startedDiving).to.equal(user.startedDiving);
 	expect(result.certificationLevel).to.equal(user.certificationLevel);
@@ -204,6 +210,169 @@ describe('Profiles Controller', () => {
 			stub.rejects('nope');
 
 			const result = await privateUser.agent.get(`/users/${ privateUser.user.username }/profile`);
+			expect(result.status).to.equal(500);
+			expect(result.body.status).to.equal(500);
+			expect(result.body.errorId).to.equal(ErrorIds.serverError);
+			expect(result.body.logId).to.exist;
+		});
+	});
+
+	describe('PUT /users/:username/profile', () => {
+		it('Will update user\'s profile', async () => {
+			const fake = fakeProfile();
+
+			const result = await publicUser.agent
+				.put(`/users/${ publicUser.user.username }/profile`)
+				.send(fake);
+			expect(result.status).to.equal(204);
+
+			const user = await User.findById(publicUser.user.id);
+			compareProfiles(
+				{
+					...fake,
+					memberSince: moment(publicUser.user.createdAt).utc().toISOString()
+				},
+				user
+			);
+		});
+
+		it('Users cannot update other user\'s profiles', async () => {
+			const fake = fakeProfile();
+			const result = await privateUser.agent
+				.put(`/users/${ publicUser.user.username }/profile`)
+				.send(fake);
+
+			expect(result.status).to.equal(403);
+			expect(result.body.status).to.equal(403);
+			expect(result.body.errorId).to.equal(ErrorIds.forbidden);
+		});
+
+		it('Anonymous users cannot update users\' profiles', async () => {
+			const fake = fakeProfile();
+			const result = await request(App)
+				.put(`/users/${ publicUser.user.username }/profile`)
+				.send(fake);
+
+			expect(result.status).to.equal(403);
+			expect(result.body.status).to.equal(403);
+			expect(result.body.errorId).to.equal(ErrorIds.forbidden);
+		});
+
+		it('Admins can update other users\' profiles', async () => {
+			const fake = fakeProfile();
+
+			const result = await adminUser.agent
+				.put(`/users/${ privateUser.user.username }/profile`)
+				.send(fake);
+			expect(result.status).to.equal(204);
+
+			const user = await User.findById(privateUser.user.id);
+			compareProfiles(
+				{
+					...fake,
+					memberSince: moment(privateUser.user.createdAt).utc().toISOString()
+				},
+				user
+			);
+		});
+
+		it('Will return Not Found if username does not belong to an existing user', async () => {
+			const fake = fakeProfile();
+			const result = await adminUser.agent
+				.put(`/users/Made_Up_User/profile`)
+				.send(fake);
+
+			expect(result.status).to.equal(404);
+			expect(result.body.status).to.equal(404);
+			expect(result.body.errorId).to.equal(ErrorIds.notFound);
+		});
+
+		it('Will return Bad Request if the message body fails validation', async () => {
+			const fake = fakeProfile();
+			fake.birthdate = '30 years ago';
+			fake.certificationAgencies = 4;
+
+			const result = await publicUser.agent
+				.put(`/users/${ publicUser.user.username }/profile`)
+				.send(fake);
+
+			expect(result.status).to.equal(400);
+			expect(result.body.status).to.equal(400);
+			expect(result.body.errorId).to.equal(ErrorIds.badRequest);
+		});
+
+		it('Will not update read-only fields', async () => {
+			const fake = fakeProfile();
+			const oldCreatedAt = publicUser.user.createdAt;
+			fake.memberSince = moment().utc().toDate();
+
+			const result = await publicUser.agent
+				.put(`/users/${ publicUser.user.username }/profile`)
+				.send(fake);
+			expect(result.status).to.equal(204);
+
+			const user = await User.findById(publicUser.user.id);
+			compareProfiles(
+				{
+					...fake,
+					memberSince: moment(oldCreatedAt).utc().toISOString()
+				},
+				user
+			);
+		});
+
+		it('Will clear fields if they are set to null', async () => {
+			const fake = {
+				memberSince: moment(adminUser.user.createdAt).utc().toISOString(),
+				logsVisibility: 'friends-only',
+				firstName: null,
+				lastName: null,
+				location: null,
+				occupation: null,
+				gender: null,
+				birthdate: null,
+				typeOfDiver: null,
+				startedDiving: null,
+				certificationLevel: null,
+				certificationAgencies: null,
+				specialties: null,
+				about: null			
+			};
+
+			const result = await adminUser.agent
+				.put(`/users/${ adminUser.user.username }/profile`)
+				.send(fake);
+			expect(result.status).to.equal(204);
+
+			const user = await User.findById(adminUser.user.id);
+			compareProfiles(fake, user);
+		});
+
+		it('Will not modify fields if they are missing', async () => {
+			const fake = {
+				memberSince: moment(adminUser.user.createdAt).utc().toISOString()		
+			};
+			const expected = friendsOnlyUser.user.getProfileJSON();
+			console.log(expected.birthdate);
+
+			const result = await friendsOnlyUser.agent
+				.put(`/users/${ friendsOnlyUser.user.username }/profile`)
+				.send(fake);
+			expect(result.status).to.equal(204);
+
+			const user = await User.findById(friendsOnlyUser.user.id);
+			console.log(user.birthdate);
+			compareProfiles(expected, user);
+		});
+
+		it('Will return Server Error if something goes wrong talking to the database', async () => {
+			const fake = fakeProfile();
+			stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub.rejects('nope');
+
+			const result = await publicUser.agent
+				.put(`/users/${ publicUser.user.username }/profile`)
+				.send(fake);
 			expect(result.status).to.equal(500);
 			expect(result.body.status).to.equal(500);
 			expect(result.body.errorId).to.equal(ErrorIds.serverError);

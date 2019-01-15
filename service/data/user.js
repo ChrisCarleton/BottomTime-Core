@@ -94,6 +94,7 @@ userSchema.methods.getProfileJSON = function () {
 		..._.pick(
 			this.toJSON(),
 			[
+				'logsVisibility',
 				'firstName',
 				'lastName',
 				'location',
@@ -107,7 +108,6 @@ userSchema.methods.getProfileJSON = function () {
 				'about'
 			]
 		),
-		privacy: this.logsVisibility,
 		memberSince: moment(this.createdAt).toISOString(),
 		birthdate: this.birthdate ? moment(this.birthdate).local().format('YYYY-MM-DD') : null
 	};
