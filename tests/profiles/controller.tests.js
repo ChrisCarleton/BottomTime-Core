@@ -217,12 +217,12 @@ describe('Profiles Controller', () => {
 		});
 	});
 
-	describe('PUT /users/:username/profile', () => {
+	describe('PATCH /users/:username/profile', () => {
 		it('Will update user\'s profile', async () => {
 			const fake = fakeProfile();
 
 			const result = await publicUser.agent
-				.put(`/users/${ publicUser.user.username }/profile`)
+				.patch(`/users/${ publicUser.user.username }/profile`)
 				.send(fake);
 			expect(result.status).to.equal(204);
 
@@ -239,7 +239,7 @@ describe('Profiles Controller', () => {
 		it('Users cannot update other user\'s profiles', async () => {
 			const fake = fakeProfile();
 			const result = await privateUser.agent
-				.put(`/users/${ publicUser.user.username }/profile`)
+				.patch(`/users/${ publicUser.user.username }/profile`)
 				.send(fake);
 
 			expect(result.status).to.equal(403);
@@ -250,7 +250,7 @@ describe('Profiles Controller', () => {
 		it('Anonymous users cannot update users\' profiles', async () => {
 			const fake = fakeProfile();
 			const result = await request(App)
-				.put(`/users/${ publicUser.user.username }/profile`)
+				.patch(`/users/${ publicUser.user.username }/profile`)
 				.send(fake);
 
 			expect(result.status).to.equal(403);
@@ -262,7 +262,7 @@ describe('Profiles Controller', () => {
 			const fake = fakeProfile();
 
 			const result = await adminUser.agent
-				.put(`/users/${ privateUser.user.username }/profile`)
+				.patch(`/users/${ privateUser.user.username }/profile`)
 				.send(fake);
 			expect(result.status).to.equal(204);
 
@@ -279,7 +279,7 @@ describe('Profiles Controller', () => {
 		it('Will return Not Found if username does not belong to an existing user', async () => {
 			const fake = fakeProfile();
 			const result = await adminUser.agent
-				.put(`/users/Made_Up_User/profile`)
+				.patch(`/users/Made_Up_User/profile`)
 				.send(fake);
 
 			expect(result.status).to.equal(404);
@@ -293,7 +293,7 @@ describe('Profiles Controller', () => {
 			fake.certificationAgencies = 4;
 
 			const result = await publicUser.agent
-				.put(`/users/${ publicUser.user.username }/profile`)
+				.patch(`/users/${ publicUser.user.username }/profile`)
 				.send(fake);
 
 			expect(result.status).to.equal(400);
@@ -307,7 +307,7 @@ describe('Profiles Controller', () => {
 			fake.memberSince = moment().utc().toDate();
 
 			const result = await publicUser.agent
-				.put(`/users/${ publicUser.user.username }/profile`)
+				.patch(`/users/${ publicUser.user.username }/profile`)
 				.send(fake);
 			expect(result.status).to.equal(204);
 
@@ -340,7 +340,7 @@ describe('Profiles Controller', () => {
 			};
 
 			const result = await adminUser.agent
-				.put(`/users/${ adminUser.user.username }/profile`)
+				.patch(`/users/${ adminUser.user.username }/profile`)
 				.send(fake);
 			expect(result.status).to.equal(204);
 
@@ -353,15 +353,12 @@ describe('Profiles Controller', () => {
 				memberSince: moment(adminUser.user.createdAt).utc().toISOString()		
 			};
 			const expected = friendsOnlyUser.user.getProfileJSON();
-			console.log(expected.birthdate);
-
 			const result = await friendsOnlyUser.agent
-				.put(`/users/${ friendsOnlyUser.user.username }/profile`)
+				.patch(`/users/${ friendsOnlyUser.user.username }/profile`)
 				.send(fake);
 			expect(result.status).to.equal(204);
 
 			const user = await User.findById(friendsOnlyUser.user.id);
-			console.log(user.birthdate);
 			compareProfiles(expected, user);
 		});
 
@@ -371,7 +368,7 @@ describe('Profiles Controller', () => {
 			stub.rejects('nope');
 
 			const result = await publicUser.agent
-				.put(`/users/${ publicUser.user.username }/profile`)
+				.patch(`/users/${ publicUser.user.username }/profile`)
 				.send(fake);
 			expect(result.status).to.equal(500);
 			expect(result.body.status).to.equal(500);

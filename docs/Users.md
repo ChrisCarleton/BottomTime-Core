@@ -105,7 +105,7 @@ HTTP Status Code | Details
 **404 Not Found** | A user with the username specified in the **username** route parameter does not exist and so no profile could be found. An [Error](General.md#error-object) Object will be returned in the response body.
 **500 Server Error** | An internal error occurred while attempting to retrieve the profile information from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
 
-### PUT /users/:username/profile
+### PATCH /users/:username/profile
 Updates a user's profile information.
 
 #### Route Parameters

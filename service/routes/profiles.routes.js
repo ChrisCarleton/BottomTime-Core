@@ -11,5 +11,5 @@ import {
 module.exports = app => {
 	app.route('/users/:username/profile')
 		.get(RetrieveUserAccount, AssertUserReadPermission, GetProfile)
-		.put(RetrieveUserAccount, AssertUserWritePermission, UpdateProfile);
+		.patch(RetrieveUserAccount, AssertUserWritePermission, UpdateProfile);
 };
