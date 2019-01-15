@@ -220,7 +220,6 @@ describe('Profiles Controller', () => {
 	describe('PATCH /users/:username/profile', () => {
 		it('Will update user\'s profile', async () => {
 			const fake = fakeProfile();
-
 			const result = await publicUser.agent
 				.patch(`/users/${ publicUser.user.username }/profile`)
 				.send(fake);

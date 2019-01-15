@@ -1,3 +1,5 @@
+/* eslint max-statements: 0 */
+
 import { expect } from 'chai';
 import fakeProfile from '../util/fake-profile';
 import faker from 'faker';
@@ -200,5 +202,85 @@ describe('Update profile validation', () => {
 	it('startedDiving can not be in the future', () => {
 		profile.startedDiving = moment().year() + 1;
 		validateProfile('number.max');
+	});
+
+	it('certificationLevel must be a string', () => {
+		profile.certificationLevel = 99;
+		validateProfile('string.base');
+	});
+
+	it('certificationLevel can be no longer than 100 characters', () => {
+		profile.certificationLevel = faker.lorem.sentences(20);
+		validateProfile('string.max');
+	});
+
+	it('certificationLevel can be null', () => {
+		profile.certificationLevel = null;
+		validateProfile();
+	});
+
+	it('certificationLevel is optional', () => {
+		delete profile.certificationLevel;
+		validateProfile();
+	});
+
+	it('certificationAgencies must be a string', () => {
+		profile.certificationAgencies = 99;
+		validateProfile('string.base');
+	});
+
+	it('certificationAgencies can be no longer than 100 characters', () => {
+		profile.certificationAgencies = faker.lorem.sentences(20);
+		validateProfile('string.max');
+	});
+
+	it('certificationAgencies can be null', () => {
+		profile.certificationAgencies = null;
+		validateProfile();
+	});
+
+	it('certificationAgencies is optional', () => {
+		delete profile.certificationAgencies;
+		validateProfile();
+	});
+
+	it('specialties must be a string', () => {
+		profile.specialties = 99;
+		validateProfile('string.base');
+	});
+
+	it('specialties can be no longer than 200 characters', () => {
+		profile.specialties = faker.lorem.sentences(35);
+		validateProfile('string.max');
+	});
+
+	it('specialties can be null', () => {
+		profile.specialties = null;
+		validateProfile();
+	});
+
+	it('specialties is optional', () => {
+		delete profile.specialties;
+		validateProfile();
+	});
+
+	it('about must be a string', () => {
+		profile.about = 99;
+		validateProfile('string.base');
+	});
+
+	it('about can be no longer than 1000 characters', () => {
+		profile.about = faker.lorem.paragraphs(20);
+		validateProfile('string.max');
+	});
+
+	it('about can be null', () => {
+		profile.about = null;
+		validateProfile();
+	});
+
+	it('about is optional', () => {
+		delete profile.about;
+		validateProfile();
 	});
 });

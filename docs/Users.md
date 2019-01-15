@@ -37,7 +37,7 @@ Passwords must meet several strength requirements. All passwords must:
 ```json
 {
 	"memberSince": "String (ISO Date): The date and time at which the user profile was created.",
-	"privacy": "One of 'private', 'friends-only', or 'public'. Indicates how visible the user's profile and logs are.",
+	"logsVisibility": "One of 'private', 'friends-only', or 'public'. Indicates how visible the user's profile and logs are.",
 	"firstName": "String: The user's first name.",
 	"lastName": "String: The user's last name.",
 	"location": "String: Where the user is geographically located.",
@@ -55,8 +55,8 @@ Passwords must meet several strength requirements. All passwords must:
 }
 ```
 
-The **privacy** field is important to note. It affects who can view the user's profile information and log
-book. Here are the rules:
+The **logsVisibility** field is important to note. It affects who can view the user's profile information
+and log book. Here are the rules:
 * Public profiles and log books can be viewed by everyone - including anonymous (unauthenticated) users
 to the site!
 * Friends-only profiles and log books can only be viewed by anyone the user has 'friended'.
@@ -114,8 +114,8 @@ will be updated.
 
 #### Message Body
 The message body must contain a valid [UserProfile](#userprofile-object) object containing the new profile
-information. Fields that are omitted will be cleared (their values will be removed.) A **PATCH** route would
-be ideal here but it does not exist yet.
+information. Fields that are set to null will be cleared (their values will be removed.) Fields that are
+omitted will be left unchanged.
 
 The **memberSince**, **divesLogged**, and **bottomTimeLogged** fields are considered read-only. Their values
 may be included in the **UserProfile** object but their values will be ignored.
@@ -124,6 +124,7 @@ may be included in the **UserProfile** object but their values will be ignored.
 HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The request succeeded and the profile information was updated. The response body will be empty.
+**400 Bad Request** | The request was rejected because there was a problem validating the message body. An [Error](General.md#error-object) Object will be returned in the response body with more details.
 **403 Forbidden** | The request was rejected because the current user is not authorized to update the requested user profile. An [Error](General.md#error-object) Object will be returned in the response body.
 **404 Not Found** | A user with the username specified in the **username** route parameter does not exist and so no profile could be found. An [Error](General.md#error-object) Object will be returned in the response body.
 **500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.

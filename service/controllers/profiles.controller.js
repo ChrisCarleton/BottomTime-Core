@@ -5,8 +5,8 @@ import moment from 'moment';
 import { UpdateProfileSchema } from '../validation/profile';
 
 export async function GetProfile(req, res) {
-	/* eslint-disable no-underscore-dangle */
 	try {
+		/* eslint-disable no-underscore-dangle */
 		const logData = await LogEntry.aggregate([
 			{
 				$match: {
@@ -28,6 +28,7 @@ export async function GetProfile(req, res) {
 				}
 			}
 		]);
+		/* eslint-enable no-underscore-dangle */
 
 		const { bottomTimeLogged, divesLogged }
 			= logData.length > 0
@@ -43,7 +44,6 @@ export async function GetProfile(req, res) {
 		const logId = req.logError('Failed to retrieve profile information.', err);
 		serverError(res, logId);
 	}
-	/* eslint-enable no-underscore-dangle */
 }
 
 export async function UpdateProfile(req, res) {
