@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import faker from 'faker';
+import fakeProfile from './fake-profile';
 
 export default (password, logsVisibility = 'friends-only') => {
 	const firstName = faker.name.firstName();
@@ -15,8 +16,6 @@ export default (password, logsVisibility = 'friends-only') => {
 		email,
 		createdAt: faker.date.past(5),
 		passwordHash: bcrypt.hashSync(password, 5),
-		logsVisibility,
-		firstName,
-		lastName
+		...fakeProfile(logsVisibility)
 	};
 };

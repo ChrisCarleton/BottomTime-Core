@@ -239,12 +239,12 @@ describe('Log Entry Security', () => {
 				.catch(done);
 		});
 
-		it('Users can view logs from friends\' "friends-only" log book', done => {
+		it.skip('Users can view logs from friends\' "friends-only" log book', done => {
 			// TODO: Make the 'friending' logic.
 			done();
 		});
 
-		it('Users cannot view logs from "friends-only" log books when they are not friended', done => {
+		it.skip('Users cannot view logs from "friends-only" log books when they are not friended', done => {
 			// TODO: Make the 'friending' logic.
 			done();
 		});

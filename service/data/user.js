@@ -45,7 +45,17 @@ const userSchema = mongoose.Schema({
 		default: 'friends-only'
 	},
 	firstName: String,
-	lastName: String
+	lastName: String,
+	location: String,
+	occupation: String,
+	gender: String,
+	birthdate: Date,
+	typeOfDiver: String,
+	startedDiving: Number,
+	certificationLevel: String,
+	certificationAgencies: String,
+	specialties: String,
+	about: String
 });
 
 userSchema.statics.findByUsername = function (username, done) {
@@ -54,6 +64,53 @@ userSchema.statics.findByUsername = function (username, done) {
 
 userSchema.statics.findByEmail = function (email, done) {
 	return this.findOne({ emailLower: email.toLowerCase() }, done);
+};
+
+userSchema.methods.getAccountJSON = function () {
+	let hasPassword = false;
+	if (this.passwordHash) {
+		hasPassword = true;
+	}
+
+	const clean = {
+		..._.pick(
+			this.toJSON(),
+			[
+				'username',
+				'email',
+				'role',
+				'isLockedOut'
+			]),
+		isAnonymous: false,
+		hasPassword,
+		createdAt: moment(this.createdAt).utc().toISOString()
+	};
+
+	return clean;
+};
+
+userSchema.methods.getProfileJSON = function () {
+	return {
+		..._.pick(
+			this.toJSON(),
+			[
+				'logsVisibility',
+				'firstName',
+				'lastName',
+				'location',
+				'occupation',
+				'gender',
+				'typeOfDiver',
+				'startedDiving',
+				'certificationLevel',
+				'certificationAgencies',
+				'specialties',
+				'about'
+			]
+		),
+		memberSince: moment(this.createdAt).toISOString(),
+		birthdate: this.birthdate ? moment(this.birthdate).local().format('YYYY-MM-DD') : null
+	};
 };
 
 export default mongoose.model('User', userSchema);
@@ -70,24 +127,5 @@ export function cleanUpUser(user) {
 		};
 	}
 
-	let hasPassword = false;
-	if (user.passwordHash) {
-		hasPassword = true;
-	}
-
-	const clean = {
-		..._.pick(
-			user.toJSON(),
-			[
-				'username',
-				'email',
-				'role',
-				'isLockedOut'
-			]),
-		isAnonymous: false,
-		hasPassword,
-		createdAt: moment(user.createdAt).utc().toISOString()
-	};
-
-	return clean;
+	return user.getAccountJSON();
 }

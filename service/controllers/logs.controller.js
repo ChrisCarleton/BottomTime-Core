@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { badRequest, serverError, notFound, forbidden } from '../utils/error-response';
+import { badRequest, serverError, notFound } from '../utils/error-response';
 import Bluebird from 'bluebird';
 import Joi from 'joi';
 import LogEntry, { assignLogEntry } from '../data/log-entry';
@@ -161,21 +161,6 @@ export async function DeleteLog(req, res) {
 	}
 }
 
-export async function RetrieveUserAccount(req, res, next) {
-	try {
-		const user = await User.findByUsername(req.params.username);
-		if (!user) {
-			return notFound(req, res);
-		}
-
-		req.account = user;
-		return next();
-	} catch (err) {
-		const logId = req.logError('Failed to retrieve user account from the database.', err);
-		serverError(res, logId);
-	}
-}
-
 export async function RetrieveLogEntry(req, res, next) {
 	try {
 		const results = await Bluebird.all(
@@ -199,33 +184,4 @@ export async function RetrieveLogEntry(req, res, next) {
 		const logId = req.logError('Failed to search database for log entry', err);
 		serverError(res, logId);
 	}
-}
-
-export function AssertLogBookReadPermission(req, res, next) {
-	if (req.user && (req.user.role === 'admin' || req.user.id === req.account.id)) {
-		return next();
-	}
-
-	if (req.account.logsVisibility === 'public') {
-		return next();
-	}
-
-	forbidden(res, 'You are not permitted to perform the requested action on this log entry');
-}
-
-export function AssertLogBookWritePermission(req, res, next) {
-	const forbiddenMessage = 'You are not permitted to create or update entries in the specified log book';
-	if (!req.user) {
-		return forbidden(
-			res,
-			forbiddenMessage);
-	}
-
-	if (req.user.id !== req.account.id && req.user.role !== 'admin') {
-		return forbidden(
-			res,
-			forbiddenMessage);
-	}
-
-	next();
 }
