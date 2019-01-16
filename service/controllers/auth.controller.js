@@ -1,24 +1,26 @@
 import { badRequest, serverError, unauthorized } from '../utils/error-response';
+import config from '../config';
 import Joi from 'joi';
+import jwt from 'jsonwebtoken';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
 import { cleanUpUser } from '../data/user';
 
 export function AuthenticateUser(req, res, next) {
-	passport.authenticate('local', (err, user) => {
+	passport.authenticate('local', { session: false }, (err, user) => {
+		if (err) {
+			const logId = req.logError(
+				'An error occurred while trying to authenticate a user.',
+				err);
+			return serverError(res, logId);
+		}
+
 		const isValid = Joi.validate(req.body, LoginSchema);
 		if (isValid.error) {
 			return badRequest(
 				'Could not authenticate user: request was invalid.',
 				isValid.error,
 				res);
-		}
-
-		if (err) {
-			const logId = req.logError(
-				'An error occurred while trying to authenticate a user.',
-				err);
-			return serverError(res, logId);
 		}
 
 		if (!user) {
@@ -28,7 +30,7 @@ export function AuthenticateUser(req, res, next) {
 				'Check the username and password to verify that they are correct.');
 		}
 
-		req.login(user, loginErr => {
+		req.login(user, { session: false }, loginErr => {
 			if (loginErr) {
 				const logId = req.logError(
 					'An error occurred while trying to authenticate a user.',
@@ -41,13 +43,34 @@ export function AuthenticateUser(req, res, next) {
 	})(req, res, next);
 }
 
-export function Login(req, res) {
-	res.sendStatus(204);
+export async function Login(req, res) {
+	const token = jwt.sign(
+		{
+			username: req.user.username
+		},
+		config.sessionSecret
+	);
+
+	req.user.loggedOut = false;
+	await req.user.save();
+
+	res.json({
+		user: cleanUpUser(req.user),
+		token
+	});
 }
 
-export function Logout(req, res) {
-	req.logout();
-	res.sendStatus(204);
+export async function Logout(req, res) {
+	try {
+		req.user.isLoggedOut = true;
+		await req.user.save();
+
+		req.logout();
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError('Unable to log out user', err);
+		serverError(res, logId);
+	}
 }
 
 export function GetCurrentUser(req, res) {

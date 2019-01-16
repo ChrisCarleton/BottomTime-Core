@@ -39,6 +39,11 @@ const userSchema = mongoose.Schema({
 		required: true,
 		default: false
 	},
+	isLoggedOut: {
+		type: Boolean,
+		required: true,
+		default: false
+	},
 	logsVisibility: {
 		type: String,
 		required: true,

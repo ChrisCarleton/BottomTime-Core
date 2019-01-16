@@ -1,40 +1,12 @@
 import bcrypt from 'bcrypt';
 import config from './config';
-// import { ErrorIds } from './utils/error-response';
+import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { logError } from './logger';
 import passport from 'passport';
 import url from 'url';
 import User from './data/user';
-
-passport.serializeUser((user, done) => {
-	done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-	try {
-		const user = await User.findById(id);
-		return done(null, user);
-	} catch (err) {
-		/*
-			TODO: I don't have a good way of making Passport return a proper standardised. 500
-			error response. For now, I'm just logging the error and returning no user. The request
-			will be handled downstream as if the user is not logged.
-
-			See https://github.com/ChrisCarleton/BottomTime-Core/issues/7 for more on this issue.
-		*/
-		logError('Failed to deserialize user session.', err);
-		// done({
-		// 	errorId: ErrorIds.serverError,
-		// 	logId: logId,
-		// 	status: 500,
-		// 	message: 'A server error occurred.',
-		// 	details: 'Your request could not be completed at this time. Please try again later.'
-		// });
-		return done(null, false);
-	}
-});
 
 passport.use(new LocalStrategy(async (username, password, done) => {
 	try {
@@ -49,6 +21,26 @@ passport.use(new LocalStrategy(async (username, password, done) => {
 		return done(err);
 	}
 }));
+
+passport.use(new JwtStrategy(
+	{
+		jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+		secretOrKey: config.sessionSecret
+	},
+	async (payload, done) => {
+		try {
+			const user = await User.findByUsername(payload.username);
+			if (!user || user.isLoggedOut) {
+				return done('Unable to sign in user. Try logging in again.');
+			}
+
+			return done(null, user);
+		} catch (err) {
+			logError(err);
+			return done(err);
+		}
+	}
+));
 
 passport.use(new GoogleStrategy({
 	clientID: config.auth.googleClientId,
