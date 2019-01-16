@@ -19,26 +19,23 @@ describe('Auth Controller', () => {
 		User.deleteMany({}, done);
 	});
 
-	describe('POST /auth/login', () => {
+	describe('POST /auth/login', async () => {
 
-		it('Authenticates a user when username and password are correct', done => {
+		it('Authenticates a user when username and password are correct', async () => {
 			const password = faker.internet.password(12, false);
 			const fake = fakeUser(password);
 			const user = new User(fake);
 
-			user.save()
-				.then(() => request(App)
-					.post('/auth/login')
-					.send({
-						username: fake.username,
-						password
-					}))
-				.then(res => {
-					expect(res.status).to.equal(204);
-					expect(res.headers['set-cookie']).to.exist;
-					done();
-				})
-				.catch(done);
+			await user.save();
+			const res = await request(App)
+				.post('/auth/login')
+				.send({
+					username: fake.username,
+					password
+				});
+			expect(res.status).to.equal(200);
+			expect(res.body.token).to.exist;
+			expect(res.body.user).to.eql(cleanUpUser(user));
 		});
 
 		it('Fails when user cannot be found', done => {
