@@ -36,7 +36,7 @@ export const requestLogger = expressLogger({
 		'response-hrtime'
 	],
 	includesFn: req => ({
-		user: req.user,
+		user: req.user ? req.user.username : '<anonymous>',
 		ecsInstanceId: containerMetadata.ContainerInstanceARN,
 		ecsTaskId: containerMetadata.TaskARN
 	})

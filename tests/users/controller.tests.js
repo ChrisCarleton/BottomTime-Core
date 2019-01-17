@@ -2,12 +2,14 @@ import { App } from '../../service/server';
 import bcrypt from 'bcrypt';
 import createAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
-import { expect, request } from 'chai';
+import { expect } from 'chai';
 import faker from 'faker';
 import fakeUser from '../util/fake-user';
+import generateAuthHeader from '../util/generate-auth-header';
 import mailer from '../../service/mail/mailer';
 import moment from 'moment';
 import mongoose from 'mongoose';
+import request from 'supertest';
 import templates from '../../service/mail/templates';
 import sinon from 'sinon';
 import User from '../../service/data/user';
@@ -32,23 +34,13 @@ describe('Users Controller', () => {
 	let admin = null;
 	let regularUser = null;
 
-	before(done => {
-		createAccount('admin')
-			.then(account => {
-				admin = account;
-				return createAccount();
-			})
-			.then(user => {
-				regularUser = user;
-				done();
-			})
-			.catch(done);
+	before(async () => {
+		admin = await createAccount('admin');
+		regularUser = await createAccount();
 	});
 
-	after(done => {
-		admin.agent.close();
-		regularUser.agent.close();
-		User.deleteMany({}, done);
+	after(async () => {
+		await User.deleteMany({});
 	});
 
 	afterEach(() => {
@@ -59,865 +51,608 @@ describe('Users Controller', () => {
 	});
 
 	describe('PUT /users/:username', () => {
-		it('Anonymous users can create accounts and will be logged in', done => {
-			const agent = request.agent(App);
+		it('Anonymous users can create accounts and will receive an auth token', async () => {
 			const fake = fakeCreateAccount();
 
-			agent
+			let res = await request(App)
 				.put(`/users/${ fake.username }`)
 				.send(fake.body)
-				.then(res => {
-					expect(res.status).to.equal(201);
-					return agent.get('/auth/me');
-				})
-				.then(res => {
-					expect(res.body.isAnonymous).to.be.false;
-					expect(res.body.isLockedOut).to.be.false;
-					expect(res.body.username).to.equal(fake.username);
-					expect(res.body.email).to.equal(fake.body.email);
-					expect(res.body.role).to.equal('user');
-					done();
-				})
-				.catch(done)
-				.finally(() => agent.close());
+				.expect(201);
+
+			const { user, token } = res.body;
+			expect(token).to.exist;
+			expect(user.isAnonymous).to.be.false;
+			expect(user.isLockedOut).to.be.false;
+			expect(user.username).to.equal(fake.username);
+			expect(user.email).to.equal(fake.body.email);
+			expect(user.role).to.equal('user');
+
+			res = await request(App)
+				.get('/auth/me')
+				.set('Authorization', `Bearer ${ token }`)
+				.expect(200);
+			expect(res.body.isAnonymous).to.be.false;
+			expect(res.body.isLockedOut).to.be.false;
+			expect(res.body.username).to.equal(fake.username);
+			expect(res.body.email).to.equal(fake.body.email);
+			expect(res.body.role).to.equal('user');
 		});
 
-		it('Anonymous users cannot create admin accounts', done => {
-			const fake = fakeCreateAccount();
-			fake.body.role = 'admin';
-
-			request(App)
-				.put(`/users/${ fake.username }`)
-				.send(fake.body)
-				.then(res => {
-					expect(res.status).to.equal(403);
-					expect(res.body.status).to.equal(403);
-					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
-					done();
-				})
-				.catch(done);
-		});
-
-		it('Admins can create new accounts and will stay logged in as admins', done => {
-			const fake = fakeCreateAccount();
-
-			admin.agent
-				.put(`/users/${ fake.username }`)
-				.send(fake.body)
-				.then(res => {
-					expect(res.status).to.equal(201);
-					return admin.agent.get('/auth/me');
-				})
-				.then(res => {
-					expect(res.body.isAnonymous).to.be.false;
-					expect(res.body.username).to.equal(admin.user.username);
-					return User.findByUsername(fake.username);
-				})
-				.then(user => {
-					expect(user).to.exist;
-					done();
-				})
-				.catch(done);
-		});
-
-		it('Admins can create admin accounts', done => {
+		it('Anonymous users cannot create admin accounts', async () => {
 			const fake = fakeCreateAccount();
 			fake.body.role = 'admin';
 
-			admin.agent
+			const res = await request(App)
 				.put(`/users/${ fake.username }`)
 				.send(fake.body)
-				.then(res => {
-					expect(res.status).to.equal(201);
-					return admin.agent.get('/auth/me');
-				})
-				.then(res => {
-					expect(res.body.isAnonymous).to.be.false;
-					expect(res.body.username).to.equal(admin.user.username);
-					done();
-				})
-				.catch(done);
+				.expect(403);
+			expect(res.status).to.equal(403);
+			expect(res.body.status).to.equal(403);
+			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
 		});
 
-		it('Other authenticated users cannot create new accounts', done => {
+		it('Admins can create admin accounts', async () => {
+			const fake = fakeCreateAccount();
+			fake.body.role = 'admin';
+
+			await request(App)
+				.put(`/users/${ fake.username }`)
+				.set(...admin.authHeader)
+				.send(fake.body)
+				.expect(201);
+		});
+
+		it('Other authenticated users cannot create new accounts', async () => {
 			const fake = fakeCreateAccount();
 
-			regularUser.agent
+			const res = await request(App)
 				.put(`/users/${ fake.username }`)
+				.set(...regularUser.authHeader)
 				.send(fake.body)
-				.then(res => {
-					expect(res.status).to.equal(403);
-					expect(res.body.status).to.equal(403);
-					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
-					done();
-				})
-				.catch(done);
+				.expect(403);
+			expect(res.body.status).to.equal(403);
+			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
 		});
 
-		it('Will return Conflict if username is taken', done => {
+		it('Will return Conflict if username is taken', async () => {
 			const fake = fakeCreateAccount();
 			fake.username = regularUser.user.username;
 
-			request(App)
+			const res = await request(App)
 				.put(`/users/${ fake.username.toUpperCase() }`)
 				.send(fake.body)
-				.then(res => {
-					expect(res.status).to.equal(409);
-					expect(res.body.errorId).to.equal(ErrorIds.conflict);
-					expect(res.body.status).to.equal(409);
-					expect(res.body.fieldName).to.equal('username');
-					return request(App).get('/auth/me');
-				})
-				.then(res => {
-					expect(res.body.isAnonymous).to.be.true;
-					done();
-				})
-				.catch(done);
+				.expect(409);
+			expect(res.body.errorId).to.equal(ErrorIds.conflict);
+			expect(res.body.status).to.equal(409);
+			expect(res.body.fieldName).to.equal('username');
 		});
 
-		it('Will return Conflict if email is taken', done => {
+		it('Will return Conflict if email is taken', async () => {
 			const fake = fakeCreateAccount();
 			fake.body.email = regularUser.user.email;
 
-			request(App)
+			const res = await request(App)
 				.put(`/users/${ fake.username.toUpperCase() }`)
 				.send(fake.body)
-				.then(res => {
-					expect(res.status).to.equal(409);
-					expect(res.body.errorId).to.equal(ErrorIds.conflict);
-					expect(res.body.fieldName).to.equal('email');
-					expect(res.body.status).to.equal(409);
-					return request(App).get('/auth/me');
-				})
-				.then(res => {
-					expect(res.body.isAnonymous).to.be.true;
-					done();
-				})
-				.catch(done);
+				.expect(409);
+			expect(res.body.errorId).to.equal(ErrorIds.conflict);
+			expect(res.body.fieldName).to.equal('email');
+			expect(res.body.status).to.equal(409);
 		});
 
-		it('Will return Bad Request if username is invalid', done => {
+		it('Will return Bad Request if username is invalid', async () => {
 			const fake = fakeCreateAccount();
 			fake.username = 'Whoa! Totally not valid';
 
-			request(App)
+			const res = await request(App)
 				.put(`/users/${ fake.username.toUpperCase() }`)
 				.send(fake.body)
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-					expect(res.body.status).to.equal(400);
-					return request(App).get('/auth/me');
-				})
-				.then(res => {
-					expect(res.body.isAnonymous).to.be.true;
-					done();
-				})
-				.catch(done);
+				.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+			expect(res.body.status).to.equal(400);
 		});
 
-		it('Will return Bad Request if request body is invalid', done => {
+		it('Will return Bad Request if request body is invalid', async () => {
 			const fake = fakeCreateAccount();
 			fake.body.notCool = true;
 
-			request(App)
+			const res = await request(App)
 				.put(`/users/${ fake.username.toUpperCase() }`)
 				.send(fake.body)
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-					expect(res.body.status).to.equal(400);
-					return request(App).get('/auth/me');
-				})
-				.then(res => {
-					expect(res.body.isAnonymous).to.be.true;
-					done();
-				})
-				.catch(done);
+				.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+			expect(res.body.status).to.equal(400);
 		});
 
-		it('Will return Bad Request if request body is empty', done => {
-			request(App)
+		it('Will return Bad Request if request body is empty', async () => {
+			const res = await request(App)
 				.put(`/users/${ faker.internet.userName() }`)
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-					expect(res.body.status).to.equal(400);
-					return request(App).get('/auth/me');
-				})
-				.then(res => {
-					expect(res.body.isAnonymous).to.be.true;
-					done();
-				})
-				.catch(done);
+				.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+			expect(res.body.status).to.equal(400);
 		});
 
-		it('Will return Server Error if something goes wrong with the database', done => {
+		it('Will return Server Error if something goes wrong with the database', async () => {
 			const fake = fakeCreateAccount();
 			stub = sinon.stub(mongoose.Model.prototype, 'save');
 			stub.rejects('nope');
 
-			request(App)
+			const res = await request(App)
 				.put(`/users/${ fake.username }`)
 				.send(fake.body)
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.logId).to.exist;
-					expect(res.body.errorId).to.equal(ErrorIds.serverError);
-					done();
-				})
-				.catch(done);
+				.expect(500);
+			expect(res.body.status).to.equal(500);
+			expect(res.body.logId).to.exist;
+			expect(res.body.errorId).to.equal(ErrorIds.serverError);
 		});
 	});
 
 	describe('POST /users/:username/changePassword', () => {
-		it('Will change the user\'s password', done => {
+		it('Will change the user\'s password', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 			const user = new User(fakeUser(oldPassword));
-			const agent = request.agent(App);
+			const authHeader = await generateAuthHeader(user.username);
 
-			user.save()
-				.then(() => agent
-					.post('/auth/login')
-					.send({
-						username: user.username,
-						password: oldPassword
-					}))
-				.then(() => agent
-					.post(`/users/${ user.username }/changePassword`)
-					.send({
-						oldPassword,
-						newPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(204);
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.true;
-					done();
-				})
-				.catch(done)
-				.finally(() => {
-					agent.close();
-				});
-		});
-
-		it('Will return Forbidden if user is not authenticated', done => {
-			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
-			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
-			const user = new User(fakeUser(oldPassword));
-
-			user.save()
-				.then(() => request(App)
-					.post(`/users/${ user.username }/changePassword`)
-					.send({
-						oldPassword,
-						newPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(403);
-					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
-					done();
-				})
-				.catch(done);
-		});
-
-		it('Will return Forbidden if requested user account canot be found', done => {
-			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
-			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
-			const user = new User(fakeUser(oldPassword));
-
-			admin.agent
+			await user.save();
+			await request(App)
 				.post(`/users/${ user.username }/changePassword`)
 				.send({
 					oldPassword,
 					newPassword
 				})
-				.then(res => {
-					expect(res.status).to.equal(403);
-					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
-					done();
-				})
-				.catch(done);
+				.set(...authHeader)
+				.expect(204);
+
+			const entity = await User.findByUsername(user.username);
+			expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.true;
 		});
 
-		it('Will return Forbidden if user tries to change another user\'s password', done => {
+		it('Will return Forbidden if user is not authenticated', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 			const user = new User(fakeUser(oldPassword));
 
-			user.save()
-				.then(() => regularUser.agent
+			await user.save();
+			const res = await request(App)
+				.post(`/users/${ user.username }/changePassword`)
+				.send({
+					oldPassword,
+					newPassword
+				})
+				.expect(403);
+			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+
+			const entity = await User.findByUsername(user.username);
+			expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
+		});
+
+		it('Will return Forbidden if requested user account canot be found', async () => {
+			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+			const user = new User(fakeUser(oldPassword));
+
+			const res = await request(App)
+				.post(`/users/${ user.username }/changePassword`)
+				.set(...admin.authHeader)
+				.send({
+					oldPassword,
+					newPassword
+				})
+				.expect(403);
+			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+		});
+
+		it('Will return Forbidden if user tries to change another user\'s password', async () => {
+			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+			const user = new User(fakeUser(oldPassword));
+
+			await user.save();
+
+			const res = await request(App)
 					.post(`/users/${ user.username }/changePassword`)
+					.set(...regularUser.authHeader)
 					.send({
 						oldPassword,
 						newPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(403);
-					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
-					done();
-				})
-				.catch(done);
+					})
+					.expect(403);
+			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+
+			const entity = await User.findByUsername(user.username);
+			expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
 		});
 
-		it('Will return Forbidden if old password is incorrect', done => {
+		it('Will return Forbidden if old password is incorrect', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 			const user = new User(fakeUser(oldPassword));
-			const agent = request.agent(App);
+			const authHeader = await generateAuthHeader(user.username);
 
-			user.save()
-				.then(() => agent
-					.post('/auth/login')
-					.send({
-						username: user.username,
-						password: oldPassword
-					}))
-				.then(() => agent
+			await user.save();
+			const res = await request(App)
 					.post(`/users/${ user.username }/changePassword`)
+					.set(...authHeader)
 					.send({
 						oldPassword: 'Wr0ng.P@ssw3rd',
 						newPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(403);
-					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
-					done();
-				})
-				.catch(done)
-				.finally(() => {
-					agent.close();
-				});
+					})
+					.expect(403);
+			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+
+			const entity = await User.findByUsername(user.username);
+			expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
 		});
 
-		it('Will allow admins to change other user\'s passwords without supplying an old one', done => {
+		it('Will allow admins to change other user\'s passwords without supplying an old one', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 			const user = new User(fakeUser(oldPassword));
 
-			user.save()
-				.then(() => admin.agent
-					.post(`/users/${ user.username }/changePassword`)
-					.send({
-						newPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(204);
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.true;
-					done();
-				})
-				.catch(done);
+			await user.save();
+			await request(App)
+				.post(`/users/${ user.username }/changePassword`)
+				.set(...admin.authHeader)
+				.send({ newPassword })
+				.expect(204);
+
+			const entity = await User.findByUsername(user.username);
+			expect(await bcrypt.compare(newPassword, entity.passwordHash)).to.be.true;
 		});
 
-		it('Old password is not required if no password is set', done => {
-			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
+		it('Old password is not required if no password is set', async () => {
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
-			const user = new User(fakeUser(oldPassword));
-			const agent = request.agent(App);
+			const user = new User(fakeUser());
 
-			user.save()
-				.then(() => agent
-					.post('/auth/login')
-					.send({
-						username: user.username,
-						password: oldPassword
-					}))
-				.then(() => {
-					user.passwordHash = null;
-					return user.save();
-				})
-				.then(() => agent
-					.post(`/users/${ user.username }/changePassword`)
-					.send({
-						newPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(204);
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.true;
-					done();
-				})
-				.catch(done)
-				.finally(() => {
-					agent.close();
-				});
+			user.passwordHash = null;
+			await user.save();
+
+			const authHeader = await generateAuthHeader(user.username);
+			await request(App)
+				.post(`/users/${ user.username }/changePassword`)
+				.set(...authHeader)
+				.send({ newPassword })
+				.expect(204);
+
+			const entity = await User.findByUsername(user.username);
+			expect(await bcrypt.compare(newPassword, entity.passwordHash)).to.be.true;
 		});
 
-		it('Will return Bad Request if new password is not strong enough', done => {
+		it('Will return Bad Request if new password is not strong enough', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = 'too_weak';
 			const user = new User(fakeUser(oldPassword));
-			const agent = request.agent(App);
+			const authHeader = await generateAuthHeader(user.username);
 
-			user.save()
-				.then(() => agent
-					.post('/auth/login')
-					.send({
-						username: user.username,
-						password: oldPassword
-					}))
-				.then(() => agent
-					.post(`/users/${ user.username }/changePassword`)
-					.send({
-						oldPassword,
-						newPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-					return User.findByUsername(user.username);
+			await user.save();
+			const res = await request(App)
+				.post(`/users/${ user.username }/changePassword`)
+				.set(...authHeader)
+				.send({
+					oldPassword,
+					newPassword
 				})
-				.then(entity => {
-					expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
-					done();
-				})
-				.catch(done)
-				.finally(() => {
-					agent.close();
-				});
+				.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+
+			const entity = await User.findByUsername(user.username);
+			expect(await bcrypt.compare(oldPassword, entity.passwordHash)).to.be.true;
 		});
 
-		it('Will return Bad Request if request body is malformed', done => {
+		it('Will return Bad Request if request body is malformed', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const user = new User(fakeUser(oldPassword));
-			const agent = request.agent(App);
+			const authHeader = await generateAuthHeader(user.username);
 
-			user.save()
-				.then(() => agent
-					.post('/auth/login')
-					.send({
-						username: user.username,
-						password: oldPassword
-					}))
-				.then(() => agent
+			await user.save();
+			const res = await request(App)
 					.post(`/users/${ user.username }/changePassword`)
+					.set(...authHeader)
 					.send({
 						wat: 'not-valid',
 						oldPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
-					done();
-				})
-				.catch(done)
-				.finally(() => {
-					agent.close();
-				});
+					})
+					.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+
+			const entity = await User.findByUsername(user.username);
+			expect(await bcrypt.compare(oldPassword, entity.passwordHash)).to.be.true;
 		});
 
-		it('Will return Bad Request if request body is missing', done => {
+		it('Will return Bad Request if request body is missing', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const user = new User(fakeUser(oldPassword));
-			const agent = request.agent(App);
+			const authHeader = await generateAuthHeader(user.username);
 
-			user.save()
-				.then(() => agent
-					.post('/auth/login')
-					.send({
-						username: user.username,
-						password: oldPassword
-					}))
-				.then(() => agent
-					.post(`/users/${ user.username }/changePassword`))
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
-					done();
-				})
-				.catch(done)
-				.finally(() => {
-					agent.close();
-				});
+			await user.save();
+			const res = await request(App)
+					.post(`/users/${ user.username }/changePassword`)
+					.set(...authHeader)
+					.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+
+			const entity = await User.findByUsername(user.username);
+			expect(await bcrypt.compare(oldPassword, entity.passwordHash)).to.be.true;
 		});
 
-		it('Will return Not Found if username is invalid', done => {
+		it('Will return Not Found if username is invalid', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 
-			admin.agent
+			const res = await request(App)
 				.post('/users/__#What^User/changePassword')
+				.set(...admin.authHeader)
 				.send({
 					oldPassword,
 					newPassword
 				})
-				.then(res => {
-					expect(res.status).to.equal(404);
-					expect(res.body.errorId).to.equal(ErrorIds.notFound);
-					done();
-				})
-				.catch(done);
+				.expect(404);
+			expect(res.body.errorId).to.equal(ErrorIds.notFound);
 		});
 
-		it('Will return Server Error if a problem occurs looking up the user account from the database', done => {
+		it('Will return Server Error if a problem occurs looking up the user account from the database', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 
-			stub = sinon.stub(User, 'findByUsername');
+			stub = sinon.stub(User, 'findOne');
 			stub.rejects('nope');
 
-			regularUser.agent
+			await request(App)
 				.post(`/users/${ regularUser.user.username }/changePassword`)
+				.set(...regularUser.authHeader)
 				.send({
 					oldPassword,
 					newPassword
 				})
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.errorId).to.equal(ErrorIds.serverError);
-					expect(res.body.logId).to.exist;
-					done();
-				})
-				.catch(done);
+				.expect(500);
 		});
 
-		it('Will return Server Error if a problem occurs while writing to the database', done => {
+		it('Will return Server Error if a problem occurs while writing to the database', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 			const user = new User(fakeUser(oldPassword));
-			const agent = request.agent(App);
+			const authHeader = await generateAuthHeader(user.username);
 
-			user.save()
-				.then(() => {
-					return agent
-						.post('/auth/login')
-						.send({
-							username: user.username,
-							password: oldPassword
-						});
-				})
-				.then(() =>{
-					stub = sinon.stub(mongoose.Model.prototype, 'save');
-					stub.rejects('nope');
+			await user.save();
+			stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub.rejects('nope');
 
-					return agent
-						.post(`/users/${ user.username }/changePassword`)
-						.send({
-							oldPassword,
-							newPassword
-						});
+			const res = await request(App)
+				.post(`/users/${ user.username }/changePassword`)
+				.set(...authHeader)
+				.send({
+					oldPassword,
+					newPassword
 				})
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.errorId).to.equal(ErrorIds.serverError);
-					expect(res.body.logId).to.exist;
-					done();
-				})
-				.catch(done)
-				.finally(() => {
-					agent.close();
-				});
+				.expect(500);
+			expect(res.body.status).to.equal(500);
+			expect(res.body.errorId).to.equal(ErrorIds.serverError);
+			expect(res.body.logId).to.exist;
 		});
 	});
 
 	describe('POST /users/:username/resetPassword', () => {
-		it('Will generate a reset token and email it', done => {
-			const user = new User(fakeUser());
-			const templatingSpy = sinon.spy(templates, 'ResetPasswordEmail');
-			const mailerSpy = sinon.spy(mailer, 'sendMail');
+		let templatingSpy = null;
+		let mailerSpy = null;
 
-			user.save()
-				.then(() => request(App).post(`/users/${ user.username }/resetPassword`))
-				.then(res => {
-					expect(res.status).to.equal(204);
-					expect(mailerSpy.called).to.be.true;
-					expect(templatingSpy.called).to.be.true;
+		afterEach(() => {
+			if (templatingSpy) {
+				templatingSpy.restore();
+				templatingSpy = null;
+			}
 
-					expect(templatingSpy.getCall(0).args[0]).to.equal(user.username);
-					expect(templatingSpy.getCall(0).args[2]).to.be.a('String');
-
-					const [ mailOptions ] = mailerSpy.getCall(0).args;
-					expect(mailOptions.to).to.equal(user.email);
-					expect(mailOptions.from).to.not.exist;
-					expect(mailOptions.subject).to.equal('Reset BottomTime password');
-					expect(mailOptions.html).to.exist;
-
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(entity.passwordResetToken).to.exist;
-					expect(entity.passwordResetExpiration).to.be.a('Date');
-					expect(
-						moment(entity.passwordResetExpiration)
-							.diff(moment().add(1, 'd'), 'm')).to.be.lessThan(1);
-					done();
-				})
-				.catch(done)
-				.finally(() => {
-					mailerSpy.restore();
-					templatingSpy.restore();
-				});
+			if (mailerSpy) {
+				mailerSpy.restore();
+				mailerSpy = null;
+			}
 		});
 
-		it('Will return 204 even if the user account does not exist', done => {
-			request(App)
+		it('Will generate a reset token and email it', async () => {
+			const user = new User(fakeUser());
+			templatingSpy = sinon.spy(templates, 'ResetPasswordEmail');
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+
+			await user.save();
+			await request(App).post(`/users/${ user.username }/resetPassword`).expect(204);
+
+			expect(mailerSpy.called).to.be.true;
+			expect(templatingSpy.called).to.be.true;
+			expect(templatingSpy.getCall(0).args[0]).to.equal(user.username);
+			expect(templatingSpy.getCall(0).args[2]).to.be.a('String');
+
+			const [ mailOptions ] = mailerSpy.getCall(0).args;
+			expect(mailOptions.to).to.equal(user.email);
+			expect(mailOptions.from).to.not.exist;
+			expect(mailOptions.subject).to.equal('Reset BottomTime password');
+			expect(mailOptions.html).to.exist;
+
+			const entity = await User.findByUsername(user.username);
+			expect(entity.passwordResetToken).to.exist;
+			expect(entity.passwordResetExpiration).to.be.a('Date');
+			expect(
+				moment(entity.passwordResetExpiration).diff(moment().add(1, 'd'), 'm')
+			).to.be.lessThan(1);
+		});
+
+		it('Will return 204 even if the user account does not exist', async () => {
+			await request(App)
 				.post('/users/MadeUpUser/resetPassword')
-				.then(res => {
-					expect(res.status).to.equal(204);
-					done();
-				})
-				.catch(done);
+				.expect(204);
 		});
 
-		it('Will return server error if the database cannot be accessed', done => {
+		it('Will return server error if the database cannot be accessed', async () => {
 			const user = new User(fakeUser());
+			await user.save();
 
-			user.save()
-				.then(() => {
-					stub = sinon.stub(User, 'findByUsername');
-					stub.rejects('nope');
-				})
-				.then(() => request(App).post(`/users/${ user.username }/resetPassword`))
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.logId).to.exist;
-					expect(res.body.errorId).to.equal(ErrorIds.serverError);
-					done();
-				})
-				.catch(done);
+			stub = sinon.stub(User, 'findOne');
+			stub.rejects('nope');
+
+			await request(App)
+				.post(`/users/${ user.username }/resetPassword`)
+				.expect(500);
 		});
 
-		it('Will return Server Error if mailer fails', done => {
+		it('Will return Server Error if mailer fails', async () => {
 			const user = new User(fakeUser());
+			await user.save();
 
-			user.save()
-				.then(() => {
-					stub = sinon.stub(mailer, 'sendMail');
-					stub.rejects('nope');
-				})
-				.then(() => request(App).post(`/users/${ user.username }/resetPassword`))
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.logId).to.exist;
-					expect(res.body.errorId).to.equal(ErrorIds.serverError);
-					done();
-				})
-				.catch(done);
+			stub = sinon.stub(mailer, 'sendMail');
+			stub.rejects('nope');
+
+			const res = await request(App).post(`/users/${ user.username }/resetPassword`).expect(500);
+			expect(res.body.status).to.equal(500);
+			expect(res.body.logId).to.exist;
+			expect(res.body.errorId).to.equal(ErrorIds.serverError);
 		});
 	});
 
 	describe('POST /users/:username/confirmResetPassword', () => {
-		it('Will update the user\'s password', done => {
+		it('Will update the user\'s password', async () => {
 			const user = new User(fakeUser());
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 			user.passwordResetToken = uuid();
 			user.passwordResetExpiration = moment().add(6, 'h').utc().toDate();
 
-			user.save()
-				.then(() => request(App)
-					.post(`/users/${ user.username }/confirmResetPassword`)
-					.send({
-						resetToken: user.passwordResetToken,
-						newPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(204);
-					return User.findByUsername(user.username);
+			await user.save();
+			await request(App)
+				.post(`/users/${ user.username }/confirmResetPassword`)
+				.send({
+					resetToken: user.passwordResetToken,
+					newPassword
 				})
-				.then(entity => {
-					expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.true;
-					expect(entity.passwordResetToken).to.not.exist;
-					expect(entity.passwordResetExpiration).to.not.exist;
-					done();
-				})
-				.catch(done);
+				.expect(204);
+
+			const entity = await User.findByUsername(user.username);
+			expect(await bcrypt.compare(newPassword, entity.passwordHash)).to.be.true;
+			expect(entity.passwordResetToken).to.not.exist;
+			expect(entity.passwordResetExpiration).to.not.exist;
 		});
 
-		it('Will return Forbidden if reset token is not set', done => {
+		it('Will return Forbidden if reset token is not set', async () => {
 			const user = new User(fakeUser());
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 
-			user.save()
-				.then(() => request(App)
-					.post(`/users/${ user.username }/confirmResetPassword`)
-					.send({
-						resetToken: uuid(),
-						newPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(403);
-					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.false;
-					done();
-				})
-				.catch(done);
-		});
-
-		it('Will return Forbidden if reset token is expired', done => {
-			const user = new User(fakeUser());
-			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
-			user.passwordResetToken = uuid();
-			user.passwordResetExpiration = moment().subtract(6, 'h').utc().toDate();
-
-			user.save()
-				.then(() => request(App)
-					.post(`/users/${ user.username }/confirmResetPassword`)
-					.send({
-						resetToken: user.passwordResetToken,
-						newPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(403);
-					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.false;
-					done();
-				})
-				.catch(done);
-		});
-
-		it('Will return Forbidden if reset token is incorrect', done => {
-			const user = new User(fakeUser());
-			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
-			user.passwordResetToken = uuid();
-			user.passwordResetExpiration = moment().add(6, 'h').utc().toDate();
-
-			user.save()
-				.then(() => request(App)
-					.post(`/users/${ user.username }/confirmResetPassword`)
-					.send({
-						resetToken: uuid(),
-						newPassword
-					}))
-				.then(res => {
-					expect(res.status).to.equal(403);
-					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
-					return User.findByUsername(user.username);
-				})
-				.then(entity => {
-					expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.false;
-					done();
-				})
-				.catch(done);
-		});
-
-		it('Will return Forbidden if user account does not exist', done => {
-			const user = fakeUser();
-			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
-
-			request(App)
+			await user.save();
+			const res = await request(App)
 				.post(`/users/${ user.username }/confirmResetPassword`)
 				.send({
 					resetToken: uuid(),
 					newPassword
 				})
-				.then(res => {
-					expect(res.status).to.equal(403);
-					expect(res.body.errorId).to.equal(ErrorIds.forbidden);
-					done();
-				})
-				.catch(done);
+				.expect(403);
+			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+			
+			const entity = await User.findByUsername(user.username);
+			expect(await bcrypt.compare(newPassword, entity.passwordHash)).to.be.false;
 		});
 
-		it('Will return Bad Request if request body is empty', done => {
-			const user = fakeUser();
+		it('Will return Forbidden if reset token is expired', async () => {
+			const user = new User(fakeUser());
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+			user.passwordResetToken = uuid();
+			user.passwordResetExpiration = moment().subtract(6, 'h').utc().toDate();
 
-			request(App)
+			await user.save();
+			const res = await request(App)
 				.post(`/users/${ user.username }/confirmResetPassword`)
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-					done();
+				.send({
+					resetToken: user.passwordResetToken,
+					newPassword
 				})
-				.catch(done);
+				.expect(403);
+			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+
+			const entity = await User.findByUsername(user.username);
+			expect(await bcrypt.compare(newPassword, entity.passwordHash)).to.be.false;
 		});
 
-		it('Will return Bad Request if request body is invalid', done => {
-			request(App)
+		it('Will return Forbidden if reset token is incorrect', async () => {
+			const user = new User(fakeUser());
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+			user.passwordResetToken = uuid();
+			user.passwordResetExpiration = moment().add(6, 'h').utc().toDate();
+
+			await user.save();
+			const res = await request(App)
+				.post(`/users/${ user.username }/confirmResetPassword`)
+				.send({
+					resetToken: uuid(),
+					newPassword
+				})
+				.expect(403);
+			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+
+			const entity = await User.findByUsername(user.username);
+			expect(await bcrypt.compare(newPassword, entity.passwordHash)).to.be.false;
+		});
+
+		it('Will return Forbidden if user account does not exist', async () => {
+			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
+			const res = await request(App)
+				.post('/users/NotARealUser/confirmResetPassword')
+				.send({
+					resetToken: uuid(),
+					newPassword
+				})
+				.expect(403);
+			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+		});
+
+		it('Will return Bad Request if request body is empty', async () => {
+			const user = fakeUser();
+			const res = await request(App)
+				.post(`/users/${ user.username }/confirmResetPassword`)
+				.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+		});
+
+		it('Will return Bad Request if request body is invalid', async () => {
+			const res = await request(App)
 				.post('/users/Jim.Coates/confirmResetPassword')
 				.send({
 					resetToken: uuid(),
 					newPassword: 'aeg932qhq3rpgn*&Y)&Y',
 					wat: 'dunno'
 				})
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-					done();
-				})
-				.catch(done);
+				.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
 		});
 
-		it('Will return Bad Request if username is invalid', done => {
+		it('Will return Bad Request if username is invalid', async () => {
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 
-			request(App)
+			const res = await request(App)
 				.post('/users/$TOtally!NOTValid/confirmResetPassword')
 				.send({
 					resetToken: uuid(),
 					newPassword
 				})
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-					done();
-				})
-				.catch(done);
+				.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
 		});
 
-		it('Will return Server Error if there is a problem updating the database', done => {
+		it('Will return Server Error if there is a problem updating the database', async () => {
 			const user = new User(fakeUser());
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 			user.passwordResetToken = uuid();
 			user.passwordResetExpiration = moment().add(6, 'h').utc().toDate();
 
-			user.save()
-				.then(() => {
-					stub = sinon.stub(mongoose.Model.prototype, 'save');
-					stub.rejects('nope');
-					return request(App)
-						.post(`/users/${ user.username }/confirmResetPassword`)
-						.send({
-							resetToken: user.passwordResetToken,
-							newPassword
-						});
+			await user.save();
+
+			stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub.rejects('nope');
+
+			const res = await request(App)
+				.post(`/users/${ user.username }/confirmResetPassword`)
+				.send({
+					resetToken: user.passwordResetToken,
+					newPassword
 				})
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.errorId).to.equal(ErrorIds.serverError);
-					expect(res.body.logId).to.exist;
-					done();
-				})
-				.catch(done);
+				.expect(500);
+			expect(res.body.status).to.equal(500);
+			expect(res.body.errorId).to.equal(ErrorIds.serverError);
+			expect(res.body.logId).to.exist;
 		});
 	});
 });

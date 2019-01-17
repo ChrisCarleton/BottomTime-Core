@@ -1,10 +1,11 @@
 import { badRequest, serverError, unauthorized } from '../utils/error-response';
+import { cleanUpUser } from '../data/user';
 import config from '../config';
 import Joi from 'joi';
 import jwt from 'jsonwebtoken';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
-import { cleanUpUser } from '../data/user';
+import sessionManager from '../utils/session-manager';
 
 export function AuthenticateUser(req, res, next) {
 	passport.authenticate('local', { session: false }, (err, user) => {
@@ -44,20 +45,16 @@ export function AuthenticateUser(req, res, next) {
 }
 
 export async function Login(req, res) {
-	const token = jwt.sign(
-		{
-			username: req.user.username
-		},
-		config.sessionSecret
-	);
-
-	req.user.loggedOut = false;
-	await req.user.save();
-
-	res.json({
-		user: cleanUpUser(req.user),
-		token
-	});
+	try {
+		const token = await sessionManager.createSessionToken(req.user.username, '');
+		res.json({
+			user: cleanUpUser(req.user),
+			token
+		});
+	} catch (err) {
+		const logId = req.logError('Unable to login user', err);
+		serverError(res, logId);
+	}
 }
 
 export async function Logout(req, res) {

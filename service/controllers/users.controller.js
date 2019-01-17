@@ -10,6 +10,7 @@ import {
 import Joi from 'joi';
 import mailer from '../mail/mailer';
 import moment from 'moment';
+import sessionManager from '../utils/session-manager';
 import templates from '../mail/templates';
 import User, { cleanUpUser } from '../data/user';
 import uuid from 'uuid/v4';
@@ -118,17 +119,17 @@ export async function CreateUserAccount(req, res) {
 		const entity = await user.save();
 
 		if (req.user && req.user.role === 'admin') {
-			return res.status(201).json(cleanUpUser(req.user));
+			return res.status(201).json({
+				user: cleanUpUser(req.user)
+			});
 		}
 
-		req.login(entity, err => {
-			if (err) {
-				throw err;
-			}
-
-			req.log.info('Created account for and logged in user ', entity.username);
-			res.status(201).json(cleanUpUser(entity));
+		req.log.info('Created account for and logged in user ', entity.username);
+		res.status(201).json({
+			user: cleanUpUser(entity),
+			token: await sessionManager.createSessionToken(entity.username)
 		});
+
 	} catch (err) {
 		const logId = req.logError('Failed to create user account due to server error', err);
 		serverError(res, logId);

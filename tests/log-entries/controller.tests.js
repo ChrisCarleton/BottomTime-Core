@@ -3,10 +3,11 @@ import { App } from '../../service/server';
 import Bluebird from 'bluebird';
 import createAccount from '../util/create-fake-account';
 import mongoose from 'mongoose';
-import { expect, request } from 'chai';
+import { expect } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import fakeMongoId from '../util/fake-mongo-id';
 import LogEntry from '../../service/data/log-entry';
+import request from 'supertest';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
@@ -16,78 +17,60 @@ describe('Logs Controller', () => {
 	let admin = null;
 	let user1 = null;
 
-	before(done => {
-		Bluebird.all([ createAccount('admin'), createAccount() ])
-			.then(results => {
-				[ admin, user1 ] = results;
-				done();
-			})
-			.catch(done);
+	before(async () => {
+		[ admin, user1 ] = await Bluebird.all([ createAccount('admin'), createAccount() ]);
 	});
 
-	after(done => {
-		admin.agent.close();
-		user1.agent.close();
-		User.deleteMany({}, done);
+	after(async () => {
+		await User.deleteMany({});
 	});
 
-	afterEach(done => {
-		// Clean up sinon stubs.
+	afterEach(async () => {
 		if (stub) {
 			stub.restore();
 			stub = null;
 		}
 
-		// Purge log records.
-		LogEntry.deleteMany({}, done);
+		await LogEntry.deleteMany({});
 	});
 
 	describe('GET /users/:username/logs/:logId', () => {
 
-		it('Will fetch the requested log entry', done => {
+		it('Will fetch the requested log entry', async () => {
 			const fake = fakeLogEntry(user1.user.id);
 			const logEntry = new LogEntry(fake);
 			delete fake.userId;
 
-			logEntry.save()
-				.then(entry => user1.agent
-					.get(`/users/${ user1.user.username }/logs/${ entry.id }`))
-				.then(res => {
-					expect(res.status).to.equal(200);
-					expect(res.body).to.exist;
+			const entry = await logEntry.save();
+			const res = await request(App)
+				.get(`/users/${ user1.user.username }/logs/${ entry.id }`)
+				.set(...user1.authHeader)
+				.expect(200);
 
-					fake.entryId = res.body.entryId;
-					expect(res.body).to.eql(fake);
-					done();
-				})
-				.catch(done);
+			expect(res.body).to.exist;
+			fake.entryId = res.body.entryId;
+			expect(res.body).to.eql(fake);
 		});
 
-		it('Will return Not Found if entry does not exist', done => {
+		it('Will return Not Found if entry does not exist', async () => {
 			const fakeId = fakeMongoId();
-			request(App)
-				.get(`/logs/${ fakeId }`)
-				.then(res => {
-					expect(res.status).to.equal(404);
-					done();
-				})
-				.catch(done);
+			await request(App)
+				.get(`/users/${ user1.user.username }/logs/${ fakeId }`)
+				.set(...user1.authHeader)
+				.expect(404);
 		});
 
-		it('Will return Server Error if something goes wrong', done => {
+		it('Will return Server Error if something goes wrong', async () => {
 			stub = sinon.stub(LogEntry, 'findById');
 			stub.rejects('nope');
 
 			const fakeId = fakeMongoId();
-			request(App)
+			const res = await request(App)
 				.get(`/users/${ user1.user.username }/logs/${ fakeId }`)
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.logId).to.exist;
-					expect(res.body.status).to.equal(500);
-					done();
-				})
-				.catch(done);
+				.set(...user1.authHeader)
+				.expect(500);
+			expect(res.body.logId).to.exist;
+			expect(res.body.status).to.equal(500);
 		});
 
 	});
