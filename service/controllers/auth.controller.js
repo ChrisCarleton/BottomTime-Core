@@ -62,14 +62,18 @@ export async function Login(req, res) {
 
 export async function Logout(req, res) {
 	try {
+		if (!req.user) {
+			return res.sendStatus(204);
+		}
+
 		req.user.isLoggedOut = true;
 		await req.user.save();
 
 		req.logout();
-		res.sendStatus(204);
+		return res.sendStatus(204);
 	} catch (err) {
 		const logId = req.logError('Unable to log out user', err);
-		serverError(res, logId);
+		return serverError(res, logId);
 	}
 }
 

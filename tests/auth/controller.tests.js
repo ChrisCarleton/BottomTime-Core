@@ -1,8 +1,10 @@
 import { App } from '../../service/server';
 import { ErrorIds } from '../../service/utils/error-response';
-import { expect, request } from 'chai';
+import { expect } from 'chai';
 import faker from 'faker';
 import fakeUser from '../util/fake-user';
+import generateAuthHeader from '../util/generate-auth-header';
+import request from 'supertest';
 import sinon from 'sinon';
 import User, { cleanUpUser } from '../../service/data/user';
 
@@ -32,213 +34,133 @@ describe('Auth Controller', () => {
 				.send({
 					username: fake.username,
 					password
-				});
-			expect(res.status).to.equal(200);
+				})
+				expect(200);
 			expect(res.body.token).to.exist;
 			expect(res.body.user).to.eql(cleanUpUser(user));
 		});
 
-		it('Fails when user cannot be found', done => {
+		it('Fails when user cannot be found', async () => {
 			const password = faker.internet.password(12, false);
 			const fake = fakeUser(password);
 
-			request(App)
+			const res = await request(App)
 				.post('/auth/login')
 				.send({
 					username: fake.username,
 					password
 				})
-				.then(res => {
-					expect(res.status).to.equal(401);
-					expect(res.body.status).to.equal(401);
-					expect(res.body.errorId).to.equal(ErrorIds.notAuthorized);
-					done();
-				})
-				.catch(done);
+				.expect(401);
+			expect(res.status).to.equal(401);
+			expect(res.body.status).to.equal(401);
+			expect(res.body.errorId).to.equal(ErrorIds.notAuthorized);
 		});
 
-		it('Fails when password is incorrect', done => {
+		it('Fails when password is incorrect', async () => {
 			const password = faker.internet.password(12, false);
 			const fake = fakeUser(password);
 			const user = new User(fake);
 
-			user.save()
-				.then(() => request(App)
-					.post('/auth/login')
-					.send({
-						username: fake.username,
-						password: 'Wr0ng.P@ss3rd'
-					}))
-				.then(res => {
-					expect(res.status).to.equal(401);
-					expect(res.body.status).to.equal(401);
-					expect(res.body.errorId).to.equal(ErrorIds.notAuthorized);
-					done();
+			await user.save();
+			const res = await request(App)
+				.post('/auth/login')
+				.send({
+					username: fake.username,
+					password: 'Wr0ng.P@ss3rd'
 				})
-				.catch(done);
+				.expect(401);
+			expect(res.body.status).to.equal(401);
+			expect(res.body.errorId).to.equal(ErrorIds.notAuthorized);
 		});
 
-		it('Returns Bad Request if validation fails', done => {
-			request(App)
+		it('Returns Bad Request if validation fails', async () => {
+			const res = await request(App)
 				.post('/auth/login')
 				.send({
 					user: 'wat?',
 					password: 53,
 					lol: 'not valid'
 				})
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.status).to.equal(400);
-					expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-					done();
-				})
-				.catch(done);
+				.expect(400);
+			expect(res.status).to.equal(400);
+			expect(res.body.status).to.equal(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
 		});
 
-		it('Returns Server Error if something goes wrong in the database', done => {
+		it('Returns Server Error if something goes wrong in the database', async () => {
 			const password = faker.internet.password(12, false);
 			const fake = fakeUser(password);
 
 			stub = sinon.stub(User, 'findOne');
 			stub.rejects('nope');
 
-			request(App)
+			const res = await request(App)
 				.post('/auth/login')
 				.send({
 					username: fake.username,
 					password
 				})
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.errorId).to.equal(ErrorIds.serverError);
-					expect(res.body.logId).to.exist;
-					done();
-				})
-				.catch(done);
+				.expect(500);
+			expect(res.body.status).to.equal(500);
+			expect(res.body.errorId).to.equal(ErrorIds.serverError);
+			expect(res.body.logId).to.exist;
 		});
 	});
 
 	describe('GET /auth/me', () => {
-		it('Returns anonymous user information if user is not authenticated', done => {
-			request(App)
+		it('Returns anonymous user information if user is not authenticated', async () => {
+			const res = await request(App)
 				.get('/auth/me')
-				.then(res => {
-					expect(res.status).to.equal(200);
-					expect(res.body).to.eql(cleanUpUser(null));
-					done();
-				})
-				.catch(done);
+				.expect(200);
+			expect(res.body).to.eql(cleanUpUser(null));
 		});
 
-		it('Returns user information for authenticated users', done => {
-			const password = faker.internet.password(12, false);
-			const fake = fakeUser(password);
-			const agent = request.agent(App);
-			let user = new User(fake);
+		it('Returns user information for authenticated users', async () => {
+			const fake = fakeUser();
+			const user = new User(fake);
+			await user.save();
 
-			user.save()
-				.then(entity => {
-					user = entity;
-					return agent
-						.post('/auth/login')
-						.send({
-							username: fake.username,
-							password
-						});
-				})
-				.then(res => {
-					expect(res.status).to.equal(204);
-					return agent.get('/auth/me');
-				})
-				.then(res => {
-					expect(res.status).to.equal(200);
-					expect(res.body).to.eql(cleanUpUser(user));
-					done();
-				})
-				.catch(done)
-				.finally(() => {
-					agent.close();
-				});
+			const result = await request(App)
+				.get('/auth/me')
+				.set(...generateAuthHeader(fake.username))
+				.expect(200);
+			expect(result.body).to.eql(cleanUpUser(user));
 		});
 
-		it('Returns Server Error if there is a problem accessing the database', done => {
-			const password = faker.internet.password(12, false);
-			const fake = fakeUser(password);
-			const agent = request.agent(App);
-			let user = new User(fake);
+		it('Returns Unauthorized if there is a problem accessing the database', async () => {
+			const fake = fakeUser();
+			const user = new User(fake);
+			await user.save();
 
-			user.save()
-				.then(entity => {
-					user = entity;
-					return agent
-						.post('/auth/login')
-						.send({
-							username: fake.username,
-							password
-						});
-				})
-				.then(res => {
-					expect(res.status).to.equal(204);
+			stub = sinon.stub(User, 'findOne');
+			stub.rejects('nope');
 
-					stub = sinon.stub(User, 'findOne');
-					stub.rejects('nope');
-
-					return agent.get('/auth/me');
-				})
-				.then(res => {
-					expect(res.status).to.equal(200);
-					expect(res.body.isAnonymous).to.be.true;
-					done();
-				})
-				.catch(done)
-				.finally(() => {
-					agent.close();
-				});
+			await request(App)
+				.get('/auth/me')
+				.set(...generateAuthHeader(user.username))
+				.expect(401);
 		});
 	});
 
 	describe('POST /logout', () => {
-		it('Kills an existing session', done => {
-			const password = faker.internet.password(12, false);
-			const fake = fakeUser(password);
-			const agent = request.agent(App);
+		it('Kills an existing session', async () => {
+			const fake = fakeUser();
 			const user = new User(fake);
 
-			user.save()
-				.then(() => agent
-					.post('/auth/login')
-					.send({
-						username: fake.username,
-						password
-					}))
-				.then(res => {
-					expect(res.status).to.equal(204);
-					return agent.post('/auth/logout');
-				})
-				.then(res => {
-					expect(res.status).to.equal(204);
-					return agent.get('/auth/me');
-				})
-				.then(res => {
-					expect(res.status).to.equal(200);
-					expect(res.body).to.eql(cleanUpUser(null));
-					done();
-				})
-				.catch(done)
-				.finally(() => {
-					agent.close();
-				});
+			await user.save();
+			await request(App)
+				.post('/auth/logout')
+				.set(...generateAuthHeader(fake.username))
+				.expect(204);
+
+			const res = await request(App).get('/auth/me').expect(200);
+			expect(res.body).to.eql(cleanUpUser(null));
 		});
 
-		it('Does nothing if there is no session', done => {
-			request(App)
+		it('Does nothing if there is no session', async () => {
+			await request(App)
 				.post('/auth/logout')
-				.then(res => {
-					expect(res.status).to.equal(204);
-					done();
-				})
-				.catch(done);
+				.expect(204);
 		});
 	});
 });

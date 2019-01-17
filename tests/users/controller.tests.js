@@ -609,9 +609,6 @@ describe('Users Controller', () => {
 
 			user.save()
 				.then(() => {
-					stub = sinon.stub(mongoose.Model.prototype, 'save');
-					stub.rejects('nope');
-
 					return agent
 						.post('/auth/login')
 						.send({
@@ -619,12 +616,17 @@ describe('Users Controller', () => {
 							password: oldPassword
 						});
 				})
-				.then(() => agent
-					.post(`/users/${ user.username }/changePassword`)
-					.send({
-						oldPassword,
-						newPassword
-					}))
+				.then(() =>{
+					stub = sinon.stub(mongoose.Model.prototype, 'save');
+					stub.rejects('nope');
+
+					return agent
+						.post(`/users/${ user.username }/changePassword`)
+						.send({
+							oldPassword,
+							newPassword
+						});
+				})
 				.then(res => {
 					expect(res.status).to.equal(500);
 					expect(res.body.status).to.equal(500);

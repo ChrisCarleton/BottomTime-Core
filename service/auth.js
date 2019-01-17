@@ -31,13 +31,13 @@ passport.use(new JwtStrategy(
 		try {
 			const user = await User.findByUsername(payload.username);
 			if (!user || user.isLoggedOut) {
-				return done('Unable to sign in user. Try logging in again.');
+				return done(null, false);
 			}
 
 			return done(null, user);
 		} catch (err) {
 			logError(err);
-			return done(err);
+			return done(null, false);
 		}
 	}
 ));
@@ -54,5 +54,11 @@ passport.use(new GoogleStrategy({
 
 export default app => {
 	app.use(passport.initialize());
-	app.use(passport.session());
+	app.use(async (req, res, next) => {
+		if (req.headers.authorization) {
+			passport.authenticate('jwt', { session: false })(req, res, next);
+		} else {
+			next();
+		}
+	});
 };
