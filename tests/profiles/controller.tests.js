@@ -67,7 +67,7 @@ describe('Profiles Controller', () => {
 
 	before(async () => {
 		privateUser = await createFakeAccount('user', 'private');
-		friendsOnlyUser = await createFakeAccount('user', 'friendsOnly');
+		friendsOnlyUser = await createFakeAccount('user', 'friends-only');
 		publicUser = await createFakeAccount('user', 'public');
 		adminUser = await createFakeAccount('admin');
 
@@ -231,13 +231,10 @@ describe('Profiles Controller', () => {
 			stub = sinon.stub(User, 'findOne');
 			stub.rejects('nope');
 
-			const result = await request(App)
+			await request(App)
 				.get(`/users/${ privateUser.user.username }/profile`)
 				.set(...privateUser.authHeader)
 				.expect(500);
-			expect(result.body.status).to.equal(500);
-			expect(result.body.errorId).to.equal(ErrorIds.serverError);
-			expect(result.body.logId).to.exist;
 		});
 	});
 
