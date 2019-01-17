@@ -1,4 +1,3 @@
-import Bluebird from 'bluebird';
 import database from '../data/database';
 
 async function GetMongoDbHealth(req) {
@@ -24,7 +23,7 @@ async function GetMongoDbHealth(req) {
 }
 
 export async function GetHealth(req, res) {
-	const components = await Bluebird.all([ GetMongoDbHealth(req) ]);
+	const components = await Promise.all([ GetMongoDbHealth(req) ]);
 	let health = 'healthy';
 	let status = 200;
 

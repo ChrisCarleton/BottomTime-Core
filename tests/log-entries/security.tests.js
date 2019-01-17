@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { App } from '../../service/server';
-import Bluebird from 'bluebird';
 import createAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect, request } from 'chai';
@@ -16,7 +15,7 @@ describe('Log Entry Security', () => {
 	let user3 = null;
 
 	before(done => {
-		Bluebird
+		Promise
 			.all([
 				createAccount('admin'),
 				createAccount('user', 'public'),
@@ -366,13 +365,13 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+			Promise.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entries => {
 					fakes.forEach(f => {
 						delete f.userId;
 					});
 
-					return Bluebird.all([
+					return Promise.all([
 						request(App)
 							.put(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
 							.send(fakes[0]),
@@ -405,13 +404,13 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(user3.user.id)
 			];
 
-			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+			Promise.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entries => {
 					fakes.forEach(f => {
 						delete f.userId;
 					});
 
-					return Bluebird.all([
+					return Promise.all([
 						admin.agent
 							.put(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
 							.send(fakes[0]),
@@ -439,13 +438,13 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+			Promise.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entries => {
 					fakes.forEach(f => {
 						delete f.userId;
 					});
 
-					return Bluebird.all([
+					return Promise.all([
 						user3.agent
 							.put(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
 							.send(fakes[0]),
@@ -565,13 +564,13 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+			Promise.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entries => {
 					fakes.forEach(f => {
 						delete f.userId;
 					});
 
-					return Bluebird.all([
+					return Promise.all([
 						request(App)
 							.del(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
 							.send(fakes[0]),
@@ -604,13 +603,13 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(user3.user.id)
 			];
 
-			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+			Promise.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entries => {
 					fakes.forEach(f => {
 						delete f.userId;
 					});
 
-					return Bluebird.all([
+					return Promise.all([
 						admin.agent
 							.del(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
 							.send(fakes[0]),
@@ -638,13 +637,13 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+			Promise.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entries => {
 					fakes.forEach(f => {
 						delete f.userId;
 					});
 
-					return Bluebird.all([
+					return Promise.all([
 						user3.agent
 							.del(`/users/${ user1.user.username }/logs/${ entries[0].id }`)
 							.send(fakes[0]),
@@ -703,7 +702,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry()
 			];
 
-			Bluebird.all(
+			Promise.all(
 				[
 					request(App).post(`/users/${ user1.user.username }/logs`).send(fakes),
 					request(App).post(`/users/${ user2.user.username }/logs`).send(fakes),
@@ -727,7 +726,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry()
 			];
 
-			Bluebird.all(
+			Promise.all(
 				[
 					admin.agent.post(`/users/${ user1.user.username }/logs`).send(fakes),
 					admin.agent.post(`/users/${ user2.user.username }/logs`).send(fakes),
@@ -761,7 +760,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry()
 			];
 
-			Bluebird.all(
+			Promise.all(
 				[
 					user1.agent.post(`/users/${ user2.user.username }/logs`).send(fakes),
 					user1.agent.post(`/users/${ user3.user.username }/logs`).send(fakes),
@@ -825,14 +824,14 @@ describe('Log Entry Security', () => {
 				savePromises.push(new LogEntry(fake).save());
 			});
 
-			Bluebird.all(savePromises)
+			Promise.all(savePromises)
 				.then(entities => {
 					const expected = _.map(entities, e => ({
 						entryId: e.id,
 						...fakeLogEntry()
 					}));
 
-					return Bluebird.all([
+					return Promise.all([
 						request(App)
 							.put(`/users/${ user1.user.username }/logs`)
 							.send([ expected[0], expected[1] ]),
@@ -869,7 +868,7 @@ describe('Log Entry Security', () => {
 			];
 			let expected = null;
 
-			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+			Promise.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entities => {
 					expected = _.map(entities, e => {
 						const newData = {
@@ -881,7 +880,7 @@ describe('Log Entry Security', () => {
 						return newData;
 					});
 
-					return Bluebird.all([
+					return Promise.all([
 						admin.agent
 							.put(`/users/${ user1.user.username }/logs`)
 							.send([ expected[0], expected[1] ]),
@@ -913,14 +912,14 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
+			Promise.all(_.map(fakes, f => new LogEntry(f).save()))
 				.then(entities => {
 					const expected = _.map(entities, e => ({
 						entryId: e.id,
 						...fakeLogEntry()
 					}));
 
-					return Bluebird.all([
+					return Promise.all([
 						user3.agent
 							.put(`/users/${ user1.user.username }/logs`)
 							.send([ expected[0], expected[1] ]),
@@ -985,8 +984,8 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
-				.then(entries => Bluebird
+			Promise.all(_.map(fakes, f => new LogEntry(f).save()))
+				.then(entries => Promise
 					.all([
 						request(App)
 							.del(`/users/${ user1.user.username }/logs`)
@@ -1022,8 +1021,8 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(user3.user.id)
 			];
 
-			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
-				.then(entries => Bluebird
+			Promise.all(_.map(fakes, f => new LogEntry(f).save()))
+				.then(entries => Promise
 					.all([
 						admin.agent
 							.del(`/users/${ user1.user.username }/logs`)
@@ -1054,8 +1053,8 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			Bluebird.all(_.map(fakes, f => new LogEntry(f).save()))
-				.then(entries => Bluebird
+			Promise.all(_.map(fakes, f => new LogEntry(f).save()))
+				.then(entries => Promise
 					.all([
 						user3.agent
 							.del(`/users/${ user1.user.username }/logs`)

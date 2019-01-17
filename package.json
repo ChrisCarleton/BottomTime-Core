@@ -59,7 +59,6 @@
     "@babel/preset-env": "^7.1.0",
     "@babel/register": "^7.0.0",
     "bcrypt": "^3.0.2",
-    "bluebird": "^3.5.3",
     "body-parser": "^1.18.3",
     "bunyan": "^1.8.12",
     "compression": "^1.7.3",

@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { App } from '../../service/server';
-import Bluebird from 'bluebird';
 import createAccount from '../util/create-fake-account';
 import mongoose from 'mongoose';
 import { expect } from 'chai';
@@ -18,7 +17,7 @@ describe('Logs Controller', () => {
 	let user1 = null;
 
 	before(async () => {
-		[ admin, user1 ] = await Bluebird.all([ createAccount('admin'), createAccount() ]);
+		[ admin, user1 ] = await Promise.all([ createAccount('admin'), createAccount() ]);
 	});
 
 	after(async () => {
@@ -365,7 +364,7 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
+			Promise.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
 				.then(res => {
 					fakes[0].entryId = res[0].id;
 					fakes[1].entryId = res[1].id;
@@ -408,7 +407,7 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[1])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save() ])
+			Promise.all([ logEntries[0].save(), logEntries[1].save() ])
 				.then(res => {
 					fakes[0].entryId = res[0].id;
 					fakes[1].entryId = res[1].id;
@@ -496,7 +495,7 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[1])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save() ])
+			Promise.all([ logEntries[0].save(), logEntries[1].save() ])
 				.then(res => {
 					fakes[0].entryId = res[0].id;
 					fakes[1].entryId = res[1].id;
@@ -538,7 +537,7 @@ describe('Logs Controller', () => {
 				logEntries[i] = new LogEntry(fakes[i]);
 			}
 
-			Bluebird.all(_.map(logEntries, e => e.save()))
+			Promise.all(_.map(logEntries, e => e.save()))
 				.then(res => {
 					for (let i = 0; i < res.length; i++) {
 						fakes[i].entryId = res[i].id;
@@ -568,7 +567,7 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
+			Promise.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
 				.then(res => {
 					fakes[0].entryId = res[0].id;
 					fakes[1].entryId = res[1].id;
@@ -612,14 +611,14 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
+			Promise.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
 				.then(() => user1.agent
 					.del(`/users/${ user1.user.username }/logs`)
 					.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]))
 				.then(res => {
 					expect(res.status).to.equal(200);
 
-					return Bluebird.all([
+					return Promise.all([
 						LogEntry.findById(logEntries[0].id),
 						LogEntry.findById(logEntries[1].id),
 						LogEntry.findById(logEntries[2].id)
@@ -646,7 +645,7 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird
+			Promise
 				.all([
 					logEntries[0].save(),
 					logEntries[1].save(),
@@ -658,7 +657,7 @@ describe('Logs Controller', () => {
 				.then(res => {
 					expect(res.status).to.equal(200);
 
-					return Bluebird.all([
+					return Promise.all([
 						LogEntry.findById(logEntries[0].id),
 						LogEntry.findById(logEntries[1].id),
 						LogEntry.findById(logEntries[2].id)
@@ -740,7 +739,7 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
+			Promise.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
 				.then(() => {
 					stub = sinon.stub(LogEntry, 'deleteMany');
 					stub.rejects('nope');

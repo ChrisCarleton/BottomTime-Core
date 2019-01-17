@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { badRequest, serverError, notFound } from '../utils/error-response';
-import Bluebird from 'bluebird';
 import Joi from 'joi';
 import LogEntry, { assignLogEntry } from '../data/log-entry';
 import {
@@ -63,7 +62,7 @@ export async function CreateLogs(req, res) {
 			return new LogEntry(e).save();
 		});
 
-		const entries = await Bluebird.all(logEntries);
+		const entries = await Promise.all(logEntries);
 		res.status(201).json(_.map(entries, e => e.toCleanJSON()));
 	} catch (err) {
 		const logId = req.logError(
@@ -97,7 +96,7 @@ export async function UpdateLogs(req, res) {
 			assignLogEntry(foundEntries[i], entries[foundEntries[i].id]);
 		}
 
-		const result = await Bluebird.all(_.map(foundEntries, e => e.save()));
+		const result = await Promise.all(_.map(foundEntries, e => e.save()));
 		res.json(_.map(result, r => r.toCleanJSON()));
 	} catch (err) {
 		const logId = req.logError(
@@ -163,7 +162,7 @@ export async function DeleteLog(req, res) {
 
 export async function RetrieveLogEntry(req, res, next) {
 	try {
-		const results = await Bluebird.all(
+		const results = await Promise.all(
 			[
 				User.findByUsername(req.params.username),
 				LogEntry.findById(req.params.logId)

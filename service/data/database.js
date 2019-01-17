@@ -2,8 +2,6 @@ import config from '../config';
 import log from '../logger';
 import mongoose from 'mongoose';
 
-mongoose.Promise = require('bluebird');
-
 (async () => {
 	try {
 		await mongoose.connect(

@@ -1,5 +1,4 @@
 import bcrypt from 'bcrypt';
-import Bluebird from 'bluebird';
 import { badRequest, conflict, forbidden, serverError } from '../utils/error-response';
 import {
 	ConfirmResetPasswordSchema,
@@ -95,7 +94,7 @@ export async function CreateUserAccount(req, res) {
 			createdAt: moment().utc().toDate()
 		});
 
-		const [ usernameConflict, emailConflict ] = await Bluebird.all(
+		const [ usernameConflict, emailConflict ] = await Promise.all(
 			[
 				User.findByUsername(req.params.username),
 				User.findByEmail(req.body.email)

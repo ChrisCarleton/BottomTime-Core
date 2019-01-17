@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { App } from '../../service/server';
-import Bluebird from 'bluebird';
 import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect, request } from 'chai';
@@ -22,13 +21,13 @@ describe('Log Entry Searching', () => {
 		privateUser = await createFakeAccount('user', 'private');
 		adminUser = await createFakeAccount('admin');
 
-		await Bluebird.all(
+		await Promise.all(
 			_.map(new Array(500), () => new LogEntry(fakeLogEntry(friendsOnlyUser.user.id)).save())
 		);
-		await Bluebird.all(
+		await Promise.all(
 			_.map(new Array(20), () => new LogEntry(fakeLogEntry(publicUser.user.id)).save())
 		);
-		await Bluebird.all(
+		await Promise.all(
 			_.map(new Array(20), () => new LogEntry(fakeLogEntry(privateUser.user.id)).save())
 		);
 	});
