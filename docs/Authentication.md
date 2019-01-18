@@ -19,6 +19,17 @@ The authentication domain deals with access to user accounts.
 Some user accounts may not have a password set on them because the user opted to sign up using one of the
 OAuth providers and so authentication is provided by a third party.
 
+### LoginSucceeded Object
+```json
+{
+	"user": { },
+	"token": "String: the JWT bearer token that can be used to authenticate future requests."
+}
+```
+
+The **user** field will be a [UserAccount](#useraccount-object) representing the user that was logged
+in. See above for details on that object's fields.
+
 ### Authentication Object
 ```json
 {
@@ -48,16 +59,17 @@ and password.
 #### Responses
 HTTP Status Code | Details
 ----- | -----
-**204 No Content** | The call succeeded and the user is authenticated. The `set-cookie` header will be returned containing the user's session cookie. The response body will be empty.
+**200 OK** | The call succeeded and the user is authenticated. A [LoginSucceeded](#loginsucceeded-object) will be returned containing information on the user that was signed in as well as a JWT bearer token that can be used to authenticate future requests.
 **400 Bad Request** | The request was rejected because the provided [Authentication](#authentication-object) object was invalid or missing.
 **401 Unauthorized** | Authentication failed. Either the user account does not exist, does not have a password set, is locked out, or the supplied password was incorrect.
 **500 Server Error** | Something went wrong accessing the database. An [Error](General.md#error-object) object will be provided in the response with more details.
 
 ### POST /auth/logout
-Logs out a user and terminates their session.
+Logs out a user and terminates their session. This will invalidate the JWT bearer token that the user was
+using to sign in.
 
 #### Responses
 HTTP Status Code | Details
 ----- | -----
-**204 No Content** | The call succeeded and the user's session has been invalidated. Their session cookie will no longer be accepted. The response body will be empty.
+**204 No Content** | The call succeeded and the user's session has been invalidated. Their bearer token will no longer be accepted. The response body will be empty.
 **500 Server Error** | Something went wrong accessing the database. An [Error](General.md#error-object) object will be provided in the response with more details.

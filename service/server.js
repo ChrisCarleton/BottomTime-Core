@@ -12,6 +12,7 @@ import log, { requestLogger } from './logger';
 import modRewrite from 'connect-modrewrite';
 import { notFound, serverErrorMiddleware } from './utils/error-response';
 import path from 'path';
+import useragent from 'express-useragent';
 
 // Wire up process-wide event handlers.
 process.on('unhandledRejection', (reason, p) => {
@@ -40,11 +41,12 @@ process.on('uncaughtException', err => {
 // Express middleware
 const app = express();
 app.use(compression());
+app.use(useragent.express());
 app.use(modRewrite([ '^/api/(.*) /$1' ]));
+applyAuth(app);
 app.use(requestLogger);
 app.use(serverErrorMiddleware);
 app.use(bodyParser.json());
-applyAuth(app);
 
 // Load routes
 glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {

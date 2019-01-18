@@ -84,7 +84,7 @@ The message body must contain a valid [UserAccount](#useraccount-object) object 
 #### Responses
 HTTP Status Code | Details
 ----- | -----
-**201 Created** | The call succeeded and the new user account has been created. If the user is not authenticated then a session will be created and a cookie will be returned, effectively, signing the user in under their new account.
+**201 Created** | The call succeeded and the new user account has been created. A [LoginSucceeded](Authentication.md#loginsucceeded-object) will be returned containing information on the user that was signed in as well as a JWT bearer token that can be used to authenticate future requests as the new user.
 **400 Bad Request** | The request was rejected because the request body was empty or the [UserAccount](#useraccount-object) object was invalid, or because the username route parameter was not valid.
 **403 Forbidden** | This is returned if the action being taken is not allowed. See above for details.
 **409 Conflict** | A Conflict error is returned if either the requested username or e-mail address is already taken by another user. Check the `field` property of the [Error](General.md#error-object) to see which one is problematic. It will be set to one of `email` or `username`.

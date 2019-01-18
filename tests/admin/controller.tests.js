@@ -1,6 +1,7 @@
 import { App } from '../../service/server';
 import database from '../../service/data/database';
-import { expect, request } from 'chai';
+import { expect } from 'chai';
+import request from 'supertest';
 import sinon from 'sinon';
 
 const ExpectedAppVersion = '1.0.0';

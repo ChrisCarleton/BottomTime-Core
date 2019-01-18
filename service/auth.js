@@ -4,6 +4,7 @@ import { ErrorIds } from './utils/error-response';
 import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as LocalStrategy } from 'passport-local';
+import { logError } from './logger';
 import passport from 'passport';
 import sessionManager from './utils/session-manager';
 import url from 'url';
@@ -39,7 +40,7 @@ passport.use(new JwtStrategy(
 
 			return done(null, user);
 		} catch (err) {
-			const logId = req.logError(err);
+			const logId = logError(err);
 			return done({
 				errorId: ErrorIds.serverError,
 				logId,

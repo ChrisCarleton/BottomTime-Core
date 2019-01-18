@@ -45,7 +45,10 @@ export function AuthenticateUser(req, res, next) {
 
 export async function Login(req, res) {
 	try {
-		const token = await sessionManager.createSessionToken(req.user.username, '');
+		const token = await sessionManager.createSessionToken(
+			req.user.username,
+			`${ req.useragent.platform } / ${ req.useragent.os } / ${ req.useragent.browser }`
+		);
 		res.json({
 			user: cleanUpUser(req.user),
 			token
