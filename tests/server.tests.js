@@ -1,7 +1,7 @@
 import { App } from '../service/server';
 import { ErrorIds } from '../service/utils/error-response';
 import { expect } from 'chai';
-import request from 'supertest'
+import request from 'supertest';
 
 describe('Server', () => {
 

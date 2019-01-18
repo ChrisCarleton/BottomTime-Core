@@ -17,10 +17,12 @@ describe('Mailer', () => {
 
 	it('Rejects if message is not sent', () => {
 		expect(
-			async () => await mailer.sendMail({
-				subject: 'Ha! No "to" line! Good luck!',
-				html: '<p>Yo!</p>'
-			})
+			async () => {
+				await mailer.sendMail({
+					subject: 'Ha! No "to" line! Good luck!',
+					html: '<p>Yo!</p>'
+				});
+			}
 		).to.throw;
 	});
 });
