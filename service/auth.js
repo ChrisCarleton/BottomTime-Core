@@ -4,7 +4,6 @@ import { ErrorIds } from './utils/error-response';
 import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as LocalStrategy } from 'passport-local';
-import { logError } from './logger';
 import passport from 'passport';
 import sessionManager from './utils/session-manager';
 import url from 'url';
@@ -27,14 +26,20 @@ passport.use(new LocalStrategy(async (username, password, done) => {
 passport.use(new JwtStrategy(
 	{
 		jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-		secretOrKey: config.sessionSecret
+		secretOrKey: config.sessionSecret,
+		passReqToCallback: true
 	},
-	async (payload, done) => {
+	async (req, payload, done) => {
 		try {
 			const user = await sessionManager.getSessionFromToken(payload);
+
+			if (user) {
+				req.sessionId = payload.sessionId;
+			}
+
 			return done(null, user);
 		} catch (err) {
-			const logId = logError(err);
+			const logId = req.logError(err);
 			return done({
 				errorId: ErrorIds.serverError,
 				logId,

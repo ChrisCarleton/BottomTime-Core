@@ -3,6 +3,7 @@ import { cleanUpUser } from '../data/user';
 import Joi from 'joi';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
+import Session from '../data/session';
 import sessionManager from '../utils/session-manager';
 
 export function AuthenticateUser(req, res, next) {
@@ -56,14 +57,12 @@ export async function Login(req, res) {
 }
 
 export async function Logout(req, res) {
+	if (!req.sessionId) {
+		return res.sendStatus(204);
+	}
+
 	try {
-		if (!req.user) {
-			return res.sendStatus(204);
-		}
-
-		req.user.isLoggedOut = true;
-		await req.user.save();
-
+		await Session.deleteOne({ _id: req.sessionId });
 		req.logout();
 		return res.sendStatus(204);
 	} catch (err) {

@@ -1,10 +1,12 @@
 import { App } from '../../service/server';
+import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import faker from 'faker';
 import fakeUser from '../util/fake-user';
 import generateAuthHeader from '../util/generate-auth-header';
 import request from 'supertest';
+import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User, { cleanUpUser } from '../../service/data/user';
 
@@ -12,13 +14,14 @@ describe('Auth Controller', () => {
 
 	let stub = null;
 
-	afterEach(done => {
+	afterEach(async () => {
 		if (stub) {
 			stub.restore();
 			stub = null;
 		}
 
-		User.deleteMany({}, done);
+		await User.deleteMany({});
+		await Session.deleteMany({});
 	});
 
 	describe('POST /auth/login', () => {
@@ -29,7 +32,7 @@ describe('Auth Controller', () => {
 			const user = new User(fake);
 
 			await user.save();
-			const res = await request(App)
+			let res = await request(App)
 				.post('/auth/login')
 				.send({
 					username: fake.username,
@@ -38,6 +41,12 @@ describe('Auth Controller', () => {
 				.expect(200);
 			expect(res.body.token).to.exist;
 			expect(res.body.user).to.eql(cleanUpUser(user));
+
+			res = await request(App)
+				.get('/auth/me')
+				.set('Authorization', `Bearer ${ res.body.token }`)
+				.expect(200);
+			expect(res.body).to.eql(cleanUpUser(user));
 		});
 
 		it('Fails when user cannot be found', async () => {
@@ -116,29 +125,24 @@ describe('Auth Controller', () => {
 		});
 
 		it('Returns user information for authenticated users', async () => {
-			const fake = fakeUser();
-			const user = new User(fake);
-			await user.save();
-
+			const user = await createFakeAccount();
 			const result = await request(App)
 				.get('/auth/me')
-				.set(...generateAuthHeader(fake.username))
+				.set(...user.authHeader)
 				.expect(200);
-			expect(result.body).to.eql(cleanUpUser(user));
+			expect(result.body).to.eql(cleanUpUser(user.user));
 		});
 
-		it('Returns Unauthorized if there is a problem accessing the database', async () => {
-			const fake = fakeUser();
-			const user = new User(fake);
-			await user.save();
+		it('Returns Server Error if there is a problem accessing the database', async () => {
+			const user = await createFakeAccount()
 
 			stub = sinon.stub(User, 'findOne');
 			stub.rejects('nope');
 
 			await request(App)
 				.get('/auth/me')
-				.set(...generateAuthHeader(user.username))
-				.expect(401);
+				.set(...user.authHeader)
+				.expect(500);
 		});
 	});
 
@@ -148,13 +152,17 @@ describe('Auth Controller', () => {
 			const user = new User(fake);
 
 			await user.save();
+			const authHeader = await generateAuthHeader(user.username);
+
 			await request(App)
 				.post('/auth/logout')
-				.set(...generateAuthHeader(fake.username))
+				.set(...authHeader)
 				.expect(204);
 
-			const res = await request(App).get('/auth/me').expect(200);
-			expect(res.body).to.eql(cleanUpUser(null));
+			await request(App)
+				.get('/auth/me')
+				.set(...authHeader)
+				.expect(401);
 		});
 
 		it('Does nothing if there is no session', async () => {
@@ -162,5 +170,9 @@ describe('Auth Controller', () => {
 				.post('/auth/logout')
 				.expect(204);
 		});
+
+		it('Returns Server Error if something goes wrong', async () => {
+
+		})
 	});
 });
