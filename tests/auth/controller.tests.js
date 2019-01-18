@@ -4,7 +4,6 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import faker from 'faker';
 import fakeUser from '../util/fake-user';
-import generateAuthHeader from '../util/generate-auth-header';
 import request from 'supertest';
 import Session from '../../service/data/session';
 import sinon from 'sinon';
@@ -134,7 +133,7 @@ describe('Auth Controller', () => {
 		});
 
 		it('Returns Server Error if there is a problem accessing the database', async () => {
-			const user = await createFakeAccount()
+			const user = await createFakeAccount();
 
 			stub = sinon.stub(User, 'findOne');
 			stub.rejects('nope');
@@ -148,20 +147,16 @@ describe('Auth Controller', () => {
 
 	describe('POST /logout', () => {
 		it('Kills an existing session', async () => {
-			const fake = fakeUser();
-			const user = new User(fake);
-
-			await user.save();
-			const authHeader = await generateAuthHeader(user.username);
+			const account = await createFakeAccount();
 
 			await request(App)
 				.post('/auth/logout')
-				.set(...authHeader)
+				.set(...account.authHeader)
 				.expect(204);
 
 			await request(App)
 				.get('/auth/me')
-				.set(...authHeader)
+				.set(...account.authHeader)
 				.expect(401);
 		});
 
@@ -172,7 +167,15 @@ describe('Auth Controller', () => {
 		});
 
 		it('Returns Server Error if something goes wrong', async () => {
+			const account = await createFakeAccount();
 
-		})
+			stub = sinon.stub(Session, 'deleteOne');
+			stub.rejects('nope');
+
+			await request(App)
+				.post('/auth/logout')
+				.set(...account.authHeader)
+				.expect(500);
+		});
 	});
 });
