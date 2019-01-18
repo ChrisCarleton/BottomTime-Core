@@ -1,8 +1,6 @@
 import { badRequest, serverError, unauthorized } from '../utils/error-response';
 import { cleanUpUser } from '../data/user';
-import config from '../config';
 import Joi from 'joi';
-import jwt from 'jsonwebtoken';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
 import sessionManager from '../utils/session-manager';

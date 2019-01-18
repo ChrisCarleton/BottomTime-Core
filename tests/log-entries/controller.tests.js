@@ -13,11 +13,10 @@ import User from '../../service/data/user';
 let stub = null;
 
 describe('Logs Controller', () => {
-	let admin = null;
 	let user1 = null;
 
 	before(async () => {
-		[ admin, user1 ] = await Promise.all([ createAccount('admin'), createAccount() ]);
+		user1 = await createAccount();
 	});
 
 	after(async () => {

@@ -251,13 +251,13 @@ describe('Users Controller', () => {
 			await user.save();
 
 			const res = await request(App)
-					.post(`/users/${ user.username }/changePassword`)
-					.set(...regularUser.authHeader)
-					.send({
-						oldPassword,
-						newPassword
-					})
-					.expect(403);
+				.post(`/users/${ user.username }/changePassword`)
+				.set(...regularUser.authHeader)
+				.send({
+					oldPassword,
+					newPassword
+				})
+				.expect(403);
 			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
 
 			const entity = await User.findByUsername(user.username);
@@ -272,13 +272,13 @@ describe('Users Controller', () => {
 
 			await user.save();
 			const res = await request(App)
-					.post(`/users/${ user.username }/changePassword`)
-					.set(...authHeader)
-					.send({
-						oldPassword: 'Wr0ng.P@ssw3rd',
-						newPassword
-					})
-					.expect(403);
+				.post(`/users/${ user.username }/changePassword`)
+				.set(...authHeader)
+				.send({
+					oldPassword: 'Wr0ng.P@ssw3rd',
+					newPassword
+				})
+				.expect(403);
 			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
 
 			const entity = await User.findByUsername(user.username);
@@ -347,13 +347,13 @@ describe('Users Controller', () => {
 
 			await user.save();
 			const res = await request(App)
-					.post(`/users/${ user.username }/changePassword`)
-					.set(...authHeader)
-					.send({
-						wat: 'not-valid',
-						oldPassword
-					})
-					.expect(400);
+				.post(`/users/${ user.username }/changePassword`)
+				.set(...authHeader)
+				.send({
+					wat: 'not-valid',
+					oldPassword
+				})
+				.expect(400);
 			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
 
 			const entity = await User.findByUsername(user.username);
@@ -367,9 +367,9 @@ describe('Users Controller', () => {
 
 			await user.save();
 			const res = await request(App)
-					.post(`/users/${ user.username }/changePassword`)
-					.set(...authHeader)
-					.expect(400);
+				.post(`/users/${ user.username }/changePassword`)
+				.set(...authHeader)
+				.expect(400);
 			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
 
 			const entity = await User.findByUsername(user.username);
@@ -542,7 +542,7 @@ describe('Users Controller', () => {
 				})
 				.expect(403);
 			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
-			
+
 			const entity = await User.findByUsername(user.username);
 			expect(await bcrypt.compare(newPassword, entity.passwordHash)).to.be.false;
 		});

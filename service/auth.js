@@ -58,11 +58,11 @@ passport.use(new GoogleStrategy({
 
 export default app => {
 	app.use(passport.initialize());
-	app.use(async (req, res, next) => {
+	app.use((req, res, next) => {
 		if (req.headers.authorization) {
 			passport.authenticate('jwt', { session: false })(req, res, next);
 		} else {
-			next();
+			return next();
 		}
 	});
 };

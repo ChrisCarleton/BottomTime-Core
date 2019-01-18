@@ -21,7 +21,7 @@ describe('Auth Controller', () => {
 		User.deleteMany({}, done);
 	});
 
-	describe('POST /auth/login', async () => {
+	describe('POST /auth/login', () => {
 
 		it('Authenticates a user when username and password are correct', async () => {
 			const password = faker.internet.password(12, false);
@@ -35,7 +35,7 @@ describe('Auth Controller', () => {
 					username: fake.username,
 					password
 				})
-				expect(200);
+				.expect(200);
 			expect(res.body.token).to.exist;
 			expect(res.body.user).to.eql(cleanUpUser(user));
 		});
