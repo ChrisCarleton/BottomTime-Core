@@ -1,12 +1,13 @@
 import _ from 'lodash';
 import { App } from '../../service/server';
-import Bluebird from 'bluebird';
 import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
-import { expect, request } from 'chai';
+import { expect } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import LogEntry from '../../service/data/log-entry';
 import mongoose from '../../service/data/database';
+import request from 'supertest';
+import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
@@ -22,25 +23,23 @@ describe('Log Entry Searching', () => {
 		privateUser = await createFakeAccount('user', 'private');
 		adminUser = await createFakeAccount('admin');
 
-		await Bluebird.all(
+		await Promise.all(
 			_.map(new Array(500), () => new LogEntry(fakeLogEntry(friendsOnlyUser.user.id)).save())
 		);
-		await Bluebird.all(
+		await Promise.all(
 			_.map(new Array(20), () => new LogEntry(fakeLogEntry(publicUser.user.id)).save())
 		);
-		await Bluebird.all(
+		await Promise.all(
 			_.map(new Array(20), () => new LogEntry(fakeLogEntry(privateUser.user.id)).save())
 		);
 	});
 
 	after(async () => {
-		publicUser.agent.close();
-		friendsOnlyUser.agent.close();
-		privateUser.agent.close();
-		adminUser.agent.close();
-
-		await LogEntry.deleteMany({});
-		await User.deleteMany({});
+		await Promise.all([
+			LogEntry.deleteMany({}),
+			User.deleteMany({}),
+			Session.deleteMany({})
+		]);
 	});
 
 	describe('Security', () => {
@@ -65,7 +64,9 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Users can view public log books', async () => {
-			const result = await privateUser.agent.get(`/users/${ publicUser.user.username }/logs`);
+			const result = await request(App)
+				.get(`/users/${ publicUser.user.username }/logs`)
+				.set(...privateUser.authHeader);
 			expect(result.status).to.equal(200);
 			expect(result.body).to.be.an('Array');
 		});
@@ -75,33 +76,43 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Users cannot view friends-only log books if they are not friends of the owner', async () => {
-			const result = await privateUser.agent.get(`/users/${ friendsOnlyUser.user.username }/logs`);
+			const result = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...privateUser.authHeader);
 			expect(result.status).to.equal(403);
 			expect(result.body.status).to.equal(403);
 			expect(result.body.errorId).to.equal(ErrorIds.forbidden);
 		});
 
 		it('Users cannot view private log books', async () => {
-			const result = await publicUser.agent.get(`/users/${ privateUser.user.username }/logs`);
+			const result = await request(App)
+				.get(`/users/${ privateUser.user.username }/logs`)
+				.set(...publicUser.authHeader);
 			expect(result.status).to.equal(403);
 			expect(result.body.status).to.equal(403);
 			expect(result.body.errorId).to.equal(ErrorIds.forbidden);
 		});
 
 		it('Admins can view public log books', async () => {
-			const result = await adminUser.agent.get(`/users/${ publicUser.user.username }/logs`);
+			const result = await request(App)
+				.get(`/users/${ publicUser.user.username }/logs`)
+				.set(...adminUser.authHeader);
 			expect(result.status).to.equal(200);
 			expect(result.body).to.be.an('Array');
 		});
 
 		it('Admins can view friends-only log books', async () => {
-			const result = await adminUser.agent.get(`/users/${ friendsOnlyUser.user.username }/logs`);
+			const result = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...adminUser.authHeader);
 			expect(result.status).to.equal(200);
 			expect(result.body).to.be.an('Array');
 		});
 
 		it('Admins can view private log books', async () => {
-			const result = await adminUser.agent.get(`/users/${ privateUser.user.username }/logs`);
+			const result = await request(App)
+				.get(`/users/${ privateUser.user.username }/logs`)
+				.set(...adminUser.authHeader);
 			expect(result.status).to.equal(200);
 			expect(result.body).to.be.an('Array');
 		});
@@ -118,7 +129,9 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Will return an array of log entries', async () => {
-			let results = await friendsOnlyUser.agent.get(`/users/${ friendsOnlyUser.user.username }/logs`);
+			let results = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader);
 			results = results.body;
 			expect(results).to.be.an('Array');
 			expect(results).to.have.length(100);
@@ -141,8 +154,9 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Will return entry times in descending order', async () => {
-			let results = await friendsOnlyUser.agent
+			let results = await request(App)
 				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
 				.query({
 					sortBy: 'entryTime',
 					sortOrder: 'desc'
@@ -158,8 +172,9 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Will return entry times in ascending order', async () => {
-			let results = await friendsOnlyUser.agent
+			let results = await request(App)
 				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
 				.query({
 					sortBy: 'entryTime',
 					sortOrder: 'asc'
@@ -175,8 +190,9 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Will return maxDepths in descending order', async () => {
-			let results = await friendsOnlyUser.agent
+			let results = await request(App)
 				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
 				.query({
 					sortBy: 'maxDepth',
 					sortOrder: 'desc'
@@ -191,8 +207,9 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Will return maxDepths in ascending order', async () => {
-			let results = await friendsOnlyUser.agent
+			let results = await request(App)
 				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
 				.query({
 					sortBy: 'maxDepth',
 					sortOrder: 'asc'
@@ -207,8 +224,9 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Will return bottomTime in descending order', async () => {
-			let results = await friendsOnlyUser.agent
+			let results = await request(App)
 				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
 				.query({
 					sortBy: 'bottomTime',
 					sortOrder: 'desc'
@@ -223,8 +241,9 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Will return bottomTime in ascending order', async () => {
-			let results = await friendsOnlyUser.agent
+			let results = await request(App)
 				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
 				.query({
 					sortBy: 'bottomTime',
 					sortOrder: 'asc'
@@ -239,8 +258,9 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Number of entries returned can be set', async () => {
-			let results = await friendsOnlyUser.agent
+			let results = await request(App)
 				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
 				.query({ count: 50 });
 			results = results.body;
 			expect(results).to.be.an('Array');
@@ -248,13 +268,17 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Will return an empty array if no log entries are found', async () => {
-			const results = await adminUser.agent.get(`/users/${ adminUser.user.username }/logs`);
+			const results = await request(App)
+				.get(`/users/${ adminUser.user.username }/logs`)
+				.set(...adminUser.authHeader);
 			expect(results.body).to.be.an('Array');
 			expect(results.body).to.be.empty;
 		});
 
 		it('Will return Not Found if requested username does not exist', async () => {
-			const result = await friendsOnlyUser.agent.get('/users/Jonny_Nonexistent/logs');
+			const result = await request(App)
+				.get('/users/Jonny_Nonexistent/logs')
+				.set(...friendsOnlyUser.authHeader);
 
 			expect(result.status).to.equal(404);
 			expect(result.body.status).to.equal(404);
@@ -262,8 +286,9 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Will return Bad Request if query string fails validation', async () => {
-			const result = await friendsOnlyUser.agent
+			const result = await request(App)
 				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
 				.query({
 					invalid: 'Yup',
 					count: -5
@@ -278,11 +303,10 @@ describe('Log Entry Searching', () => {
 			stub = sinon.stub(mongoose.Query.prototype, 'exec');
 			stub.rejects('Nope!');
 
-			const result = await friendsOnlyUser.agent.get(`/users/${ friendsOnlyUser.user.username }/logs`);
-			expect(result.status).to.equal(500);
-			expect(result.body.status).to.equal(500);
-			expect(result.body.logId).to.exist;
-			expect(result.body.errorId).to.equal(ErrorIds.serverError);
+			await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
+				.expect(500);
 		});
 	});
 });

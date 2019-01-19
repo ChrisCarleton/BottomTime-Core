@@ -5,16 +5,14 @@ import bodyParser from 'body-parser';
 import containerMetadata from './utils/container-metadata';
 import compression from 'compression';
 import config from './config';
-import database from './data/database';
 import express from 'express';
 import glob from 'glob';
 import http from 'http';
 import log, { requestLogger } from './logger';
 import modRewrite from 'connect-modrewrite';
-import moment from 'moment';
 import { notFound, serverErrorMiddleware } from './utils/error-response';
 import path from 'path';
-import session from 'express-session';
+import useragent from 'express-useragent';
 
 // Wire up process-wide event handlers.
 process.on('unhandledRejection', (reason, p) => {
@@ -42,21 +40,13 @@ process.on('uncaughtException', err => {
 
 // Express middleware
 const app = express();
-const MongoDbStore = require('connect-mongo')(session);
-
 app.use(compression());
+app.use(useragent.express());
 app.use(modRewrite([ '^/api/(.*) /$1' ]));
+applyAuth(app);
 app.use(requestLogger);
 app.use(serverErrorMiddleware);
-app.use(session({
-	resave: true,
-	saveUninitialized: false,
-	secret: config.sessionSecret,
-	store: new MongoDbStore({ mongooseConnection: database.connection }),
-	cookie: moment.duration(3, 'd')
-}));
 app.use(bodyParser.json());
-applyAuth(app);
 
 // Load routes
 glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {

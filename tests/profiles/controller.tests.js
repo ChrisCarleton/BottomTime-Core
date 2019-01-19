@@ -1,14 +1,15 @@
 import _ from 'lodash';
 import { App } from '../../service/server';
-import Bluebird from 'bluebird';
 import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
-import { expect, request } from 'chai';
+import { expect } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import fakeProfile from '../util/fake-profile';
 import LogEntry from '../../service/data/log-entry';
 import moment from 'moment';
 import mongoose from 'mongoose';
+import request from 'supertest';
+import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
@@ -66,7 +67,7 @@ describe('Profiles Controller', () => {
 
 	before(async () => {
 		privateUser = await createFakeAccount('user', 'private');
-		friendsOnlyUser = await createFakeAccount('user', 'friendsOnly');
+		friendsOnlyUser = await createFakeAccount('user', 'friends-only');
 		publicUser = await createFakeAccount('user', 'public');
 		adminUser = await createFakeAccount('admin');
 
@@ -74,7 +75,7 @@ describe('Profiles Controller', () => {
 			logEntries[i] = fakeLogEntry(publicUser.user.id);
 		}
 
-		await Bluebird.all(_.map(logEntries, e => new LogEntry(e).save()));
+		await Promise.all(_.map(logEntries, e => new LogEntry(e).save()));
 	});
 
 	afterEach(() => {
@@ -85,27 +86,29 @@ describe('Profiles Controller', () => {
 	});
 
 	after(async () => {
-		privateUser.agent.close();
-		friendsOnlyUser.agent.close();
-		publicUser.agent.close();
-		adminUser.agent.close();
-
-		await User.deleteMany({});
-		await LogEntry.deleteMany({});
+		await Promise.all([
+			User.deleteMany({}),
+			Session.deleteMany({}),
+			Session.deleteMany({})
+		]);
 	});
 
 	describe('GET /users/:username/profile', () => {
 		it('Will return the user\'s profile', async () => {
-			const result = await privateUser.agent.get(`/users/${ privateUser.user.username }/profile`);
-			expect(result.status).to.equal(200);
+			const result = await request(App)
+				.get(`/users/${ privateUser.user.username }/profile`)
+				.set(...privateUser.authHeader)
+				.expect(200);
 			expect(result.body).to.exist;
 			expect(result.body).to.have.keys(expectedKeys);
 			compareProfiles(result.body, privateUser.user);
 		});
 
 		it('Will return public profile', async () => {
-			const result = await privateUser.agent.get(`/users/${ publicUser.user.username }/profile`);
-			expect(result.status).to.equal(200);
+			const result = await request(App)
+				.get(`/users/${ publicUser.user.username }/profile`)
+				.set(...privateUser.authHeader)
+				.expect(200);
 			expect(result.body).to.exist;
 			expect(result.body).to.have.keys(expectedKeys);
 			compareProfiles(result.body, publicUser.user);
@@ -116,22 +119,28 @@ describe('Profiles Controller', () => {
 		});
 
 		it('Will not return friends-only profile if not friended', async () => {
-			const result = await privateUser.agent.get(`/users/${ friendsOnlyUser.user.username }/profile`);
-			expect(result.status).to.equal(403);
+			const result = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/profile`)
+				.set(...privateUser.authHeader)
+				.expect(403);
 			expect(result.body.status).to.equal(403);
 			expect(result.body.errorId).to.equal(ErrorIds.forbidden);
 		});
 
 		it('Will not return private profile', async () => {
-			const result = await friendsOnlyUser.agent.get(`/users/${ privateUser.user.username }/profile`);
-			expect(result.status).to.equal(403);
+			const result = await request(App)
+				.get(`/users/${ privateUser.user.username }/profile`)
+				.set(...friendsOnlyUser.authHeader)
+				.expect(403);
 			expect(result.body.status).to.equal(403);
 			expect(result.body.errorId).to.equal(ErrorIds.forbidden);
 		});
 
 		it('Admins can view public profiles', async () => {
-			const result = await adminUser.agent.get(`/users/${ publicUser.user.username }/profile`);
-			expect(result.status).to.equal(200);
+			const result = await request(App)
+				.get(`/users/${ publicUser.user.username }/profile`)
+				.set(...adminUser.authHeader)
+				.expect(200);
 			expect(result.body).to.exist;
 			expect(result.body).to.have.keys(expectedKeys);
 			compareProfiles(result.body, publicUser.user);
@@ -142,39 +151,46 @@ describe('Profiles Controller', () => {
 		});
 
 		it('Admins can view friends-only profiles when not friended', async () => {
-			const result = await adminUser.agent.get(`/users/${ friendsOnlyUser.user.username }/profile`);
-			expect(result.status).to.equal(200);
+			const result = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/profile`)
+				.set(...adminUser.authHeader)
+				.expect(200);
 			expect(result.body).to.exist;
 			expect(result.body).to.have.keys(expectedKeys);
 			compareProfiles(result.body, friendsOnlyUser.user);
 		});
 
 		it('Admins can view private profiles', async () => {
-			const result = await adminUser.agent.get(`/users/${ privateUser.user.username }/profile`);
-			expect(result.status).to.equal(200);
+			const result = await request(App)
+				.get(`/users/${ privateUser.user.username }/profile`)
+				.set(...adminUser.authHeader)
+				.expect(200);
 			expect(result.body).to.exist;
 			expect(result.body).to.have.keys(expectedKeys);
 			compareProfiles(result.body, privateUser.user);
 		});
 
 		it('Anonyous users can view public profiles', async () => {
-			const result = await request(App).get(`/users/${ publicUser.user.username }/profile`);
-			expect(result.status).to.equal(200);
+			const result = await request(App)
+				.get(`/users/${ publicUser.user.username }/profile`)
+				.expect(200);
 			expect(result.body).to.exist;
 			expect(result.body).to.have.keys(expectedKeys);
 			compareProfiles(result.body, publicUser.user);
 		});
 
 		it('Anonymous users cannot view friends-only profiles', async () => {
-			const result = await request(App).get(`/users/${ friendsOnlyUser.user.username }/profile`);
-			expect(result.status).to.equal(403);
+			const result = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/profile`)
+				.expect(403);
 			expect(result.body.status).to.equal(403);
 			expect(result.body.errorId).to.equal(ErrorIds.forbidden);
 		});
 
 		it('Anonymous users cannot view private profiles', async () => {
-			const result = await request(App).get(`/users/${ privateUser.user.username }/profile`);
-			expect(result.status).to.equal(403);
+			const result = await request(App)
+				.get(`/users/${ privateUser.user.username }/profile`)
+				.expect(403);
 			expect(result.body.status).to.equal(403);
 			expect(result.body.errorId).to.equal(ErrorIds.forbidden);
 		});
@@ -185,22 +201,28 @@ describe('Profiles Controller', () => {
 				expectedBottomTime += logEntries[i].bottomTime;
 			}
 
-			const result = await publicUser.agent.get(`/users/${ publicUser.user.username }/profile`);
-			expect(result.status).to.equal(200);
+			const result = await request(App)
+				.get(`/users/${ publicUser.user.username }/profile`)
+				.set(...publicUser.authHeader)
+				.expect(200);
 			expect(result.body.divesLogged).to.equal(logEntries.length);
 			expect(result.body.bottomTimeLogged).to.equal(expectedBottomTime);
 		});
 
 		it('Will return zeros for bottom time and dives logged if no dives exist', async () => {
-			const result = await privateUser.agent.get(`/users/${ privateUser.user.username }/profile`);
-			expect(result.status).to.equal(200);
+			const result = await request(App)
+				.get(`/users/${ privateUser.user.username }/profile`)
+				.set(...privateUser.authHeader)
+				.expect(200);
 			expect(result.body.divesLogged).to.equal(0);
 			expect(result.body.bottomTimeLogged).to.equal(0);
 		});
 
 		it('Will return Not Found if specified profile does not exist', async () => {
-			const result = await publicUser.agent.get('/users/notARealUser/profile');
-			expect(result.status).to.equal(404);
+			const result = await request(App)
+				.get('/users/notARealUser/profile')
+				.set(...publicUser.authHeader)
+				.expect(404);
 			expect(result.body.status).to.equal(404);
 			expect(result.body.errorId).to.equal(ErrorIds.notFound);
 		});
@@ -209,21 +231,21 @@ describe('Profiles Controller', () => {
 			stub = sinon.stub(User, 'findOne');
 			stub.rejects('nope');
 
-			const result = await privateUser.agent.get(`/users/${ privateUser.user.username }/profile`);
-			expect(result.status).to.equal(500);
-			expect(result.body.status).to.equal(500);
-			expect(result.body.errorId).to.equal(ErrorIds.serverError);
-			expect(result.body.logId).to.exist;
+			await request(App)
+				.get(`/users/${ privateUser.user.username }/profile`)
+				.set(...privateUser.authHeader)
+				.expect(500);
 		});
 	});
 
 	describe('PATCH /users/:username/profile', () => {
 		it('Will update user\'s profile', async () => {
 			const fake = fakeProfile();
-			const result = await publicUser.agent
+			await request(App)
 				.patch(`/users/${ publicUser.user.username }/profile`)
-				.send(fake);
-			expect(result.status).to.equal(204);
+				.set(...publicUser.authHeader)
+				.send(fake)
+				.expect(204);
 
 			const user = await User.findById(publicUser.user.id);
 			compareProfiles(
@@ -237,11 +259,12 @@ describe('Profiles Controller', () => {
 
 		it('Users cannot update other user\'s profiles', async () => {
 			const fake = fakeProfile();
-			const result = await privateUser.agent
+			const result = await request(App)
 				.patch(`/users/${ publicUser.user.username }/profile`)
-				.send(fake);
+				.set(...privateUser.authHeader)
+				.send(fake)
+				.expect(403);
 
-			expect(result.status).to.equal(403);
 			expect(result.body.status).to.equal(403);
 			expect(result.body.errorId).to.equal(ErrorIds.forbidden);
 		});
@@ -250,9 +273,9 @@ describe('Profiles Controller', () => {
 			const fake = fakeProfile();
 			const result = await request(App)
 				.patch(`/users/${ publicUser.user.username }/profile`)
-				.send(fake);
+				.send(fake)
+				.expect(403);
 
-			expect(result.status).to.equal(403);
 			expect(result.body.status).to.equal(403);
 			expect(result.body.errorId).to.equal(ErrorIds.forbidden);
 		});
@@ -260,10 +283,11 @@ describe('Profiles Controller', () => {
 		it('Admins can update other users\' profiles', async () => {
 			const fake = fakeProfile();
 
-			const result = await adminUser.agent
+			await request(App)
 				.patch(`/users/${ privateUser.user.username }/profile`)
-				.send(fake);
-			expect(result.status).to.equal(204);
+				.set(...adminUser.authHeader)
+				.send(fake)
+				.expect(204);
 
 			const user = await User.findById(privateUser.user.id);
 			compareProfiles(
@@ -277,11 +301,12 @@ describe('Profiles Controller', () => {
 
 		it('Will return Not Found if username does not belong to an existing user', async () => {
 			const fake = fakeProfile();
-			const result = await adminUser.agent
+			const result = await request(App)
 				.patch('/users/Made_Up_User/profile')
-				.send(fake);
+				.set(...adminUser.authHeader)
+				.send(fake)
+				.expect(404);
 
-			expect(result.status).to.equal(404);
 			expect(result.body.status).to.equal(404);
 			expect(result.body.errorId).to.equal(ErrorIds.notFound);
 		});
@@ -291,11 +316,12 @@ describe('Profiles Controller', () => {
 			fake.birthdate = '30 years ago';
 			fake.certificationAgencies = 4;
 
-			const result = await publicUser.agent
+			const result = await request(App)
 				.patch(`/users/${ publicUser.user.username }/profile`)
-				.send(fake);
+				.set(...publicUser.authHeader)
+				.send(fake)
+				.expect(400);
 
-			expect(result.status).to.equal(400);
 			expect(result.body.status).to.equal(400);
 			expect(result.body.errorId).to.equal(ErrorIds.badRequest);
 		});
@@ -305,10 +331,11 @@ describe('Profiles Controller', () => {
 			const oldCreatedAt = publicUser.user.createdAt;
 			fake.memberSince = moment().utc().toDate();
 
-			const result = await publicUser.agent
+			await request(App)
 				.patch(`/users/${ publicUser.user.username }/profile`)
-				.send(fake);
-			expect(result.status).to.equal(204);
+				.set(...publicUser.authHeader)
+				.send(fake)
+				.expect(204);
 
 			const user = await User.findById(publicUser.user.id);
 			compareProfiles(
@@ -338,10 +365,11 @@ describe('Profiles Controller', () => {
 				about: null
 			};
 
-			const result = await adminUser.agent
+			await request(App)
 				.patch(`/users/${ adminUser.user.username }/profile`)
-				.send(fake);
-			expect(result.status).to.equal(204);
+				.set(...adminUser.authHeader)
+				.send(fake)
+				.expect(204);
 
 			const user = await User.findById(adminUser.user.id);
 			compareProfiles(fake, user);
@@ -352,10 +380,11 @@ describe('Profiles Controller', () => {
 				memberSince: moment(adminUser.user.createdAt).utc().toISOString()
 			};
 			const expected = friendsOnlyUser.user.getProfileJSON();
-			const result = await friendsOnlyUser.agent
+			await request(App)
 				.patch(`/users/${ friendsOnlyUser.user.username }/profile`)
-				.send(fake);
-			expect(result.status).to.equal(204);
+				.set(...friendsOnlyUser.authHeader)
+				.send(fake)
+				.expect(204);
 
 			const user = await User.findById(friendsOnlyUser.user.id);
 			compareProfiles(expected, user);
@@ -366,10 +395,11 @@ describe('Profiles Controller', () => {
 			stub = sinon.stub(mongoose.Model.prototype, 'save');
 			stub.rejects('nope');
 
-			const result = await publicUser.agent
+			const result = await request(App)
 				.patch(`/users/${ publicUser.user.username }/profile`)
-				.send(fake);
-			expect(result.status).to.equal(500);
+				.set(...publicUser.authHeader)
+				.send(fake)
+				.expect(500);
 			expect(result.body.status).to.equal(500);
 			expect(result.body.errorId).to.equal(ErrorIds.serverError);
 			expect(result.body.logId).to.exist;

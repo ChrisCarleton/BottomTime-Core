@@ -33,12 +33,14 @@ export const requestLogger = expressLogger({
 		'short-body',
 		'req',
 		'res',
-		'response-hrtime'
+		'response-hrtime',
+		'user-agent'
 	],
 	includesFn: req => ({
-		user: req.user,
+		user: req.user ? req.user.username : '<anonymous>',
 		ecsInstanceId: containerMetadata.ContainerInstanceARN,
-		ecsTaskId: containerMetadata.TaskARN
+		ecsTaskId: containerMetadata.TaskARN,
+		device: `${ req.useragent.platform } / ${ req.useragent.os } / ${ req.useragent.browser }`
 	})
 });
 

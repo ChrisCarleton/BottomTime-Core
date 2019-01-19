@@ -1,120 +1,101 @@
 import _ from 'lodash';
 import { App } from '../../service/server';
-import Bluebird from 'bluebird';
 import createAccount from '../util/create-fake-account';
 import mongoose from 'mongoose';
-import { expect, request } from 'chai';
+import { expect } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import fakeMongoId from '../util/fake-mongo-id';
 import LogEntry from '../../service/data/log-entry';
+import request from 'supertest';
+import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
+import { ErrorIds } from '../../service/utils/error-response';
 
 let stub = null;
 
 describe('Logs Controller', () => {
-	let admin = null;
 	let user1 = null;
 
-	before(done => {
-		Bluebird.all([ createAccount('admin'), createAccount() ])
-			.then(results => {
-				[ admin, user1 ] = results;
-				done();
-			})
-			.catch(done);
+	before(async () => {
+		user1 = await createAccount();
 	});
 
-	after(done => {
-		admin.agent.close();
-		user1.agent.close();
-		User.deleteMany({}, done);
+	after(async () => {
+		await User.deleteMany({});
+		await Session.deleteMany({});
 	});
 
-	afterEach(done => {
-		// Clean up sinon stubs.
+	afterEach(async () => {
 		if (stub) {
 			stub.restore();
 			stub = null;
 		}
 
-		// Purge log records.
-		LogEntry.deleteMany({}, done);
+		await LogEntry.deleteMany({});
 	});
 
 	describe('GET /users/:username/logs/:logId', () => {
 
-		it('Will fetch the requested log entry', done => {
+		it('Will fetch the requested log entry', async () => {
 			const fake = fakeLogEntry(user1.user.id);
 			const logEntry = new LogEntry(fake);
 			delete fake.userId;
 
-			logEntry.save()
-				.then(entry => user1.agent
-					.get(`/users/${ user1.user.username }/logs/${ entry.id }`))
-				.then(res => {
-					expect(res.status).to.equal(200);
-					expect(res.body).to.exist;
+			const entry = await logEntry.save();
+			const res = await request(App)
+				.get(`/users/${ user1.user.username }/logs/${ entry.id }`)
+				.set(...user1.authHeader)
+				.expect(200);
 
-					fake.entryId = res.body.entryId;
-					expect(res.body).to.eql(fake);
-					done();
-				})
-				.catch(done);
+			expect(res.body).to.exist;
+			fake.entryId = res.body.entryId;
+			expect(res.body).to.eql(fake);
 		});
 
-		it('Will return Not Found if entry does not exist', done => {
+		it('Will return Not Found if entry does not exist', async () => {
 			const fakeId = fakeMongoId();
-			request(App)
-				.get(`/logs/${ fakeId }`)
-				.then(res => {
-					expect(res.status).to.equal(404);
-					done();
-				})
-				.catch(done);
+			await request(App)
+				.get(`/users/${ user1.user.username }/logs/${ fakeId }`)
+				.set(...user1.authHeader)
+				.expect(404);
 		});
 
-		it('Will return Server Error if something goes wrong', done => {
+		it('Will return Server Error if something goes wrong', async () => {
 			stub = sinon.stub(LogEntry, 'findById');
 			stub.rejects('nope');
 
 			const fakeId = fakeMongoId();
-			request(App)
+			const res = await request(App)
 				.get(`/users/${ user1.user.username }/logs/${ fakeId }`)
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.logId).to.exist;
-					expect(res.body.status).to.equal(500);
-					done();
-				})
-				.catch(done);
+				.set(...user1.authHeader)
+				.expect(500);
+			expect(res.body.logId).to.exist;
+			expect(res.body.status).to.equal(500);
 		});
 
 	});
 
 	describe('POST /users/:username/logs', () => {
 
-		it('Will create a new record', done => {
+		it('Will create a new record', async () => {
 			const fake = fakeLogEntry();
 			delete fake.userId;
 
-			user1.agent
+			const res = await request(App)
 				.post(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
 				.send([ fake ])
-				.then(res => {
-					expect(res.status).to.equal(201);
-					expect(res.body).to.exist;
-					expect(res.body).to.be.an('Array');
-					expect(res.body.length).to.equal(1);
+				.expect(201);
+			expect(res.body).to.exist;
+			expect(res.body).to.be.an('Array');
+			expect(res.body.length).to.equal(1);
 
-					fake.entryId = res.body[0].entryId;
-					expect(res.body[0]).to.eql(fake);
-					done();
-				})
-				.catch(done);
+			fake.entryId = res.body[0].entryId;
+			expect(res.body[0]).to.eql(fake);
 		});
 
-		it('Will create multiple records', done => {
+		it('Will create multiple records', async () => {
 			const fakes = [
 				fakeLogEntry(),
 				fakeLogEntry(),
@@ -125,24 +106,21 @@ describe('Logs Controller', () => {
 			delete fakes[1].userId;
 			delete fakes[2].userId;
 
-			user1.agent
+			const res = await request(App)
 				.post(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
 				.send(fakes)
-				.then(res => {
-					expect(res.status).to.equal(201);
-					expect(res.body).to.exist;
-					expect(res.body).to.be.an('Array');
+				.expect(201);
+			expect(res.body).to.exist;
+			expect(res.body).to.be.an('Array');
 
-					for (let i = 0; i < fakes.length; i++) {
-						fakes[i].entryId = res.body[i].entryId;
-						expect(res.body[i]).to.eql(fakes[i]);
-					}
-					done();
-				})
-				.catch(done);
+			for (let i = 0; i < fakes.length; i++) {
+				fakes[i].entryId = res.body[i].entryId;
+				expect(res.body[i]).to.eql(fakes[i]);
+			}
 		});
 
-		it('Will return Bad Request if one or more log entries are invalid', done => {
+		it('Will return Bad Request if one or more log entries are invalid', async () => {
 			const fakes = [
 				fakeLogEntry(),
 				fakeLogEntry(),
@@ -150,227 +128,181 @@ describe('Logs Controller', () => {
 			];
 
 			fakes[1].averageDepth = -1;
-			user1.agent
+			const res = await request(App)
 				.post(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
 				.send(fakes)
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
-					expect(res.body.details.isJoi).to.be.true;
-					done();
-				})
-				.catch(done);
+				.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+			expect(res.body.details.isJoi).to.be.true;
 		});
 
-		it('Will return Bad Request if array is empty', done => {
-			user1.agent
+		it('Will return Bad Request if array is empty', async () => {
+			const res = await request(App)
 				.post(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
 				.send([])
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
-					expect(res.body.details.isJoi).to.be.true;
-					done();
-				})
-				.catch(done);
+				.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+			expect(res.body.details.isJoi).to.be.true;
 		});
 
-		it('Will return Bad Request if request payload is empty', done => {
-			user1.agent
+		it('Will return Bad Request if request payload is empty', async () => {
+			const res = await request(App)
 				.post(`/users/${ user1.user.username }/logs`)
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
-					expect(res.body.details.isJoi).to.be.true;
-					done();
-				})
-				.catch(done);
+				.set(...user1.authHeader)
+				.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+			expect(res.body.details.isJoi).to.be.true;
 		});
 
-		it('Will return Server Error if database request fails', done => {
+		it('Will return Server Error if database request fails', async () => {
 			const fake = fakeLogEntry();
 
 			stub = sinon.stub(mongoose.Model.prototype, 'save');
 			stub.rejects('nope');
 
-			user1.agent
+			const res = await request(App)
 				.post(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
 				.send([ fake ])
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.logId).to.exist;
-					done();
-				})
-				.catch(done);
+				.expect(500);
+			expect(res.body.status).to.equal(500);
+			expect(res.body.logId).to.exist;
 		});
 
 	});
 
 	describe('PUT /users/:username/logs/:logId', () => {
 
-		it('Will update the log entry', done => {
+		it('Will update the log entry', async () => {
 			const fake = fakeLogEntry(user1.user.id);
 			const originalEntry = new LogEntry(fake);
 			let entryId = null;
 
-			originalEntry.save()
-				.then(entry => {
-					entryId = entry.id;
-					fake.location = 'Some new location';
-					fake.maxDepth = 139.5;
-					delete fake.userId;
+			const entry = await originalEntry.save();
+			entryId = entry.id;
+			fake.location = 'Some new location';
+			fake.maxDepth = 139.5;
+			delete fake.userId;
 
-					return user1.agent
-						.put(`/users/${ user1.user.username }/logs/${ entryId }`)
-						.send(fake);
-				})
-				.then(res => {
-					expect(res.status).to.equal(200);
-					return user1.agent
-						.get(`/users/${ user1.user.username }/logs/${ entryId }`);
-				})
-				.then(res => {
-					fake.entryId = entryId;
-					expect(res.status).to.equal(200);
-					expect(res.body).to.eql(fake);
-					done();
-				})
-				.catch(done);
+			await request(App)
+				.put(`/users/${ user1.user.username }/logs/${ entryId }`)
+				.set(...user1.authHeader)
+				.send(fake)
+				.expect(200);
+
+			const res = await request(App)
+				.get(`/users/${ user1.user.username }/logs/${ entryId }`)
+				.set(...user1.authHeader)
+				.expect(200);
+			fake.entryId = entryId;
+			expect(res.body).to.eql(fake);
 		});
 
-		it('Will return Not Found if the log engry does not exit', done => {
+		it('Will return Not Found if the log engry does not exit', async () => {
 			const fake = fakeLogEntry();
 			fake.entryId = fakeMongoId();
 
-			user1.agent
+			await request(App)
 				.put(`/users/${ user1.user.username }/logs/${ fake.entryId }`)
+				.set(...user1.authHeader)
 				.send(fake)
-				.then(res => {
-					expect(res.status).to.equal(404);
-
-					done();
-				})
-				.catch(done);
+				.expect(404);
 		});
 
-		it('Will return Bad Request if update is invalid', done => {
+		it('Will return Bad Request if update is invalid', async () => {
 			const fake = fakeLogEntry(user1.user.id);
 			const originalEntry = new LogEntry(fake);
 			let entryId = null;
 
-			originalEntry.save()
-				.then(entity => {
-					entryId = entity.id;
-					fake.site = null;
-					delete fake.userId;
+			const entity = await originalEntry.save();
+			entryId = entity.id;
+			fake.site = null;
+			delete fake.userId;
 
-					return user1.agent
-						.put(`/users/${ user1.user.username }/logs/${ entryId }`)
-						.send(fake);
-				})
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
-					expect(res.body.status).to.equal(400);
-
-					done();
-				})
-				.catch(done);
+			const res = await request(App)
+				.put(`/users/${ user1.user.username }/logs/${ entryId }`)
+				.set(...user1.authHeader)
+				.send(fake)
+				.expect(400);
+			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
+			expect(res.body.status).to.equal(400);
 		});
 
-		it('Will return Server Error if database fails', done => {
+		it('Will return Server Error if database fails', async () => {
 			const fake = fakeLogEntry(user1.user.id);
 			const originalEntry = new LogEntry(fake);
 			let entryId = null;
 
-			originalEntry.save()
-				.then(entry => {
-					entryId = entry.id;
-					fake.location = 'Some new location';
-					fake.maxDepth = 139.5;
-					delete fake.userId;
+			const entry = await originalEntry.save();
+			entryId = entry.id;
+			fake.location = 'Some new location';
+			fake.maxDepth = 139.5;
+			delete fake.userId;
 
-					stub = sinon.stub(mongoose.Model.prototype, 'save');
-					stub.rejects('nope');
+			stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub.rejects('nope');
 
-					return user1.agent
-						.put(`/users/${ user1.user.username }/logs/${ entryId }`)
-						.send(fake);
-				})
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.logId).to.exist;
-					done();
-				})
-				.catch(done);
+			const res = await request(App)
+				.put(`/users/${ user1.user.username }/logs/${ entryId }`)
+				.set(...user1.authHeader)
+				.send(fake)
+				.expect(500);
+			expect(res.body.status).to.equal(500);
+			expect(res.body.logId).to.exist;
 		});
 
 	});
 
 	describe('DELETE /users/:username/logs/:logId', () => {
 
-		it('Will delete the specified log entry', done => {
+		it('Will delete the specified log entry', async () => {
 			const fake = fakeLogEntry(user1.user.id);
 			const entry = new LogEntry(fake);
 
-			entry.save()
-				.then(entity => {
-					fake.entryId = entity.id;
+			const entity = await entry.save();
+			fake.entryId = entity.id;
 
-					return user1.agent
-						.del(`/users/${ user1.user.username }/logs/${ fake.entryId }`);
-				})
-				.then(res => {
-					expect(res.status).to.equal(204);
-					return LogEntry.findById(fake.entryId);
-				})
-				.then(res => {
-					expect(res).to.be.null;
-					done();
-				})
-				.catch(done);
+			await request(App)
+				.del(`/users/${ user1.user.username }/logs/${ fake.entryId }`)
+				.set(...user1.authHeader)
+				.expect(204);
+
+			const res = await LogEntry.findById(fake.entryId);
+			expect(res).to.be.null;
 		});
 
-		it('Will return Not Found if the log entry does not exist', done => {
+		it('Will return Not Found if the log entry does not exist', async () => {
 			const entryId = fakeMongoId();
 
-			user1.agent
+			await request(App)
 				.del(`/user/${ user1.user.username }/logs/${ entryId }`)
-				.then(res => {
-					expect(res.status).to.equal(404);
-					done();
-				})
-				.catch(done);
+				.set(...user1.authHeader)
+				.expect(404);
 		});
 
-		it('Will return Server Error if the database fails', done => {
+		it('Will return Server Error if the database fails', async () => {
 			const fake = fakeLogEntry(user1.user.id);
 			const entry = new LogEntry(fake);
 
-			entry.save()
-				.then(entity => {
-					fake.entryId = entity.id;
+			const entity = await entry.save();
+			fake.entryId = entity.id;
 
-					stub = sinon.stub(LogEntry, 'deleteOne');
-					stub.rejects('nope');
+			stub = sinon.stub(LogEntry, 'deleteOne');
+			stub.rejects('nope');
 
-					return user1.agent
-						.del(`/users/${ user1.user.username }/logs/${ fake.entryId }`);
-				})
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.logId).to.exist;
-					done();
-				})
-				.catch(done);
+			const res = await request(App)
+				.del(`/users/${ user1.user.username }/logs/${ fake.entryId }`)
+				.set(...user1.authHeader)
+				.expect(500);
+			expect(res.body.status).to.equal(500);
+			expect(res.body.logId).to.exist;
 		});
 	});
 
 	describe('PUT /users/:username/logs', () => {
-		it('Will update records', done => {
+		it('Will update records', async () => {
 			const fakes = [
 				fakeLogEntry(user1.user.id),
 				fakeLogEntry(user1.user.id),
@@ -382,39 +314,37 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
-				.then(res => {
-					fakes[0].entryId = res[0].id;
-					fakes[1].entryId = res[1].id;
-					fakes[2].entryId = res[2].id;
+			let res = await Promise.all([
+				logEntries[0].save(),
+				logEntries[1].save(),
+				logEntries[2].save()
+			]);
 
-					delete fakes[0].userId;
-					delete fakes[1].userId;
-					delete fakes[2].userId;
+			fakes[0].entryId = res[0].id;
+			fakes[1].entryId = res[1].id;
+			fakes[2].entryId = res[2].id;
 
-					fakes[0].weight = { amount: 69.4 };
-					fakes[1].maxDepth = 300;
-					fakes[2].site = 'Local swimming pool';
+			delete fakes[0].userId;
+			delete fakes[1].userId;
+			delete fakes[2].userId;
 
-					return user1.agent
-						.put(`/users/${ user1.user.username }/logs`)
-						.send(fakes);
-				})
-				.then(res => {
-					expect(res.status).to.equal(200);
-					expect(res.body).to.be.an('Array');
-					expect(res.body).to.eql(fakes);
+			fakes[0].weight = { amount: 69.4 };
+			fakes[1].maxDepth = 300;
+			fakes[2].site = 'Local swimming pool';
 
-					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
-				})
-				.then(res => {
-					expect(_.map(res, r => r.toCleanJSON())).to.eql(fakes);
-					done();
-				})
-				.catch(done);
+			res = await request(App)
+				.put(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
+				.send(fakes)
+				.expect(200);
+			expect(res.body).to.be.an('Array');
+			expect(res.body).to.eql(fakes);
+
+			res = await LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
+			expect(_.map(res, r => r.toCleanJSON())).to.eql(fakes);
 		});
 
-		it('Will succeed if one of the records is missing', done => {
+		it('Will succeed if one of the records is missing', async () => {
 			const fakes = [
 				fakeLogEntry(user1.user.id),
 				fakeLogEntry(user1.user.id),
@@ -425,85 +355,66 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[1])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save() ])
-				.then(res => {
-					fakes[0].entryId = res[0].id;
-					fakes[1].entryId = res[1].id;
-					fakes[2].entryId = fakeMongoId();
+			let res = await Promise.all([ logEntries[0].save(), logEntries[1].save() ]);
+			fakes[0].entryId = res[0].id;
+			fakes[1].entryId = res[1].id;
+			fakes[2].entryId = fakeMongoId();
 
-					delete fakes[0].userId;
-					delete fakes[1].userId;
-					delete fakes[2].userId;
+			delete fakes[0].userId;
+			delete fakes[1].userId;
+			delete fakes[2].userId;
 
-					fakes[0].weight = { amount: 69.4 };
-					fakes[1].maxDepth = 300;
-					fakes[2].site = 'Local swimming pool';
+			fakes[0].weight = { amount: 69.4 };
+			fakes[1].maxDepth = 300;
+			fakes[2].site = 'Local swimming pool';
 
-					return user1.agent
-						.put(`/users/${ user1.user.username }/logs`)
-						.send(fakes);
-				})
-				.then(res => {
-					expect(res.status).to.equal(200);
-					expect(res.body).to.be.an('Array');
-					expect(res.body).to.eql(_.take(fakes, 2));
+			res = await request(App)
+				.put(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
+				.send(fakes)
+				.expect(200);
+			expect(res.body).to.be.an('Array');
+			expect(res.body).to.eql(_.take(fakes, 2));
 
-					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
-				})
-				.then(res => {
-					expect(_.map(res, r => r.toCleanJSON()))
-						.to.eql(_.take(fakes, 2));
-					done();
-				})
-				.catch(done);
+			res = await LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
+			expect(_.map(res, r => r.toCleanJSON())).to.eql(_.take(fakes, 2));
 		});
 
-		it('Will return an empty array if none of the records can be found', done => {
+		it('Will return an empty array if none of the records can be found', async () => {
 			const fakes = [
 				{ entryId: fakeMongoId(), ...fakeLogEntry() },
 				{ entryId: fakeMongoId(), ...fakeLogEntry() },
 				{ entryId: fakeMongoId(), ...fakeLogEntry() }
 			];
 
-			user1.agent
+			let res = await request(App)
 				.put(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
 				.send(fakes)
-				.then(res => {
-					expect(res.status).to.equal(200);
-					expect(res.body).to.be.an('Array');
-					expect(res.body).to.be.empty;
+				.expect(200);
+			expect(res.body).to.be.an('Array');
+			expect(res.body).to.be.empty;
 
-					return LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
-				})
-				.then(res => {
-					expect(res).to.be.empty;
-					done();
-				})
-				.catch(done);
+			res = await LogEntry.find({ _id: { $in: _.map(res.body, e => e.entryId) } });
+			expect(res).to.be.empty;
 		});
 
-		it('Will return Bad Request if the array is empty', done => {
-			user1.agent
+		it('Will return Bad Request if the array is empty', async () => {
+			await request(App)
 				.put(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
 				.send([])
-				.then(res => {
-					expect(res.status).to.equal(400);
-					done();
-				})
-				.catch(done);
+				.expect(400);
 		});
 
-		it('Will return Bad Request if the message body is empty', done => {
-			user1.agent
+		it('Will return Bad Request if the message body is empty', async () => {
+			await request(App)
 				.put(`/users/${ user1.user.username }/logs`)
-				.then(res => {
-					expect(res.status).to.equal(400);
-					done();
-				})
-				.catch(done);
+				.set(...user1.authHeader)
+				.expect(400);
 		});
 
-		it('Will return Bad Request if one of the records is invalid', done => {
+		it('Will return Bad Request if one of the records is invalid', async () => {
 			const fakes = [
 				fakeLogEntry(user1.user.id),
 				fakeLogEntry(user1.user.id)
@@ -513,40 +424,34 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[1])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save() ])
-				.then(res => {
-					fakes[0].entryId = res[0].id;
-					fakes[1].entryId = res[1].id;
+			let res = await Promise.all([ logEntries[0].save(), logEntries[1].save() ]);
+			fakes[0].entryId = res[0].id;
+			fakes[1].entryId = res[1].id;
 
-					delete fakes[0].userId;
-					delete fakes[1].userId;
+			delete fakes[0].userId;
+			delete fakes[1].userId;
 
-					const modified = [
-						{ ...fakes[0] },
-						{ ...fakes[1] }
-					];
+			const modified = [
+				{ ...fakes[0] },
+				{ ...fakes[1] }
+			];
 
-					modified[0].weight = { amount: 69.4 };
-					modified[1].maxDepth = -23;
+			modified[0].weight = { amount: 69.4 };
+			modified[1].maxDepth = -23;
 
-					return user1.agent
-						.put(`/users/${ user1.user.username }/logs`)
-						.send(modified);
-				})
-				.then(res => {
-					expect(res.status).to.equal(400);
-					return LogEntry.find({ _id: { $in: _.map(fakes, e => e.entryId) } });
-				})
-				.then(res => {
-					delete fakes[0].userId;
-					delete fakes[1].userId;
-					expect(_.map(res, r => r.toCleanJSON())).to.eql(fakes);
-					done();
-				})
-				.catch(done);
+			await request(App)
+				.put(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
+				.send(modified)
+				.expect(400);
+
+			res = await LogEntry.find({ _id: { $in: _.map(fakes, e => e.entryId) } });
+			delete fakes[0].userId;
+			delete fakes[1].userId;
+			expect(_.map(res, r => r.toCleanJSON())).to.eql(fakes);
 		});
 
-		it('Will return Bad Request if there are too many records', done => {
+		it('Will return Bad Request if there are too many records', async () => {
 			const fakes = [];
 			const logEntries = [];
 
@@ -555,25 +460,20 @@ describe('Logs Controller', () => {
 				logEntries[i] = new LogEntry(fakes[i]);
 			}
 
-			Bluebird.all(_.map(logEntries, e => e.save()))
-				.then(res => {
-					for (let i = 0; i < res.length; i++) {
-						fakes[i].entryId = res[i].id;
-						delete fakes[i].userId;
-					}
+			const res = await Promise.all(_.map(logEntries, e => e.save()));
+			for (let i = 0; i < res.length; i++) {
+				fakes[i].entryId = res[i].id;
+				delete fakes[i].userId;
+			}
 
-					return user1.agent
-						.put(`/users/${ user1.user.username }/logs`)
-						.send(fakes);
-				})
-				.then(res => {
-					expect(res.status).to.equal(400);
-					done();
-				})
-				.catch(done);
+			await request(App)
+				.put(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
+				.send(fakes)
+				.expect(400);
 		});
 
-		it('Will return Server Error if the database fails', done => {
+		it('Will return Server Error if the database fails', async () => {
 			const fakes = [
 				fakeLogEntry(user1.user.id),
 				fakeLogEntry(user1.user.id),
@@ -585,39 +485,41 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
-				.then(res => {
-					fakes[0].entryId = res[0].id;
-					fakes[1].entryId = res[1].id;
-					fakes[2].entryId = res[2].id;
+			let res = await Promise.all(
+				[
+					logEntries[0].save(),
+					logEntries[1].save(),
+					logEntries[2].save()
+				]
+			);
 
-					delete fakes[0].userId;
-					delete fakes[1].userId;
-					delete fakes[2].userId;
+			fakes[0].entryId = res[0].id;
+			fakes[1].entryId = res[1].id;
+			fakes[2].entryId = res[2].id;
 
-					fakes[0].weight = { amount: 69.4 };
-					fakes[1].maxDepth = 300;
-					fakes[2].site = 'Local swimming pool';
+			delete fakes[0].userId;
+			delete fakes[1].userId;
+			delete fakes[2].userId;
 
-					stub = sinon.stub(mongoose.Model.prototype, 'save');
-					stub.rejects('nope');
+			fakes[0].weight = { amount: 69.4 };
+			fakes[1].maxDepth = 300;
+			fakes[2].site = 'Local swimming pool';
 
-					return user1.agent
-						.put(`/users/${ user1.user.username }/logs`)
-						.send(fakes);
-				})
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.logId).to.exist;
-					done();
-				})
-				.catch(done);
+			stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub.rejects('nope');
+
+			res = await request(App)
+				.put(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
+				.send(fakes)
+				.expect(500);
+			expect(res.body.status).to.equal(500);
+			expect(res.body.logId).to.exist;
 		});
 	});
 
 	describe('DELETE /users/:username/logs', () => {
-		it('Will delete the specified log entries', done => {
+		it('Will delete the specified log entries', async () => {
 			const fakes = [
 				fakeLogEntry(user1.user.id),
 				fakeLogEntry(user1.user.id),
@@ -629,29 +531,24 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
-				.then(() => user1.agent
-					.del(`/users/${ user1.user.username }/logs`)
-					.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]))
-				.then(res => {
-					expect(res.status).to.equal(200);
+			await Promise.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ]);
+			await request(App)
+				.del(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
+				.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ])
+				.expect(200);
 
-					return Bluebird.all([
-						LogEntry.findById(logEntries[0].id),
-						LogEntry.findById(logEntries[1].id),
-						LogEntry.findById(logEntries[2].id)
-					]);
-				})
-				.then(res => {
-					expect(res[0]).to.be.null;
-					expect(res[1]).to.be.null;
-					expect(res[2]).to.be.null;
-					done();
-				})
-				.catch(done);
+			const res = await Promise.all([
+				LogEntry.findById(logEntries[0].id),
+				LogEntry.findById(logEntries[1].id),
+				LogEntry.findById(logEntries[2].id)
+			]);
+			expect(res[0]).to.be.null;
+			expect(res[1]).to.be.null;
+			expect(res[2]).to.be.null;
 		});
 
-		it('Will delete even if an entry is not found', done => {
+		it('Will delete even if an entry is not found', async () => {
 			const fakes = [
 				fakeLogEntry(user1.user.id),
 				fakeLogEntry(user1.user.id),
@@ -663,89 +560,74 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird
-				.all([
+			await Promise.all(
+				[
 					logEntries[0].save(),
 					logEntries[1].save(),
 					logEntries[2].save()
-				], fakeMongoId())
-				.then(() => user1.agent
-					.del(`/users/${ user1.user.username }/logs`)
-					.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]))
-				.then(res => {
-					expect(res.status).to.equal(200);
+				]
+			);
 
-					return Bluebird.all([
-						LogEntry.findById(logEntries[0].id),
-						LogEntry.findById(logEntries[1].id),
-						LogEntry.findById(logEntries[2].id)
-					]);
-				})
-				.then(res => {
-					expect(res[0]).to.be.null;
-					expect(res[1]).to.be.null;
-					expect(res[2]).to.be.null;
-					done();
-				})
-				.catch(done);
+			await request(App)
+				.del(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
+				.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id, fakeMongoId() ])
+				.expect(200);
+
+			const res = await Promise.all([
+				LogEntry.findById(logEntries[0].id),
+				LogEntry.findById(logEntries[1].id),
+				LogEntry.findById(logEntries[2].id)
+			]);
+			expect(res[0]).to.be.null;
+			expect(res[1]).to.be.null;
+			expect(res[2]).to.be.null;
 		});
 
-		it('Will succeed even if no entries are found', done => {
+		it('Will succeed even if no entries are found', async () => {
 			const entryIds = [
 				fakeMongoId(),
 				fakeMongoId(),
 				fakeMongoId()
 			];
 
-			user1.agent
+			await request(App)
 				.del(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
 				.send(entryIds)
-				.then(res => {
-					expect(res.status).to.equal(200);
-					done();
-				})
-				.catch(done);
+				.expect(200);
 		});
 
-		it('Will return Bad Request if array is empty', done => {
-			user1.agent
+		it('Will return Bad Request if array is empty', async () => {
+			const res = await request(App)
 				.del(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
 				.send([])
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
-					expect(res.body.status).to.equal(400);
-					done();
-				})
-				.catch(done);
+				.expect(400);
+			expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
+			expect(res.body.status).to.equal(400);
 		});
 
-		it('Will return Bad Request if request payload is empty', done => {
-			user1.agent
+		it('Will return Bad Request if request payload is empty', async () => {
+			const res = await request(App)
 				.del(`/users/${ user1.user.username }/logs`)
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
-					expect(res.body.status).to.equal(400);
-					done();
-				})
-				.catch(done);
+				.set(...user1.authHeader)
+				.expect(400);
+			expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
+			expect(res.body.status).to.equal(400);
 		});
 
-		it('Will return Bad Request if entry ID list is invalid', done => {
-			user1.agent
+		it('Will return Bad Request if entry ID list is invalid', async () => {
+			const res = await request(App)
 				.del(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
 				.send({ omg: 'wat?' })
-				.then(res => {
-					expect(res.status).to.equal(400);
-					expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
-					expect(res.body.status).to.equal(400);
-					done();
-				})
-				.catch(done);
+				.expect(400);
+			expect(res.body.errorId).to.equal('bottom-time/errors/bad-request');
+			expect(res.body.status).to.equal(400);
 		});
 
-		it('Will return Server Error if the database fails', done => {
+		it('Will return Server Error if the database fails', async () => {
 			const fakes = [
 				fakeLogEntry(user1.user.id),
 				fakeLogEntry(user1.user.id),
@@ -757,22 +639,18 @@ describe('Logs Controller', () => {
 				new LogEntry(fakes[2])
 			];
 
-			Bluebird.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ])
-				.then(() => {
-					stub = sinon.stub(LogEntry, 'deleteMany');
-					stub.rejects('nope');
+			await Promise.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ]);
 
-					return user1.agent
-						.del(`/users/${ user1.user.username }/logs`)
-						.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ]);
-				})
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal(500);
-					expect(res.body.logId).to.exist;
-					done();
-				})
-				.catch(done);
+			stub = sinon.stub(LogEntry, 'deleteMany');
+			stub.rejects('nope');
+
+			const res = await request(App)
+				.del(`/users/${ user1.user.username }/logs`)
+				.set(...user1.authHeader)
+				.send([ logEntries[0].id, logEntries[1].id, logEntries[2].id ])
+				.expect(500);
+			expect(res.body.status).to.equal(500);
+			expect(res.body.logId).to.exist;
 		});
 	});
 });

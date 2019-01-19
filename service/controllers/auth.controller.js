@@ -1,24 +1,26 @@
 import { badRequest, serverError, unauthorized } from '../utils/error-response';
+import { cleanUpUser } from '../data/user';
 import Joi from 'joi';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
-import { cleanUpUser } from '../data/user';
+import Session from '../data/session';
+import sessionManager from '../utils/session-manager';
 
 export function AuthenticateUser(req, res, next) {
-	passport.authenticate('local', (err, user) => {
+	passport.authenticate('local', { session: false }, (err, user) => {
+		if (err) {
+			const logId = req.logError(
+				'An error occurred while trying to authenticate a user.',
+				err);
+			return serverError(res, logId);
+		}
+
 		const isValid = Joi.validate(req.body, LoginSchema);
 		if (isValid.error) {
 			return badRequest(
 				'Could not authenticate user: request was invalid.',
 				isValid.error,
 				res);
-		}
-
-		if (err) {
-			const logId = req.logError(
-				'An error occurred while trying to authenticate a user.',
-				err);
-			return serverError(res, logId);
 		}
 
 		if (!user) {
@@ -28,7 +30,7 @@ export function AuthenticateUser(req, res, next) {
 				'Check the username and password to verify that they are correct.');
 		}
 
-		req.login(user, loginErr => {
+		req.login(user, { session: false }, loginErr => {
 			if (loginErr) {
 				const logId = req.logError(
 					'An error occurred while trying to authenticate a user.',
@@ -41,13 +43,35 @@ export function AuthenticateUser(req, res, next) {
 	})(req, res, next);
 }
 
-export function Login(req, res) {
-	res.sendStatus(204);
+export async function Login(req, res) {
+	try {
+		const token = await sessionManager.createSessionToken(
+			req.user.username,
+			`${ req.useragent.platform } / ${ req.useragent.os } / ${ req.useragent.browser }`
+		);
+		res.json({
+			user: cleanUpUser(req.user),
+			token
+		});
+	} catch (err) {
+		const logId = req.logError('Unable to login user', err);
+		serverError(res, logId);
+	}
 }
 
-export function Logout(req, res) {
-	req.logout();
-	res.sendStatus(204);
+export async function Logout(req, res) {
+	if (!req.sessionId) {
+		return res.sendStatus(204);
+	}
+
+	try {
+		await Session.deleteOne({ _id: req.sessionId });
+		req.logout();
+		return res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError('Unable to log out user', err);
+		return serverError(res, logId);
+	}
 }
 
 export function GetCurrentUser(req, res) {
