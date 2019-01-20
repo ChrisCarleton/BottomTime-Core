@@ -30,7 +30,17 @@ function test() {
 		}));
 }
 
-function serve(done) {
+async function testData(done) {
+	try {
+		const generateTestData = require('./admin/generate-test-data');
+		await generateTestData();
+		done();
+	} catch (err) {
+		done(err);
+	}
+}
+
+function watch(done) {
 	devServer.start();
 	gulp.watch([ 'service/**/*.js' ], file => {
 		devServer.start.bind(devServer);
@@ -42,10 +52,23 @@ function serve(done) {
 	done();
 }
 
+function serve(done) {
+	devServer.start();
+	log('Dev server started.');
+	done();
+}
+
 gulp.task('lint', lint);
 
 gulp.task('test', test);
 
+gulp.task('test-data', testData);
+
 gulp.task('serve', serve);
 
-gulp.task('default', serve);
+gulp.task('server', serve);
+
+gulp.task('watch', watch);
+
+gulp.task('default', watch);
+
