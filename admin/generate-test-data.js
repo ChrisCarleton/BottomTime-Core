@@ -35,22 +35,29 @@ module.exports = async function() {
 
 		await Promise.all(_.map(users, u => u.save()));
 		log('Created users: ', _.map(users, u => u.username));
-		
+
+		const promises = [];
 		let totalEntries = 0;
+		
 		log('Creating a boat-load of log entries...');
-		users.forEach(async u => {
+		_.forEach(users, async u => {
 			let logEntries = new Array(faker.random.number({ min: 7, max: 90 }));
 			totalEntries += logEntries.length;
-			logEntries = _.map(logEntries, e => {
-				const fake = fakeLogEntry(u.id);
-				return new LogEntry(fake);
+			logEntries = _.map(logEntries, () => {
+				const entry = new LogEntry(fakeLogEntry(u._id));
+				return entry;
 			});
 
-			await Promise.all(_.map(logEntries, e => e.save()));
+			for (let i = 0; i < logEntries.length; i++) {
+				promises.push(logEntries[i].save());
+			};
 		});
+
+		await Promise.all(promises);
 		log(`Created ${ totalEntries } log entries.`);
 	} catch (err) {
-		console.error(err);
+		log.error(err);
+		process.exitCode = 1;
 	}
 
 	database.connection.close();

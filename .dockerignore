@@ -1,6 +1,7 @@
 .circleci/
 .git/
 .nyc_output/
+admin/
 coverage/
 docs/
 logs/

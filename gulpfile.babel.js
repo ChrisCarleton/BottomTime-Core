@@ -40,6 +40,16 @@ async function testData(done) {
 	}
 }
 
+async function purgeDatabase(done) {
+	try {
+		const generateTestData = require('./admin/purge-database');
+		await purgeDatabase();
+		done();
+	} catch (err) {
+		done(err);
+	}
+}
+
 function watch(done) {
 	devServer.start();
 	gulp.watch([ 'service/**/*.js' ], file => {
@@ -63,6 +73,8 @@ gulp.task('lint', lint);
 gulp.task('test', test);
 
 gulp.task('test-data', testData);
+
+gulp.task('purge-database', purgeDatabase);
 
 gulp.task('serve', serve);
 
