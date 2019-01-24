@@ -30,6 +30,16 @@ module.exports = {
 		"no-tabs": 0,
 		"no-unused-expressions": 0,
 		"no-warning-comments": 1,
-		"operator-linebreak": [2, "before"]
+		"operator-linebreak": [2, "before"],
+		"prefer-destructuring": [2, {
+			"VariableDeclarator": {
+				"array": true,
+				"object": true
+			},
+			"AssignmentExpression": {
+				"array": false,
+				"object": true
+			}		
+		}]
 	}
 };

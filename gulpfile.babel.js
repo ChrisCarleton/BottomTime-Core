@@ -11,7 +11,7 @@ import path from 'path';
 const devServer = new GLS('service/index.js');
 
 function lint() {
-	return gulp.src([ 'gulpfile.babel.js', 'service/**/*.js', 'tests/**/*.js' ])
+	return gulp.src([ 'gulpfile.babel.js', 'service/**/*.js', 'tests/**/*.js', 'admin/**/*.js' ])
 		.pipe(eslint())
 		.pipe(eslint.format())
 		.pipe(eslint.failAfterError());
@@ -30,7 +30,19 @@ function test() {
 		}));
 }
 
-function serve(done) {
+async function testData() {
+	await require('./admin/generate-test-data')();
+}
+
+async function purgeDatabase() {
+	await require('./admin/purge-database')();
+}
+
+async function createAdminUser() {
+	await require('./admin/create-admin-user')();
+}
+
+function watch(done) {
 	devServer.start();
 	gulp.watch([ 'service/**/*.js' ], file => {
 		devServer.start.bind(devServer);
@@ -42,10 +54,27 @@ function serve(done) {
 	done();
 }
 
+function serve(done) {
+	devServer.start();
+	log('Dev server started.');
+	done();
+}
+
 gulp.task('lint', lint);
 
 gulp.task('test', test);
 
+gulp.task('test-data', testData);
+
+gulp.task('purge-database', purgeDatabase);
+
+gulp.task('create-admin-user', createAdminUser);
+
 gulp.task('serve', serve);
 
-gulp.task('default', serve);
+gulp.task('server', serve);
+
+gulp.task('watch', watch);
+
+gulp.task('default', watch);
+
