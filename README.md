@@ -78,3 +78,36 @@ Terraform is used to spin up an AWS ECS-powered environment to host the applicat
 * Terraform modules can be found at `terraform/modules/` and configuration for specific environments can be
 found in `terraform/env/`.
 * The CircleCI deployment pipeline is controlled by editing `.circleci/config.yml`.
+
+## Administrative Tasks
+A number of one-off administrative tasks have been created as runnable Gulp tasks. These are largely for
+working with the database to set up initial data in a new environment.
+
+Many of the commands take an optional `mongoEndpoint` command line argument. This is can be set to the
+MongoDB connection string forthe target environment's database. By default, it will be set to 
+`mongodb://localhost/dev` which is most common in development and testing.
+
+### Creating an Administrator User
+A new environment will not have any data defined in the database, and that means no administrator accounts
+for setting things up! To create an initial Admin account run the following command:
+
+```
+gulp create-admin-user <mongoEndpoint>
+```
+
+You'll be prompted for a strong password. Once completed, the command will have created (or updated) a
+privileged user called 'Admin' with the password you provided. The cammand can also be used to reset the
+admin password if it is forgotten.
+
+### Generating Test Data
+This is meant for test and dev environments where it's useful to have a database populated with plenty of
+realistic-ish data. Run
+
+```
+gulp test-data <mongoEndpoint>
+```
+
+This will create several users with log dozens of dives logged. The generated usernames will be output to
+the terminal. Any one of them can be logged into using the password "`bottomtime`".
+
+Obviously, **do not** run this against the prod database.
