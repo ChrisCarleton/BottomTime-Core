@@ -92,11 +92,11 @@ A new environment will not have any data defined in the database, and that means
 for setting things up! To create an initial Admin account run the following command:
 
 ```
-gulp create-admin-user <mongoEndpoint>
+gulp create-admin-user [mongoEndpoint]
 ```
 
 You'll be prompted for a strong password. Once completed, the command will have created (or updated) a
-privileged user called 'Admin' with the password you provided. The cammand can also be used to reset the
+privileged user called 'Admin' with the password you provided. The command can also be used to reset the
 admin password if it is forgotten.
 
 ### Generating Test Data
@@ -104,10 +104,19 @@ This is meant for test and dev environments where it's useful to have a database
 realistic-ish data. Run
 
 ```
-gulp test-data <mongoEndpoint>
+gulp test-data [mongoEndpoint]
 ```
 
-This will create several users with log dozens of dives logged. The generated usernames will be output to
-the terminal. Any one of them can be logged into using the password "`bottomtime`".
+This will create several users with dozens of dives logged. The generated usernames will be output to
+the terminal. Any of these user accounts can be logged into using the password `bottomtime`.
 
 Obviously, **do not** run this against the prod database.
+
+### Purging the Database
+This command will purge **all** data from the datase. All tables will be emptied.
+
+```
+gulp purge-database [mongoEndpoint]
+```
+
+Use with extreme caution.
