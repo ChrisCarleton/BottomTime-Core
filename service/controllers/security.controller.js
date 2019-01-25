@@ -26,10 +26,12 @@ export async function RetrieveUserAccount(req, res, next) {
 
 export function AssertUserReadPermission(req, res, next) {
 	if (req.user && (req.user.role === 'admin' || req.user.id === req.account.id)) {
+		req.readOnlyResource = false;
 		return next();
 	}
 
 	if (req.account.logsVisibility === 'public') {
+		req.readOnlyResource = true;
 		return next();
 	}
 
@@ -50,5 +52,6 @@ export function AssertUserWritePermission(req, res, next) {
 			forbiddenMessage);
 	}
 
+	req.readOnlyResource = false;
 	next();
 }

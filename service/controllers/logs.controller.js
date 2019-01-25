@@ -44,7 +44,10 @@ export async function ListLogs(req, res) {
 }
 
 export function GetLog(req, res) {
-	res.json(req.logEntry.toCleanJSON());
+	res.json({
+		...req.logEntry.toCleanJSON(),
+		readOnly: req.readOnlyResource
+	});
 }
 
 export async function CreateLogs(req, res) {
