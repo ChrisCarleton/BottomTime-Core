@@ -50,6 +50,7 @@ describe('Logs Controller', () => {
 
 			expect(res.body).to.exist;
 			fake.entryId = res.body.entryId;
+			fake.readOnly = false;
 			expect(res.body).to.eql(fake);
 		});
 
@@ -197,6 +198,7 @@ describe('Logs Controller', () => {
 				.set(...user1.authHeader)
 				.expect(200);
 			fake.entryId = entryId;
+			fake.readOnly = false;
 			expect(res.body).to.eql(fake);
 		});
 

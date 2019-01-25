@@ -29,7 +29,8 @@ const expectedKeys = [
 	'specialties',
 	'about',
 	'divesLogged',
-	'bottomTimeLogged'
+	'bottomTimeLogged',
+	'readOnly'
 ];
 
 function compareProfiles(result, user) {
@@ -101,6 +102,7 @@ describe('Profiles Controller', () => {
 				.expect(200);
 			expect(result.body).to.exist;
 			expect(result.body).to.have.keys(expectedKeys);
+			expect(result.body.readOnly).to.be.false;
 			compareProfiles(result.body, privateUser.user);
 		});
 
@@ -110,6 +112,7 @@ describe('Profiles Controller', () => {
 				.set(...privateUser.authHeader)
 				.expect(200);
 			expect(result.body).to.exist;
+			expect(result.body.readOnly).to.be.true;
 			expect(result.body).to.have.keys(expectedKeys);
 			compareProfiles(result.body, publicUser.user);
 		});
@@ -142,6 +145,7 @@ describe('Profiles Controller', () => {
 				.set(...adminUser.authHeader)
 				.expect(200);
 			expect(result.body).to.exist;
+			expect(result.body.readOnly).to.false;
 			expect(result.body).to.have.keys(expectedKeys);
 			compareProfiles(result.body, publicUser.user);
 		});
@@ -156,6 +160,7 @@ describe('Profiles Controller', () => {
 				.set(...adminUser.authHeader)
 				.expect(200);
 			expect(result.body).to.exist;
+			expect(result.body.readOnly).to.false;
 			expect(result.body).to.have.keys(expectedKeys);
 			compareProfiles(result.body, friendsOnlyUser.user);
 		});
@@ -166,6 +171,7 @@ describe('Profiles Controller', () => {
 				.set(...adminUser.authHeader)
 				.expect(200);
 			expect(result.body).to.exist;
+			expect(result.body.readOnly).to.false;
 			expect(result.body).to.have.keys(expectedKeys);
 			compareProfiles(result.body, privateUser.user);
 		});
@@ -175,6 +181,7 @@ describe('Profiles Controller', () => {
 				.get(`/users/${ publicUser.user.username }/profile`)
 				.expect(200);
 			expect(result.body).to.exist;
+			expect(result.body.readOnly).to.true;
 			expect(result.body).to.have.keys(expectedKeys);
 			compareProfiles(result.body, publicUser.user);
 		});
@@ -330,6 +337,7 @@ describe('Profiles Controller', () => {
 			const fake = fakeProfile();
 			const oldCreatedAt = publicUser.user.createdAt;
 			fake.memberSince = moment().utc().toDate();
+			fake.readOnly = false;
 
 			await request(App)
 				.patch(`/users/${ publicUser.user.username }/profile`)

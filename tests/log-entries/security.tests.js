@@ -83,6 +83,7 @@ describe('Log Entry Security', () => {
 			const res = await request(App)
 				.get(`/users/${ user1.user.username }/logs/${ entity.id }`)
 				.expect(200);
+			fake.readOnly = true;
 			expect(res.body).to.eql(fake);
 		});
 
@@ -122,6 +123,7 @@ describe('Log Entry Security', () => {
 				.get(`/users/${ user3.user.username }/logs/${ entity.id }`)
 				.set(...admin.authHeader)
 				.expect(200);
+			fake.readOnly = false;
 			expect(res.body).to.eql(fake);
 		});
 
@@ -137,6 +139,7 @@ describe('Log Entry Security', () => {
 				.get(`/users/${ user2.user.username }/logs/${ entity.id }`)
 				.set(...admin.authHeader)
 				.expect(200);
+			fake.readOnly = false;
 			expect(res.body).to.eql(fake);
 		});
 
@@ -152,6 +155,7 @@ describe('Log Entry Security', () => {
 				.get(`/users/${ user3.user.username }/logs/${ entity.id }`)
 				.set(...user3.authHeader)
 				.expect(200);
+			fake.readOnly = false;
 			expect(res.body).to.eql(fake);
 		});
 
@@ -167,6 +171,7 @@ describe('Log Entry Security', () => {
 				.get(`/users/${ user2.user.username }/logs/${ entity.id }`)
 				.set(...user2.authHeader)
 				.expect(200);
+			fake.readOnly = false;
 			expect(res.body).to.eql(fake);
 		});
 
@@ -182,6 +187,7 @@ describe('Log Entry Security', () => {
 				.get(`/users/${ user1.user.username }/logs/${ entity.id }`)
 				.set(...admin.authHeader)
 				.expect(200);
+			fake.readOnly = false;
 			expect(res.body).to.eql(fake);
 		});
 
@@ -197,6 +203,7 @@ describe('Log Entry Security', () => {
 				.get(`/users/${ user1.user.username }/logs/${ entity.id }`)
 				.set(...user2.authHeader)
 				.expect(200);
+			fake.readOnly = true;
 			expect(res.body).to.eql(fake);
 		});
 
