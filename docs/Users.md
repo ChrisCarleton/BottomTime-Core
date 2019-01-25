@@ -73,6 +73,14 @@ setting.
 }
 ```
 
+### ConfirmPasswordReset Object
+```json
+{
+	"resetToken": "REQUIRED String: The reset token that was provided in the e-mail to the user.",
+	"newPassword": "REQUIRED String: The new password to be applied to the user's account."
+}
+```
+
 ## Routes
 ### PUT /users/:username
 Creates a new user account. Certain actions are not permitted, however. These
@@ -135,8 +143,40 @@ HTTP Status Code | Details
 **500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
 
 ### POST /users/:username/resetPassword
+Requests that a forgotten password be reset. This API call does not require an Authorization token. A
+confirmation token will be sent by e-mail to the account owner's email address. The token must be posted
+to `POST /users/:username/confirmPasswordReset` within 24 hours to complete the password reset.
+
+#### Route Parameters
+* **username** - The username identifying the account for which the password reset will be requested.
+
+#### Message Body
+The message body should be empty.
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**204 No Content** | The request was received and processed. If the `username` route parameter refers to a valid user account then a reset token will be emailed to the user's e-mail address.
+**500 Server Error** | An internal error occurred while attempting to create the reset token or send the email. An [Error](General.md#error-object) Object will be returned in the response body with more details.
 
 ### POST /users/:username/confirmResetPassword
+Changes a user's password after a reset password request has been made. A call to
+`POST /users/:username/resetPassword` must be made before-hand to receive the reset token necessary to
+make this call.
+
+#### Route Parameters
+* **username** - The username identifying the account for which the password will be reset.
+
+#### Message Body
+The message body must contain a [ConfirmPasswordReset](#confirmpasswordreset-object) object.
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**204 No Content** | The request succeeded and the password was successfully changed.
+**400 Bad Request** | The request was rejected because there was a problem validating the message body. It may have been malformed or the new password may have not met strength requirements.
+**403 Forbidden** | The request was rejected for security reasons. The reset token may be invalid or expired.
+**500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
 
 ### PATCH /users/:username/profile
 Updates a user's profile information.
