@@ -65,6 +65,14 @@ to the site!
 * Admins (user.role === 'admin') can view and modify *all* profiles and log books, regardless of the privacy
 setting.
 
+### ChangePassword Object
+```json
+{
+	"oldPassword": "String: The user's old (current) password.",
+	"newPassword": "REQUIRED String: The new password to be applied to the user's account."
+}
+```
+
 ## Routes
 ### PUT /users/:username
 Creates a new user account. Certain actions are not permitted, however. These
@@ -104,6 +112,31 @@ HTTP Status Code | Details
 **403 Forbidden** | The request was rejected because the current user is not authorized to view the requested user profile. An [Error](General.md#error-object) Object will be returned in the response body.
 **404 Not Found** | A user with the username specified in the **username** route parameter does not exist and so no profile could be found. An [Error](General.md#error-object) Object will be returned in the response body.
 **500 Server Error** | An internal error occurred while attempting to retrieve the profile information from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
+
+### POST /users/:username/changePassword
+Changes a user's password. Users may change their own passwords.
+
+#### Route Parameters
+* **username** - The username identifying the account for which the password will be changed.
+
+#### Message Body
+A [ChangePassword](#changepassword-object) object containing the user's current password as well as the
+desired new password. Admins may change the password of any user. Admins are not required to provide the
+`oldPassword` parameter in the message body. Regular users changing their own password must supply their
+correct current password as the `oldPassword` parameter.
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**204 No Content** | The request succeeded and the password was successfully changed.
+**400 Bad Request** | The request was rejected because there was a problem validating the message body. It may have been malformed or the new password may have not met strength requirements.
+**403 Forbidden** | The request was rejected because the current user is not authorized to change the password for the user account indicated in the `username` route parameter. It can also occur if the `oldPassword` supplied in the message body was incorrect. An [Error](General.md#error-object) Object will be returned in the response body.
+**404 Not Found** | A user with the username specified in the **username** route parameter does not exist and so no user account could be found. An [Error](General.md#error-object) Object will be returned in the response body.
+**500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
+
+### POST /users/:username/resetPassword
+
+### POST /users/:username/confirmResetPassword
 
 ### PATCH /users/:username/profile
 Updates a user's profile information.
