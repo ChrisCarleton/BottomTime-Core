@@ -38,7 +38,8 @@ export async function GetProfile(req, res) {
 		res.json({
 			...req.account.getProfileJSON(),
 			bottomTimeLogged,
-			divesLogged
+			divesLogged,
+			readOnly: req.readOnlyResource
 		});
 	} catch (err) {
 		const logId = req.logError('Failed to retrieve profile information.', err);
@@ -51,6 +52,7 @@ export async function UpdateProfile(req, res) {
 		delete req.body.memberSince;
 		delete req.body.divesLogged;
 		delete req.body.bottomTimeLogged;
+		delete req.body.readOnly;
 
 		const isValid = Joi.validate(req.body, UpdateProfileSchema);
 		if (isValid.error) {
