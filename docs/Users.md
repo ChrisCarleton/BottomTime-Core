@@ -122,7 +122,8 @@ HTTP Status Code | Details
 **500 Server Error** | An internal error occurred while attempting to retrieve the profile information from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
 
 ### POST /users/:username/changePassword
-Changes a user's password. Users may change their own passwords.
+Changes a user's password. Users may change their own passwords. Admins can change the password for any
+user account.
 
 #### Route Parameters
 * **username** - The username identifying the account for which the password will be changed.
@@ -137,7 +138,7 @@ correct current password as the `oldPassword` parameter.
 HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The request succeeded and the password was successfully changed.
-**400 Bad Request** | The request was rejected because there was a problem validating the message body. It may have been malformed or the new password may have not met strength requirements.
+**400 Bad Request** | The request was rejected because there was a problem validating the message body. It may have been malformed or the new password may not have met strength requirements.
 **403 Forbidden** | The request was rejected because the current user is not authorized to change the password for the user account indicated in the `username` route parameter. It can also occur if the `oldPassword` supplied in the message body was incorrect. An [Error](General.md#error-object) Object will be returned in the response body.
 **404 Not Found** | A user with the username specified in the **username** route parameter does not exist and so no user account could be found. An [Error](General.md#error-object) Object will be returned in the response body.
 **500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
@@ -175,7 +176,7 @@ HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The request succeeded and the password was successfully changed.
 **400 Bad Request** | The request was rejected because there was a problem validating the message body. It may have been malformed or the new password may have not met strength requirements.
-**403 Forbidden** | The request was rejected for security reasons. The reset token may be invalid or expired.
+**403 Forbidden** | The request was rejected for security reasons. The reset token may be invalid or expired, or the indicated user account may not exist.
 **500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
 
 ### PATCH /users/:username/profile
