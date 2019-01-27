@@ -1,29 +1,22 @@
 /****************************************************************************************
  *
  * USAGE:
- * gulp create-admin-user [mongoDbEndpoint]
+ * npm run create-admin-user
  *
  * If not supplied on the command line, mongoDbEndpoint will default to
  * mongodb://localhost/dev
  *
  ***************************************************************************************/
 
-import config from '../service/config';
-
-if (process.argv[3]) {
-	config.mongoEndpoint = process.argv[3];
-}
-
 import bcrypt from 'bcrypt';
+import chalk from 'chalk';
 import database from '../service/data/database';
 import log from 'fancy-log';
 import readline from 'readline-sync';
 import User from '../service/data/user';
 
-module.exports = async function () {
+(async function () {
 	try {
-		log(`Using MongoDB endpoint "${ config.mongoEndpoint }"...`);
-
 		let user = await User.findByUsername('Admin');
 
 		if (user) {
@@ -32,7 +25,7 @@ module.exports = async function () {
 				+ 'Would you like to reset the password?'
 			)) {
 				log('Ok. Exiting.');
-				database.connection.close();
+				await database.connection.close();
 				return;
 			}
 		}
@@ -64,9 +57,9 @@ module.exports = async function () {
 		log('User "Admin" has been created with administrative privileges.');
 		log('Log in with the password you provided above.');
 	} catch (err) {
-		log.error(err);
+		log.error(chalk.red(err));
 		process.exitCode = 1;
 	}
 
-	database.connection.close();
-};
+	await database.connection.close();
+})();
