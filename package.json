@@ -8,7 +8,11 @@
     "dev": "gulp serve | bunyan",
     "start": "node service/index.js",
     "test": "gulp test",
-    "coverage": "nyc report --reporter=text-lcov | coveralls"
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "generate-test-data": "node admin/bootstrap.js ./generate-test-data",
+    "kill-sessions": "node admin/bootstrap.js ./kill-sessions",
+    "create-admin-user": "node admin/bootstrap.js ./create-admin-user",
+    "purge-database": "node admin/bootstrap.js ./purge-database"
   },
   "repository": {
     "type": "git",
@@ -40,6 +44,7 @@
   },
   "devDependencies": {
     "chai": "^4.1.2",
+    "chalk": "^2.4.2",
     "coveralls": "^3.0.2",
     "eslint-config-strict": "^14.0.1",
     "eslint-plugin-filenames": "^1.3.2",

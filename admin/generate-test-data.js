@@ -1,20 +1,12 @@
 /****************************************************************************************
  *
  * USAGE:
- * gulp test-data [mongoDbEndpoint]
- *
- * If not supplied on the command line, mongoDbEndpoint will default to
- * mongodb://localhost/dev
+ * npm run generate-test-data
  *
  ***************************************************************************************/
 
-import config from '../service/config';
-
-if (process.argv[3]) {
-	config.mongoEndpoint = process.argv[3];
-}
-
 import _ from 'lodash';
+import chalk from 'chalk';
 import database from '../service/data/database';
 import faker from 'faker';
 import fakeLogEntry from '../tests/util/fake-log-entry';
@@ -23,10 +15,8 @@ import log from 'fancy-log';
 import LogEntry from '../service/data/log-entry';
 import User from '../service/data/user';
 
-module.exports = async function () {
+(async () => {
 	try {
-		log(`Using MongoDB endpoint "${ config.mongoEndpoint }"...`);
-
 		const users = _.map(new Array(12), () => {
 			const fake = fakeUser('bottomtime');
 			return new User(fake);
@@ -55,11 +45,11 @@ module.exports = async function () {
 		});
 
 		await Promise.all(promises);
-		log(`Created ${ totalEntries } log entries.`);
+		log(`Created ${ chalk.bold(totalEntries) } log entries.`);
 	} catch (err) {
-		log.error(err);
+		log.error(chalk.red(err));
 		process.exitCode = 1;
 	}
 
-	database.connection.close();
-};
+	await database.connection.close();
+})();

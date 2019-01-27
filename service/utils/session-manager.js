@@ -21,7 +21,7 @@ async function purgeExpiredSessions() {
 
 async function createSessionToken(username, device) {
 	const session = new Session({
-		username,
+		username: username.toLowerCase(),
 		device,
 		expires: moment().add(3, 'd').valueOf()
 	});
@@ -30,7 +30,7 @@ async function createSessionToken(username, device) {
 	return jwt.sign(
 		{
 			sessionId: session.id,
-			username,
+			username: username.toLowerCase(),
 			device,
 			expires: session.expires
 		},

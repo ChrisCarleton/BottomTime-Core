@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 
 (async () => {
 	try {
+		log.debug(`Connecting to database at "${ config.mongoEndpoint }"...`);
 		await mongoose.connect(
 			config.mongoEndpoint,
 			{

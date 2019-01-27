@@ -83,20 +83,20 @@ found in `terraform/env/`.
 A number of one-off administrative tasks have been created as runnable Gulp tasks. These are largely for
 working with the database to set up initial data in a new environment.
 
-Many of the commands take an optional `mongoEndpoint` command line argument. This is can be set to the
-MongoDB connection string forthe target environment's database. By default, it will be set to 
-`mongodb://localhost/dev` which is most common in development and testing.
+By default, the scripts will run against `mongodb://localhost/dev`. To change this default, set the
+`BT_MONGO_ENDPOINT` environment variable to the desired MongoDB connection string before running these
+commands.
 
 ### Creating an Administrator User
-A new environment will not have any data defined in the database, and that means no administrator accounts
+A new environment will not have any data defined in the database - and that means no administrator accounts
 for setting things up! To create an initial Admin account run the following command:
 
 ```
-gulp create-admin-user [mongoEndpoint]
+npm run create-admin-user
 ```
 
 You'll be prompted for a strong password. Once completed, the command will have created (or updated) a
-privileged user called 'Admin' with the password you provided. The command can also be used to reset the
+privileged user called `Admin` with the password you provided. The command can also be used to reset the
 admin password if it is forgotten.
 
 ### Generating Test Data
@@ -104,7 +104,7 @@ This is meant for test and dev environments where it's useful to have a database
 realistic-ish data. Run
 
 ```
-gulp test-data [mongoEndpoint]
+npm run generate-test-data
 ```
 
 This will create several users with dozens of dives logged. The generated usernames will be output to
@@ -112,11 +112,20 @@ the terminal. Any of these user accounts can be logged into using the password `
 
 Obviously, **do not** run this against the prod database.
 
+### Invalidating User Sessions
+Occasionally, it may be necessary to forcefully terminate a user's sessions. Running this command will
+invalidate all auth tokens associated with the indicated username. If `.` is supplied in place of a username
+then **ALL** sessions will be terminated.
+
+```
+npm run kill-sessions (username|.)
+```
+
 ### Purging the Database
 This command will purge **all** data from the datase. All tables will be emptied.
 
 ```
-gulp purge-database [mongoEndpoint]
+npm run purge-database
 ```
 
-Use with extreme caution.
+Use with extreme caution. **Do not** run this in production!!!!

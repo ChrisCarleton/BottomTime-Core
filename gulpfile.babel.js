@@ -30,18 +30,6 @@ function test() {
 		}));
 }
 
-async function testData() {
-	await require('./admin/generate-test-data')();
-}
-
-async function purgeDatabase() {
-	await require('./admin/purge-database')();
-}
-
-async function createAdminUser() {
-	await require('./admin/create-admin-user')();
-}
-
 function watch(done) {
 	devServer.start();
 	gulp.watch([ 'service/**/*.js' ], file => {
@@ -63,12 +51,6 @@ function serve(done) {
 gulp.task('lint', lint);
 
 gulp.task('test', test);
-
-gulp.task('test-data', testData);
-
-gulp.task('purge-database', purgeDatabase);
-
-gulp.task('create-admin-user', createAdminUser);
 
 gulp.task('serve', serve);
 
