@@ -3,9 +3,6 @@
  * USAGE:
  * npm run generate-test-data
  *
- * If not supplied on the command line, mongoDbEndpoint will default to
- * mongodb://localhost/dev
- *
  ***************************************************************************************/
 
 import _ from 'lodash';
@@ -18,7 +15,7 @@ import log from 'fancy-log';
 import LogEntry from '../service/data/log-entry';
 import User from '../service/data/user';
 
-(async function () {
+(async () => {
 	try {
 		const users = _.map(new Array(12), () => {
 			const fake = fakeUser('bottomtime');

@@ -3,9 +3,6 @@
  * USAGE:
  * npm run create-admin-user
  *
- * If not supplied on the command line, mongoDbEndpoint will default to
- * mongodb://localhost/dev
- *
  ***************************************************************************************/
 
 import bcrypt from 'bcrypt';
@@ -15,7 +12,7 @@ import log from 'fancy-log';
 import readline from 'readline-sync';
 import User from '../service/data/user';
 
-(async function () {
+(async () => {
 	try {
 		let user = await User.findByUsername('Admin');
 

@@ -13,7 +13,7 @@ import readline from 'readline-sync';
 import Session from '../service/data/session';
 import User from '../service/data/user';
 
-(async function () {
+(async () => {
 	try {
 		if (!readline.keyInYN(
 			'This operation will totally destroy all data in the database. Are you sure you want to proceed?'
