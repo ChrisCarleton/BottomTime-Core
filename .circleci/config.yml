@@ -46,6 +46,8 @@ jobs:
           name: Deploy Docker Image
           command: |
             $(aws ecr get-login --no-include-email --region us-east-1)
+            docker tag bottom-time/core:latest 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:latest
+            docker push 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:latest
             docker tag bottom-time/core:latest 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:$CIRCLE_BUILD_NUM
             docker push 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core:$CIRCLE_BUILD_NUM
             mkdir temp/
@@ -68,6 +70,8 @@ jobs:
           name: Deploy Docker Image
           command: |
             $(aws ecr get-login --no-include-email --region us-east-1)
+            docker tag bottom-time/core:latest 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core-prod:latest
+            docker push 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core-prod:latest
             docker tag bottom-time/core:latest 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core-prod:$CIRCLE_BUILD_NUM
             docker push 961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core-prod:$CIRCLE_BUILD_NUM
             mkdir temp/
