@@ -53,15 +53,17 @@ export const NewEntrySchema = Joi.object().keys({
 	...logEntryBaseSchema
 });
 
+export const EntryId = Joi.string().hex().length(24).required();
+
 export const UpdateEntrySchema = Joi.object().keys({
-	entryId: Joi.string().regex(/[a-f0-9]{24}/i).required(),
+	entryId: Joi.string().hex().length(24).required(),
 	...logEntryBaseSchema
 });
 
 export const EntryQueryParamsSchema = Joi.object().keys({
 	count: Joi.number().integer().min(1).max(1000),
 	sortBy: Joi.string().only([ 'entryTime', 'maxDepth', 'bottomTime' ]),
-	sortOrder: Joi.string().only([ 'asc', 'desc' ])
-}).and([ 'sortBy', 'sortOrder' ]);
-
-export const EntryId = Joi.string().regex(/[a-f0-9]{24}/i).required();
+	sortOrder: Joi.string().only([ 'asc', 'desc' ]),
+	lastSeen: Joi.string(),
+	seenIds: Joi.array().items(Joi.string().hex().length(24))
+}).and([ 'sortBy', 'sortOrder' ]).with('seenIds', 'lastSeen');

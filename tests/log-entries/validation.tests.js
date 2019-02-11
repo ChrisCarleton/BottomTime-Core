@@ -231,4 +231,35 @@ describe('Entry query params validation', () => {
 		delete queryString.sortBy;
 		validateQueryParams('object.and');
 	});
+
+	it('Will accept lastEntry and seenIds', () => {
+		queryString.lastSeen = '48';
+		queryString.seenIds = [ fakeMongoId(), fakeMongoId(), fakeMongoId() ];
+		validateQueryParams();
+	});
+
+	it('Will not accept seenIds without lastEntry', () => {
+		queryString.seenIds = [ fakeMongoId(), fakeMongoId(), fakeMongoId() ];
+		validateQueryParams('object.with');
+	});
+
+	it('lastEntry needs must be a string', () => {
+		queryString.lastSeen = 48;
+		validateQueryParams('string.base');
+	});
+
+	it('seenIds must be an array', () => {
+		queryString.lastSeen = '48';
+		queryString.seenIds = fakeMongoId();
+		validateQueryParams('array.base');
+	});
+
+	it('seenIds must be an array of MongoIds', () => {
+		queryString.lastSeen = '48';
+		queryString.seenIds = [ 'a298a3b95f96bfie9e177978' ];
+		validateQueryParams('string.hex');
+
+		queryString.seenIds = [ 'a298a3b95f96bfe9e177978' ];
+		validateQueryParams('string.length');
+	});
 });
