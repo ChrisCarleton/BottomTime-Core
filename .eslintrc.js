@@ -28,6 +28,7 @@ module.exports = {
 		"indent": [2, "tab"],
 		"no-sync": 0,
 		"no-tabs": 0,
+		"no-underscore-dangle": 0,
 		"no-unused-expressions": 0,
 		"no-warning-comments": 1,
 		"operator-linebreak": [2, "before"],

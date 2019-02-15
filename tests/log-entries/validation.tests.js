@@ -8,6 +8,7 @@ import {
 	NewEntrySchema,
 	UpdateEntrySchema
 } from '../../service/validation/log-entry';
+import moment from 'moment';
 
 let logEntry = null;
 let queryString = null;
@@ -15,7 +16,7 @@ let queryString = null;
 function ensureValid(isValid, expectedError) {
 	if (expectedError) {
 		expect(isValid.error).to.exist;
-		expect(isValid.error.details).to.have.length(1);
+		expect(isValid.error.details.length).to.be.at.least(1);
 		expect(isValid.error.details[0].type).to.equal(expectedError);
 	} else {
 		expect(isValid.error).to.not.exist;
@@ -232,34 +233,53 @@ describe('Entry query params validation', () => {
 		validateQueryParams('object.and');
 	});
 
-	it('Will accept lastEntry and seenIds', () => {
+	it('Will accept lastSeen and seenIds', () => {
 		queryString.lastSeen = '48';
 		queryString.seenIds = [ fakeMongoId(), fakeMongoId(), fakeMongoId() ];
 		validateQueryParams();
 	});
 
-	it('Will not accept seenIds without lastEntry', () => {
+	it('Will not accept seenIds without lastSeen', () => {
 		queryString.seenIds = [ fakeMongoId(), fakeMongoId(), fakeMongoId() ];
 		validateQueryParams('object.with');
 	});
 
-	it('lastEntry needs must be a string', () => {
+	it('lastSeen needs must be an ISO date when sorting by entryTime', () => {
+		queryString.sortBy = 'entryTime';
 		queryString.lastSeen = 48;
 		validateQueryParams('string.base');
 	});
 
-	it('seenIds must be an array', () => {
-		queryString.lastSeen = '48';
-		queryString.seenIds = fakeMongoId();
-		validateQueryParams('array.base');
+	it('lastSeen must be a number when sorting by maxDepth', () => {
+		queryString.sortBy = 'maxDepth';
+		queryString.lastSeen = moment().toISOString();
+		validateQueryParams('number.base');
 	});
 
-	it('seenIds must be an array of MongoIds', () => {
+	it('lastSeen must be a number when sorting by bottomTime', () => {
+		queryString.sortBy = 'maxDepth';
+		queryString.lastSeen = 'seven';
+		validateQueryParams('number.base');
+	});
+
+	it('seenIds can be a single valid Id', () => {
+		queryString.lastSeen = '48';
+		queryString.seenIds = fakeMongoId();
+		validateQueryParams();
+	});
+
+	it('seenIds can be an array of valid Ids', () => {
+		queryString.lastSeen = 48;
+		queryString.seenIds = [ fakeMongoId(), fakeMongoId() ];
+		validateQueryParams();
+	});
+
+	it('seenIds must contain valid Ids', () => {
 		queryString.lastSeen = '48';
 		queryString.seenIds = [ 'a298a3b95f96bfie9e177978' ];
-		validateQueryParams('string.hex');
+		validateQueryParams('string.base');
 
-		queryString.seenIds = [ 'a298a3b95f96bfe9e177978' ];
+		queryString.seenIds = 'a298a3b95f96bfe9e177978';
 		validateQueryParams('string.length');
 	});
 });

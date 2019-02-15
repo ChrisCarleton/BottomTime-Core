@@ -64,6 +64,16 @@ export const EntryQueryParamsSchema = Joi.object().keys({
 	count: Joi.number().integer().min(1).max(1000),
 	sortBy: Joi.string().only([ 'entryTime', 'maxDepth', 'bottomTime' ]),
 	sortOrder: Joi.string().only([ 'asc', 'desc' ]),
-	lastSeen: Joi.string(),
-	seenIds: Joi.array().items(Joi.string().hex().length(24))
+	lastSeen: Joi.alternatives().when(
+		'sortBy',
+		{
+			is: 'entryTime',
+			then: Joi.string().isoDate(),
+			otherwise: Joi.number().positive()
+		}
+	),
+	seenIds: Joi.alternatives().try(
+		Joi.string().hex().length(24),
+		Joi.array().items(Joi.string().hex().length(24))
+	)
 }).and([ 'sortBy', 'sortOrder' ]).with('seenIds', 'lastSeen');

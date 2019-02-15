@@ -1,14 +1,46 @@
 import _ from 'lodash';
 import { badRequest, serverError, notFound } from '../utils/error-response';
-import Joi from 'joi';
-import LogEntry, { assignLogEntry } from '../data/log-entry';
 import {
 	EntryId,
 	EntryQueryParamsSchema,
 	NewEntrySchema,
 	UpdateEntrySchema
 } from '../validation/log-entry';
+import Joi from 'joi';
+import LogEntry, { assignLogEntry } from '../data/log-entry';
 import User from '../data/user';
+
+function getWhereClauseForSearch(query) {
+	const whereClause = {};
+	const operator = query.sortOrder === 'asc' ? '$gte' : '$lte';
+
+	if (query.lastSeen) {
+		switch (query.sortBy) {
+		case 'maxDepth':
+			whereClause.maxDepth = {};
+			whereClause.maxDepth[operator] = parseInt(query.lastSeen, 10);
+			break;
+		case 'bottomTime':
+			whereClause.bottomTime = {};
+			whereClause.bottomTime[operator] = parseInt(query.lastSeen, 10);
+			break;
+		default:
+			whereClause.entryTime = {};
+			whereClause.entryTime[operator] = Date.parse(query.lastSeen);
+			break;
+		}
+
+		if (query.seenIds) {
+			if (typeof (query.seenIds) === 'string') {
+				query.seenIds = [ query.seenIds ];
+			}
+
+			whereClause._id = { $nin: query.seenIds };
+		}
+	}
+
+	return whereClause;
+}
 
 export async function ListLogs(req, res) {
 	try {
@@ -27,8 +59,10 @@ export async function ListLogs(req, res) {
 			sortOrder = `${ query.sortOrder === 'asc' ? '' : '-' }${ query.sortBy }`;
 		}
 
+		const whereClause = getWhereClauseForSearch(query);
 		const entries = await LogEntry
 			.find({ userId: req.account.id })
+			.where(whereClause)
 			.select('_id entryTime location site bottomTime maxDepth')
 			.sort(sortOrder)
 			.limit(parseInt(query.count, 10) || 100)
