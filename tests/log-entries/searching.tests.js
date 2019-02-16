@@ -3,6 +3,7 @@ import { App } from '../../service/server';
 import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
+import faker from 'faker';
 import fakeLogEntry from '../util/fake-log-entry';
 import LogEntry from '../../service/data/log-entry';
 import mongoose from '../../service/data/database';
@@ -10,6 +11,17 @@ import request from 'supertest';
 import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
+
+const SameyEntryTimes = [
+	faker.date.past(3).toISOString(),
+	faker.date.past(3).toISOString(),
+	faker.date.past(3).toISOString(),
+	faker.date.past(3).toISOString(),
+	faker.date.past(3).toISOString(),
+	faker.date.past(3).toISOString()
+];
+const SameyMaxDepths = [ 35, 45, 55, 65, 75, 85 ];
+const SameyBottomTimes = [ 10, 20, 30, 40, 50, 60 ];
 
 describe('Log Entry Searching', () => {
 	let friendsOnlyUser = null;
@@ -30,7 +42,13 @@ describe('Log Entry Searching', () => {
 			_.map(new Array(20), () => new LogEntry(fakeLogEntry(publicUser.user.id)).save())
 		);
 		await Promise.all(
-			_.map(new Array(20), () => new LogEntry(fakeLogEntry(privateUser.user.id)).save())
+			_.map(new Array(100), () => {
+				const newEntry = new LogEntry(fakeLogEntry(privateUser.user.id));
+				newEntry.entryTime = faker.random.arrayElement(SameyEntryTimes);
+				newEntry.maxDepth = faker.random.arrayElement(SameyMaxDepths);
+				newEntry.bottomTime = faker.random.arrayElement(SameyBottomTimes);
+				return newEntry.save();
+			})
 		);
 	});
 
@@ -308,5 +326,78 @@ describe('Log Entry Searching', () => {
 				.set(...friendsOnlyUser.authHeader)
 				.expect(500);
 		});
+	});
+
+	describe('Load more', () => {
+		[
+			{ sortBy: 'entryTime', sortOrder: 'desc' },
+			{ sortBy: 'entryTime', sortOrder: 'asc' },
+			{ sortBy: 'maxDepth', sortOrder: 'desc' },
+			{ sortBy: 'maxDepth', sortOrder: 'asc' },
+			{ sortBy: 'bottomTime', sortOrder: 'desc' },
+			{ sortBy: 'bottomTime', sortOrder: 'asc' }
+		].forEach(t => it(`Will resume a search by ${ t.sortBy } in ${ t.sortOrder } order`, async () => {
+			const { sortOrder, sortBy } = t;
+
+			let results = await request(App)
+				.get(`/users/${ privateUser.user.username }/logs`)
+				.query({
+					count: 50,
+					sortBy,
+					sortOrder
+				})
+				.set(...privateUser.authHeader);
+			results = results.body;
+			expect(results).to.be.an('Array');
+			expect(results).to.have.length(50);
+
+			const seenIds = [];
+			const lastSeen = results[results.length - 1][sortBy];
+
+			for (let i = results.length - 1; i >= 0; i--) {
+				if (results[i][sortBy] === lastSeen) {
+					seenIds.push(results[i].entryId);
+				} else {
+					break;
+				}
+			}
+
+			const more = await request(App)
+				.get(`/users/${ privateUser.user.username }/logs`)
+				.query({
+					count: 50,
+					sortBy,
+					sortOrder,
+					lastSeen,
+					seenIds
+				})
+				.set(...privateUser.authHeader);
+
+			expect(more.status).to.equal(200);
+			results = _.concat(results, more.body);
+			expect(results).to.have.length(100);
+
+			if (sortBy === 'entryTime') {
+				if (sortOrder === 'asc') {
+					for (let i = 1; i < results.length; i++) {
+						expect(Date.parse(results[i].entryTime))
+							.to.be.at.least(Date.parse(results[i - 1].entryTime));
+					}
+				} else {
+					for (let i = 1; i < results.length; i++) {
+						expect(Date.parse(results[i].entryTime))
+							.to.be.at.most(Date.parse(results[i - 1].entryTime));
+					}
+				}
+			} else if (sortOrder === 'asc') {
+				for (let i = 1; i < results.length; i++) {
+					expect(results[i][sortBy]).to.be.at.least(results[i - 1][sortBy]);
+				}
+			} else {
+				for (let i = 1; i < results.length; i++) {
+					expect(results[i][sortBy]).to.be.at.most(results[i - 1][sortBy]);
+				}
+			}
+		}));
 	});
 });
