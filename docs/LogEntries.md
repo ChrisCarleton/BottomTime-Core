@@ -58,6 +58,16 @@ Queries a user's log book for log entries.
 **bottomTime**, and **maxDepth**. The default is **entryTime**.
 * **sortOrder** - The order in which sorted entries should be returned. Allowed values are **asc**
 (ascending order), and **desc** (descending order.) The default value is **desc**.
+* **lastSeen** - For searches where some results have already been shown, the **lastSeen** value should be
+set to the entryTime, maxDepth, or bottomTime (depending on the value of the **sortBy** parameter) of the
+last entry returned in the previous query. This tells the API that the search should resume at or beyond
+that value.
+* **seenIds** - For searches where some results have already been show, the **seenIds** value should be
+set to an array of entryIds that should be excluded from the results. Example: A search was made for entries
+ordered by bottomTime in descending order. The last entry returned had a bottomTime of 38 minutes. To
+continue getting more results **lastSeen** should be set to 38, and **seenIds** should be a comma-separated
+list of all entry Ids that have already been returned where bottomTime is 38 minutes (so that they are not
+repeated in the next set of results.)
 
 **NOTE:** The **sortBy** and **sortOrder** parameters are a pair. If one is included in the query string,
 then the other is also required.

@@ -244,7 +244,7 @@ describe('Entry query params validation', () => {
 		validateQueryParams('object.with');
 	});
 
-	it('lastSeen needs must be an ISO date when sorting by entryTime', () => {
+	it('lastSeen must be an ISO date when sorting by entryTime', () => {
 		queryString.sortBy = 'entryTime';
 		queryString.lastSeen = 48;
 		validateQueryParams('string.base');
