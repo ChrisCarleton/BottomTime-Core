@@ -4,6 +4,7 @@
 admin/
 coverage/
 docs/
+env/
 logs/
 node_modules/
 temp/

@@ -4,8 +4,10 @@ import { ErrorIds } from './utils/error-response';
 import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as LocalStrategy } from 'passport-local';
-import { logError } from './logger';
+import log, { logError } from './logger';
+import moment from 'moment';
 import passport from 'passport';
+import randomUsername from './utils/random-username';
 import sessionManager from './utils/session-manager';
 import url from 'url';
 import User from './data/user';
@@ -57,9 +59,50 @@ passport.use(new GoogleStrategy({
 	clientSecret: config.auth.googleClientSecret,
 	callbackURL: url.resolve(config.siteUrl, '/auth/google/callback')
 },
-(accessToken, refreshToken, profile, cb) => {
-	// TODO: Handle response from Google.
-	cb(null, null);
+async (accessToken, refreshToken, profile, cb) => {
+	try {
+		let user = await User.findOne({ googleId: profile.id });
+		if (user) {
+			return cb(null, user);
+		}
+
+		let username = profile.emails[0].value.substr(0, profile.emails[0].value.indexOf('@'));
+
+		const [ usernameTaken, emailTaken ] = await Promise.all([
+			User.findByUsername(username),
+			User.findByEmail(profile.emails[0].value)
+		]);
+
+		if (emailTaken) {
+			return cb(null, 'email-taken');
+		}
+
+		if (usernameTaken) {
+			username = randomUsername();
+		}
+
+		user = {
+			username,
+			usernameLower: username.toLowerCase(),
+			email: profile.emails[0].value,
+			emailLower: profile.emails[0].value.toLowerCase(),
+			createdAt: moment().utc().toDate(),
+			googleId: profile.id
+		};
+
+		if (profile.name) {
+			user.firstName = profile.name.givenName;
+			user.lastName = profile.name.familyName;
+		}
+
+		user = new User(user);
+		await user.save();
+
+		log.info('Created new user account based on Google Sign In:', user.username);
+		return cb(null, user);
+	} catch (err) {
+		return cb(err);
+	}
 }));
 
 export default app => {
