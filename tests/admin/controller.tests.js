@@ -10,21 +10,20 @@ const ExpectedApiVersion = '1.0.0';
 describe('Admin Controller', () => {
 
 	describe('GET /', () => {
-		it('Returns the application and API versions', done => {
-			request(App)
-				.get('/')
-				.then(res => {
-					expect(res.status).to.equal(200);
-					expect(res.body.appVersion).to.equal(ExpectedAppVersion);
-					expect(res.body.apiVersion).to.equal(ExpectedApiVersion);
-					done();
-				})
-				.catch(done);
+		it('Returns the application and API versions', async () => {
+			const res = await request(App).get('/');
+			expect(res.status).to.equal(200);
+			expect(res.body.appVersion).to.equal(ExpectedAppVersion);
+			expect(res.body.apiVersion).to.equal(ExpectedApiVersion);
 		});
 	});
 
 	describe('GET /health', () => {
 		let stub = null;
+
+		before(async () => {
+			// TODO: Ensure Mongo Connection before testing.
+		});
 
 		afterEach(() => {
 			if (stub) {
@@ -33,39 +32,29 @@ describe('Admin Controller', () => {
 			}
 		});
 
-		it('Returns healthy when everything is cool', done => {
-			request(App)
-				.get('/health')
-				.then(res => {
-					expect(res.status).to.equal(200);
-					expect(res.body.status).to.equal('healthy');
-					res.body.components.forEach(c => {
-						expect(c.health).to.equal('healthy');
-					});
-					done();
-				})
-				.catch(done);
+		it('Returns healthy when everything is cool', async () => {
+			const res = await request(App).get('/health');
+			expect(res.status).to.equal(200);
+			expect(res.body.status).to.equal('healthy');
+			res.body.components.forEach(c => {
+				expect(c.health).to.equal('healthy');
+			});
 		});
 
-		it('Returns unhealthy when MongoDB is inaccessible', done => {
+		it('Returns unhealthy when MongoDB is inaccessible', async () => {
 			stub = sinon.stub(database.connection.db, 'stats');
 			stub.rejects('nope!');
 
-			request(App)
-				.get('/health')
-				.then(res => {
-					expect(res.status).to.equal(500);
-					expect(res.body.status).to.equal('unhealthy');
-					res.body.components.forEach(c => {
-						if (c.name === 'MongoDB') {
-							expect(c.health).to.equal('unhealthy');
-						} else {
-							expect(c.health).to.equal('healthy');
-						}
-					});
-					done();
-				})
-				.catch(done);
+			const res = await request(App).get('/health');
+			expect(res.status).to.equal(500);
+			expect(res.body.status).to.equal('unhealthy');
+			res.body.components.forEach(c => {
+				if (c.name === 'MongoDB') {
+					expect(c.health).to.equal('unhealthy');
+				} else {
+					expect(c.health).to.equal('healthy');
+				}
+			});
 		});
 	});
 

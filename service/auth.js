@@ -54,12 +54,7 @@ passport.use(new JwtStrategy(
 	}
 ));
 
-passport.use(new GoogleStrategy({
-	clientID: config.auth.googleClientId,
-	clientSecret: config.auth.googleClientSecret,
-	callbackURL: url.resolve(config.siteUrl, '/auth/google/callback')
-},
-async (accessToken, refreshToken, profile, cb) => {
+export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
 	try {
 		let user = await User.findOne({ googleId: profile.id });
 		if (user) {
@@ -101,9 +96,25 @@ async (accessToken, refreshToken, profile, cb) => {
 		log.info('Created new user account based on Google Sign In:', user.username);
 		return cb(null, user);
 	} catch (err) {
-		return cb(err);
+		const logId = logError('An error occurred while attempting to authenticate a user using Google', err);
+		return cb({
+			errorId: ErrorIds.serverError,
+			logId,
+			status: 500,
+			message: 'A server error occurred.',
+			details: 'Your request could not be completed at this time. Please try again later.'
+		});
 	}
-}));
+}
+
+passport.use(
+	new GoogleStrategy({
+		clientID: config.auth.googleClientId,
+		clientSecret: config.auth.googleClientSecret,
+		callbackURL: url.resolve(config.siteUrl, '/auth/google/callback')
+	},
+	SignInWithGoogle)
+);
 
 export default app => {
 	app.use(passport.initialize());
