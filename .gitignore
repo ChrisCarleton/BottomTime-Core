@@ -67,3 +67,6 @@ typings/
 
 # temp directory
 temp/
+
+# Environment variable files
+env/

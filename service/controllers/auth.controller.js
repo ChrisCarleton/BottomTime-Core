@@ -1,4 +1,4 @@
-import { badRequest, serverError, unauthorized } from '../utils/error-response';
+import { badRequest, conflict, serverError, unauthorized } from '../utils/error-response';
 import { cleanUpUser } from '../data/user';
 import Joi from 'joi';
 import { LoginSchema } from '../validation/user';
@@ -44,6 +44,13 @@ export function AuthenticateUser(req, res, next) {
 }
 
 export async function Login(req, res) {
+	if (req.user === 'email-taken') {
+		return conflict(
+			res,
+			'email',
+			'Unable to create account. The e-mail address is already associated with another user account.');
+	}
+
 	try {
 		const token = await sessionManager.createSessionToken(
 			req.user.username,
@@ -78,10 +85,7 @@ export function GetCurrentUser(req, res) {
 	res.json(cleanUpUser(req.user));
 }
 
-export function GoogleAuth(req, res) {
-	res.sendStatus(501);
-}
-
 export function GoogleCallback(req, res) {
+	// Authenticated! Create session token.
 	res.sendStatus(501);
 }

@@ -4,6 +4,7 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import faker from 'faker';
 import fakeUser from '../util/fake-user';
+import { Login } from '../../service/controllers/auth.controller';
 import request from 'supertest';
 import Session from '../../service/data/session';
 import sinon from 'sinon';
@@ -113,6 +114,36 @@ describe('Auth Controller', () => {
 			expect(res.body.errorId).to.equal(ErrorIds.serverError);
 			expect(res.body.logId).to.exist;
 		});
+
+		it('Will return 409 if the e-mail address is already taken', async () => {
+			// This can happen if a user signs in using an outside OAuth provider
+			// which attempts to create a new account but the e-mail from the OAuth provider
+			// is already registered to an existing account.
+			let code = 0;
+			let message = null;
+			const req = {
+				user: 'email-taken',
+				logError: () => {} // eslint-disable-line no-empty-function
+			};
+			const res = {
+				status: status => {
+					code = status;
+					return {
+						json: m => {
+							message = m;
+						}
+					};
+				}
+			};
+
+			await Login(req, res);
+			expect(code).to.equal(409);
+			expect(message).to.exist;
+			expect(message.status).to.equal(409);
+			expect(message.fieldName).to.equal('email');
+			expect(message.errorId).to.equal(ErrorIds.conflict);
+		});
+
 	});
 
 	describe('GET /auth/me', () => {
