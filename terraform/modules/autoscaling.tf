@@ -9,10 +9,11 @@ data "aws_acm_certificate" "lb_cert" {
 
 data "aws_ami" "ecs_optimized" {
 	most_recent = true
+	owners = ["amazon"]
 
 	filter {
 		name = "name"
-		values = ["amzn-ami-2018.03.i-amazon-ecs-optimized"]
+		values = ["amzn2-ami-ecs-hvm-2.0.20190301-x86_64-ebs"]
 	}
 }
 
