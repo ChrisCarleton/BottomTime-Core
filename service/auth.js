@@ -15,7 +15,7 @@ import User from './data/user';
 function generateServerError(err) {
 	const logId = logError(err);
 	return {
-		errorId: ErrorIds.serverError,
+		errorId: ErrorIds.authError,
 		logId,
 		status: 500,
 		message: 'A server error occurred.',
