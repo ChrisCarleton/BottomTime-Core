@@ -5,4 +5,5 @@
 1. [General APIs](General.md)
 1. [Authentication](Authentication.md)
 1. [Users and Profiles](Users.md)
+1. [Friends](Friends.md)
 1. [Log Entries](LogEntries.md)
