@@ -4,9 +4,13 @@ import {
 	RetrieveUserAccount
 } from '../controllers/security.controller';
 import {
+	ApproveFriendRequest,
 	BulkDeleteFriends,
+	CreateFriendRequest,
 	DeleteFriend,
-	ListFriends
+	ListFriends,
+	RejectFriendRequest,
+	RetrieveFriendAccount
 } from '../controllers/friends.controller';
 
 const FriendsRoute = '/users/:username/friends';
@@ -18,5 +22,9 @@ module.exports = app => {
 		.delete(RetrieveUserAccount, BulkDeleteFriends);
 
 	app.route(FriendRoute)
+		.put(RetrieveUserAccount, RetrieveFriendAccount, CreateFriendRequest)
 		.delete(RetrieveUserAccount, DeleteFriend);
+
+	app.post(`${ FriendRoute }/approve`, RetrieveUserAccount, ApproveFriendRequest);
+	app.post(`${ FriendRoute }/reject`, RetrieveUserAccount, RejectFriendRequest);
 };

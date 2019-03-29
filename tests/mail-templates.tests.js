@@ -1,7 +1,10 @@
 import { expect } from 'chai';
 import fs from 'fs';
 import path from 'path';
-import { ResetPasswordEmail } from '../service/mail/templates';
+import {
+	NewFriendRequestEmail,
+	ResetPasswordEmail
+} from '../service/mail/templates';
 
 describe('Templating Engine', () => {
 
@@ -23,6 +26,27 @@ describe('Templating Engine', () => {
 				done();
 			});
 
+	});
+
+	it('New Friend Request Template', done => {
+		const message = NewFriendRequestEmail(
+			'Jimmy McDonnel',
+			'jimmydiver64',
+			'Timmy McDougal'
+		);
+
+		fs.readFile(
+			path.join(__dirname, 'assets/new-friend-request.html'),
+			'utf8',
+			(err, data) => {
+				if (err) {
+					return done(err);
+				}
+
+				expect(message).to.equal(data);
+				done();
+			}
+		);
 	});
 
 });

@@ -5,9 +5,12 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import fakeUser from '../util/fake-user';
 import Friend from '../../service/data/friend';
+import mailer from '../../service/mail/mailer';
+import mongoose from 'mongoose';
 import request from 'supertest';
 import Session from '../../service/data/session';
 import sinon from 'sinon';
+import templates from '../../service/mail/templates';
 import User from '../../service/data/user';
 
 describe('Friends controller', () => {
@@ -20,10 +23,14 @@ describe('Friends controller', () => {
 		u => u.username
 	);
 	let user = null;
+	let admin = null;
 	let stub = null;
+	let mailerSpy = null;
+	let templateSpy = null;
 
 	before(async () => {
 		user = await createFakeAccount();
+		admin = await createFakeAccount('admin');
 		await Promise.all(friends.map(f => f.save()));
 	});
 
@@ -31,6 +38,14 @@ describe('Friends controller', () => {
 		if (stub) {
 			stub.restore();
 			stub = null;
+		}
+		if (mailerSpy) {
+			mailerSpy.restore();
+			mailerSpy = null;
+		}
+		if (templateSpy) {
+			templateSpy.restore();
+			templateSpy = null;
 		}
 		await Friend.deleteMany({});
 	});
@@ -190,6 +205,120 @@ describe('Friends controller', () => {
 			expect(response.body.errorId).to.equal(ErrorIds.serverError);
 			expect(response.body.logId).to.exist;
 			expect(response.body.status).to.equal(500);
+		});
+	});
+
+	describe('PUT /users/:username/friends/:friendName', () => {
+		it('Will create a friend request', async () => {
+			templateSpy = sinon.spy(templates, 'NewFriendRequestEmail');
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+
+			await request(App)
+				.put(`/users/${ user.user.username }/friends/${ friends[0].username }`)
+				.set(...user.authHeader)
+				.expect(204);
+
+			const friendRequest = await Friend.findOne({
+				user: user.user.username,
+				friend: friends[0].username
+			});
+			expect(friendRequest).to.exist;
+			expect(friendRequest.requestedOn).to.exist;
+			expect(friendRequest.approved).to.be.false;
+
+			expect(mailerSpy.called).to.be.true;
+			expect(templateSpy.called).to.be.true;
+
+			const [ userFriendlyName, friendUsername, friendFriendlyName ]
+				= templateSpy.getCall(0).args;
+			expect(userFriendlyName).to.equal(`${ user.user.firstName } ${ user.user.lastName }`);
+			expect(friendUsername).to.equal(friends[0].username);
+			expect(friendFriendlyName).to.equal(friends[0].firstName);
+
+			const [ mailOptions ] = mailerSpy.getCall(0).args;
+			expect(mailOptions.to).to.equal(friends[0].email);
+			expect(mailOptions.from).to.not.exist;
+			expect(mailOptions.subject).to.equal('Dive Buddy Request');
+			expect(mailOptions.html).to.exist;
+		});
+
+		it('Admins will create a bi-lateral friendship', async () => {
+			templateSpy = sinon.spy(templates, 'NewFriendRequestEmail');
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+
+			await request(App)
+				.put(`/users/${ user.user.username }/friends/${ friends[0].username }`)
+				.set(...admin.authHeader)
+				.expect(204);
+
+			const friendRequests = await Promise.all([
+				Friend.findOne({
+					user: user.user.username,
+					friend: friends[0].username
+				}),
+				Friend.findOne({
+					user: friends[0].username,
+					friend: user.user.username
+				})
+			]);
+			expect(friendRequests[0]).to.exist;
+			expect(friendRequests[0].requestedOn).to.exist;
+			expect(friendRequests[0].approved).to.be.true;
+			expect(friendRequests[0].approvedOn).to.exist;
+			expect(friendRequests[1]).to.exist;
+			expect(friendRequests[1].requestedOn).to.exist;
+			expect(friendRequests[1].approved).to.be.true;
+			expect(friendRequests[1].approvedOn).to.exist;
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 404 if user does not exist', async () => {
+			const response = await request(App)
+				.put(`/users/no.such.user/friends/${ friends[0].username }`)
+				.set(...user.authHeader)
+				.expect(404);
+			const { body } = response;
+
+			expect(body.errorId).to.equal(ErrorIds.notFound);
+			expect(body.status).to.equal(404);
+		});
+
+		it('Will return 404 if friend does not exist', async () => {
+			const response = await request(App)
+				.put(`/users/${ user.user.username }/friends/no.such.user`)
+				.set(...user.authHeader)
+				.expect(404);
+			const { body } = response;
+
+			expect(body.errorId).to.equal(ErrorIds.notFound);
+			expect(body.status).to.equal(404);
+		});
+
+		it('Will return 500 if the friend request cannot be saved', async () => {
+			stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub.rejects('nope');
+
+			const response = await request(App)
+				.put(`/users/${ user.user.username }/friends/${ friends[0].username }`)
+				.set(...user.authHeader)
+				.expect(500);
+			const { body } = response;
+
+			expect(body.errorId).to.equal(ErrorIds.serverError);
+			expect(body.status).to.equal(500);
+			expect(body.logId).to.exist;
+		});
+
+		it('Will succeed even if the e-mail cannot be sent', async () => {
+			stub = sinon.stub(mailer, 'sendMail');
+			stub.rejects('nope');
+
+			await request(App)
+				.put(`/users/${ user.user.username }/friends/${ friends[0].username }`)
+				.set(...user.authHeader)
+				.expect(204);
 		});
 	});
 

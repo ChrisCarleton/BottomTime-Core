@@ -1,6 +1,6 @@
 [Back to table of contents](API.md)
 
-# Friends API
+# Friends API (Dive Buddies)
 These are APIs for managing a user's list of friends and friend requests.
 
 ## Classes
@@ -54,7 +54,7 @@ HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The call succeeded and the friend request was created.
 **403 Forbidden** | The request was rejected because the current user does not have permission to modify the indicated user's friends.
-**404 Not Found** | The request failed because the user specified in the **username** route parameter does not exist or the user specified in **friendName** 
+**404 Not Found** | The request failed because the user specified in the **username** route parameter does not exist or the user specified in **friendName** route parameter does not exist.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### POST /users/:username/:friends/[approve|reject]

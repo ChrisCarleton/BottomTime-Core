@@ -1,3 +1,4 @@
+import moment from 'moment';
 import mongoose from './database';
 
 const friendSchema = mongoose.Schema({
@@ -38,6 +39,15 @@ friendSchema.methods.toCleanJSON = function () {
 	const clean = this.toJSON();
 	delete clean._id;
 	delete clean.__v;
+
+	if (clean.requestedOn) {
+		clean.requestedOn = moment(this.requestedOn).utc().toISOString();
+	}
+
+	if (clean.approvedOn) {
+		clean.approvedOn = moment(this.approvedOn).utc().toISOString();
+	}
+
 	return clean;
 };
 
