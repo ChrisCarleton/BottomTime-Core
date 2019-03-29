@@ -33,3 +33,22 @@ export async function ListFriends(req, res) {
 		serverError(res, logId);
 	}
 }
+
+export async function DeleteFriend(req, res) {
+	try {
+		await Friend.findOneAndDelete({
+			user: req.account.username,
+			friend: req.params.friendName
+		});
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError(
+			`Unable to delete friend for user ${ req.account.username }.`,
+			err);
+		serverError(res, logId);
+	}
+}
+
+export function BulkDeleteFriends(req, res) {
+	res.sendStatus(501);
+}

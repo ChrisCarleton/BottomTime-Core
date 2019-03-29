@@ -4,6 +4,8 @@ import {
 	RetrieveUserAccount
 } from '../controllers/security.controller';
 import {
+	BulkDeleteFriends,
+	DeleteFriend,
 	ListFriends
 } from '../controllers/friends.controller';
 
@@ -12,7 +14,9 @@ const FriendRoute = `${ FriendsRoute }/:friendName`;
 
 module.exports = app => {
 	app.route(FriendsRoute)
-		.get(RetrieveUserAccount, ListFriends);
+		.get(RetrieveUserAccount, ListFriends)
+		.delete(RetrieveUserAccount, BulkDeleteFriends);
 
-	app.route(FriendRoute);
+	app.route(FriendRoute)
+		.delete(RetrieveUserAccount, DeleteFriend);
 };

@@ -5,7 +5,6 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import fakeUser from '../util/fake-user';
 import Friend from '../../service/data/friend';
-import mongoose from 'mongoose';
 import request from 'supertest';
 import Session from '../../service/data/session';
 import sinon from 'sinon';
@@ -28,11 +27,12 @@ describe('Friends controller', () => {
 		await Promise.all(friends.map(f => f.save()));
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		if (stub) {
 			stub.restore();
 			stub = null;
 		}
+		await Friend.deleteMany({});
 	});
 
 	after(async () => {
@@ -68,10 +68,6 @@ describe('Friends controller', () => {
 			];
 			await Promise.all(friendAssociations.map(fa => fa.save()));
 		}
-
-		afterEach(async () => {
-			await Friend.deleteMany({});
-		});
 
 		it('Will list a user\'s friends by default', async () => {
 			await createFriendAssociations();
@@ -182,8 +178,8 @@ describe('Friends controller', () => {
 			expect(response.body.details).to.exist;
 		});
 
-		it.skip('Will return 500 if a server error occurs', async () => {
-			stub = sinon.stub(mongoose.Query.prototype, 'exec');
+		it('Will return 500 if a server error occurs', async () => {
+			stub = sinon.stub(Friend, 'getFriendsForUser');
 			stub.rejects('nope');
 
 			const response = await request(App)
@@ -194,6 +190,52 @@ describe('Friends controller', () => {
 			expect(response.body.errorId).to.equal(ErrorIds.serverError);
 			expect(response.body.logId).to.exist;
 			expect(response.body.status).to.equal(500);
+		});
+	});
+
+	describe('DEL /users/:username/friends/:friendName', () => {
+		it('Will delete the requested friend', async () => {
+			const friend = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				approved: true,
+				approvedOn: new Date()
+			});
+
+			await friend.save();
+
+			await request(App)
+				.del(`/users/${ user.user.username }/friends/${ friends[0].username }`)
+				.set(...user.authHeader)
+				.expect(204);
+
+			const result = await Friend.findOne({
+				user: user.user.username,
+				friend: friends[0].username
+			});
+			expect(result).to.be.null;
+		});
+
+		it('Will return 204 even if there is nothing to delete', async () => {
+			await request(App)
+				.delete(`/users/${ user.user.username }/friends/${ friends[1].username }`)
+				.set(...user.authHeader)
+				.expect(204);
+		});
+
+		it('Will return 500 if a server error occurs', async () => {
+			stub = sinon.stub(Friend, 'findOneAndDelete');
+			stub.rejects('nope');
+
+			const { body } = await request(App)
+				.delete(`/users/${ user.user.username }/friends/${ friends[1].username }`)
+				.set(...user.authHeader)
+				.expect(500);
+
+			expect(body).to.exist;
+			expect(body.errorId).to.equal(ErrorIds.serverError);
+			expect(body.logId).to.exist;
+			expect(body.status).to.equal(500);
 		});
 	});
 });
