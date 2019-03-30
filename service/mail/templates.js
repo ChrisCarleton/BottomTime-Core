@@ -35,8 +35,13 @@ export function NewFriendRequestEmail(userFriendlyName, friendUsername, friendFr
 	});
 }
 
-export function ApproveFriendRequestEmail() {
-	return approveFriendRequestTemplate({});
+export function ApproveFriendRequestEmail(userFriendlyName, friendUsername, friendFriendlyName) {
+	const friendProfileUrl = url.resolve(config.siteUrl, `/profile/${ friendUsername }`);
+	return approveFriendRequestTemplate({
+		userFriendlyName,
+		friendFriendlyName,
+		friendProfileUrl
+	});
 }
 
 export function RejectFriendRequestEmail() {

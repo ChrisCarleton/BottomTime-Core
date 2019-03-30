@@ -25,6 +25,6 @@ module.exports = app => {
 		.put(RetrieveUserAccount, RetrieveFriendAccount, CreateFriendRequest)
 		.delete(RetrieveUserAccount, DeleteFriend);
 
-	app.post(`${ FriendRoute }/approve`, RetrieveUserAccount, ApproveFriendRequest);
-	app.post(`${ FriendRoute }/reject`, RetrieveUserAccount, RejectFriendRequest);
+	app.post(`${ FriendRoute }/approve`, ApproveFriendRequest);
+	app.post(`${ FriendRoute }/reject`, RejectFriendRequest);
 };

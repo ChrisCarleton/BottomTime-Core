@@ -98,8 +98,59 @@ export async function CreateFriendRequest(req, res) {
 	res.sendStatus(204);
 }
 
-export function ApproveFriendRequest(req, res) {
-	res.sendStatus(501);
+export async function ApproveFriendRequest(req, res) {
+	let user = null;
+	let friend = null;
+	let friendRequest = null;
+
+	try {
+		[ user, friend, friendRequest ] = await Promise.all([
+			User.findByUsername(req.params.username),
+			User.findByUsername(req.params.friendName),
+			Friend.findOne({
+				user: req.params.username,
+				friend: req.params.friendName
+			})
+		]);
+
+		if (!user || !friend || !friendRequest) {
+			return notFound(req, res);
+		}
+
+		if (friendRequest.approved) {
+			return badRequest(
+				'Request could not be completed',
+				'Friend request has already been approved',
+				res
+			);
+		}
+
+		friendRequest.approved = true;
+		friendRequest.approvedOn = new Date();
+		await friendRequest.save();
+	} catch (err) {
+		const logId = req.logError(
+			`Failed to approve friend request from ${ req.params.username } to ${ req.params.friendName }.`,
+			err);
+		return serverError(res, logId);
+	}
+
+	try {
+		const html = templates.ApproveFriendRequestEmail(
+			user.getFriendlyName(),
+			friend.username,
+			friend.getFullName()
+		);
+		await mailer.sendMail({
+			to: user.email,
+			subject: 'Dive Buddy Request Accepted',
+			html
+		});
+	} catch (err) {
+		req.logError('Failed to send notification e-mail for friend request approval', err);
+	}
+
+	res.sendStatus(204);
 }
 
 export function RejectFriendRequest(req, res) {

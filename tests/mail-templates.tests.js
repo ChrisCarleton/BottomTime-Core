@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import fs from 'fs';
 import path from 'path';
 import {
+	ApproveFriendRequestEmail,
 	NewFriendRequestEmail,
 	ResetPasswordEmail
 } from '../service/mail/templates';
@@ -47,6 +48,26 @@ describe('Templating Engine', () => {
 				done();
 			}
 		);
+	});
+
+	it('Friend Request Approved Template', done => {
+		const message = ApproveFriendRequestEmail(
+			'Ronald Duffries',
+			's.michaelson',
+			'Steve Michaelson'
+		);
+
+		fs.readFile(
+			path.join(__dirname, 'assets/friend-request-approved.html'),
+			'utf8',
+			(err, data) => {
+				if (err) {
+					return done(err);
+				}
+
+				expect(data).to.equal(message);
+				done();
+			});
 	});
 
 });

@@ -73,7 +73,7 @@ HTTP Status Code | Details
 **204 No Content** | The call succeeded and the friend request was approved/rejected.
 **400 Bad Request** | The request failed because the friend request was already approved.
 **403 Forbidden** | The request was rejected because the current user does not have permission to approve or reject the request. Only the *recipient* of a request (or an admin) is allowed to approve/reject a request.
-**404 Not Found** | The request failed because the friend request could not be found.
+**404 Not Found** | The request failed because the friend request, the user, or the friend could not be found.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### DELETE /users/:username/friends/:friendName

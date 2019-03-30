@@ -5,6 +5,7 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import fakeUser from '../util/fake-user';
 import Friend from '../../service/data/friend';
+import generateAuthHeader from '../util/generate-auth-header';
 import mailer from '../../service/mail/mailer';
 import mongoose from 'mongoose';
 import request from 'supertest';
@@ -319,6 +320,194 @@ describe('Friends controller', () => {
 				.put(`/users/${ user.user.username }/friends/${ friends[0].username }`)
 				.set(...user.authHeader)
 				.expect(204);
+		});
+	});
+
+	describe('POST /users/:username/friends/:friendName/approve', () => {
+
+		let friendAuthHeader = null;
+
+		before(async () => {
+			friendAuthHeader = await generateAuthHeader(friends[0].username);
+		});
+
+		it('Will approve a friend request and send a notification email', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				approved: false,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'ApproveFriendRequestEmail');
+
+			await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
+				.send(...friendAuthHeader)
+				.expect(204);
+
+			const result = await Friend.findOne({
+				user: user.user.username,
+				friend: friends[0].username
+			});
+			expect(result).to.exist;
+			expect(result.approved).to.be.true;
+			expect(result.approvedOn).to.exist;
+
+			expect(mailerSpy.called).to.be.true;
+			expect(templateSpy.called).to.be.true;
+
+			const [ userFriendlyName, friendUsername, friendFriendlyName ]
+				= templateSpy.getCall(0).args;
+			expect(userFriendlyName).to.equal(user.user.firstName);
+			expect(friendUsername).to.equal(friends[0].username);
+			expect(friendFriendlyName).to.equal(`${ friends[0].firstName } ${ friends[0].lastName }`);
+
+			const [ mailOptions ] = mailerSpy.getCall(0).args;
+			expect(mailOptions.to).to.equal(user.user.email);
+			expect(mailOptions.from).to.not.exist;
+			expect(mailOptions.subject).to.equal('Dive Buddy Request Accepted');
+			expect(mailOptions.html).to.exist;
+		});
+
+		it('Will return 400 if the request has already been approved', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				approved: true,
+				requestedOn: new Date(),
+				approvedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'ApproveFriendRequestEmail');
+
+			await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
+				.send(...friendAuthHeader)
+				.expect(400);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 404 if user does not exist', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				approved: false,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'ApproveFriendRequestEmail');
+
+			const response = await request(App)
+				.post(`/users/no.such.user/friends/${ friends[0].username }/approve`)
+				.send(...friendAuthHeader)
+				.expect(404);
+
+			const { body } = response;
+			expect(body.errorId).to.equal(ErrorIds.notFound);
+			expect(body.status).to.equal(404);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 404 if friend does not exist', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				approved: false,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'ApproveFriendRequestEmail');
+
+			const response = await request(App)
+				.post(`/users/${ user.user.username }/friends/no.such.user/approve`)
+				.send(...friendAuthHeader)
+				.expect(404);
+
+			const { body } = response;
+			expect(body.errorId).to.equal(ErrorIds.notFound);
+			expect(body.status).to.equal(404);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 404 if the friend request does not exist', async () => {
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'ApproveFriendRequestEmail');
+
+			const response = await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
+				.send(...friendAuthHeader)
+				.expect(404);
+
+			const { body } = response;
+			expect(body.errorId).to.equal(ErrorIds.notFound);
+			expect(body.status).to.equal(404);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 500 if an error occurs approving the request', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				approved: false,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub.rejects('nope');
+
+			const response = await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
+				.send(...friendAuthHeader)
+				.expect(500);
+
+			const { body } = response;
+			expect(body.errorId).to.equal(ErrorIds.serverError);
+			expect(body.status).to.equal(500);
+			expect(body.logId).to.exist;
+		});
+
+		it('Will succeed even if the notification e-mail cannot be sent', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				approved: false,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			stub = sinon.stub(mailer, 'sendMail');
+			stub.rejects('nope');
+
+			await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
+				.send(...friendAuthHeader)
+				.expect(204);
+
+			const result = await Friend.findOne({
+				user: user.user.username,
+				friend: friends[0].username
+			});
+			expect(result).to.exist;
+			expect(result.approved).to.be.true;
+			expect(result.approvedOn).to.exist;
 		});
 	});
 
