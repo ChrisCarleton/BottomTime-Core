@@ -9,17 +9,18 @@ Describes a relation between a user and a friend.
 
 ```json
 {
-	"user": "String: The user's username",
-	"friend": "String: The friend's username",
+	"user": "REQUIRED String: The user's username",
+	"friend": "REQUIRED String: The friend's username",
+	"approved": "Boolean: Indicates whether or not the friend request has been approved or rejected.",
 	"requestedOn": "String: The date at which the initial friend request was made. (ISO 8601 format.)",
-	"approved": "Boolean: Indicates whether or not the friend request has been approved.",
-	"approvedOn": "String: The date at which the friend request was approved. (ISO 8601 format.)"
+	"evaluatedOn": "String: The date at which the friend request was approved/rejected. (ISO 8601 format.)",
+	"reason": "String: Reason given for approving/rejecting the friend request."
 }
 ```
 
-**Notes:** The `approved` property distinguishes whether the record is an established friendship or just a
-pending friend request. Friend requests will have `approved` set to `false`. Once the request is approved,
-`approved` will be set to `true`.
+**Notes:** The `approved` property indicates the state of the friend relationship. If `true` the
+friendship request has been approved. `False` means it was rejected. If `null`, then this record
+represents an open friend request.
 
 ## Routes
 ### GET /users/:username/friends
@@ -31,6 +32,7 @@ Lists a user's friends and/or friend requests.
 #### Query Parameters
 * **type** - Indicates whether friends, friend requests, or both should be returned. Valid values are
 `friends`, `requests`, or `both`. If this parameter is omitted, the default will be `friends`.
+`requests` includes both pending and rejected friend requests.
 
 #### Responses
 HTTP Status Code | Details
@@ -58,10 +60,10 @@ HTTP Status Code | Details
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### POST /users/:username/:friends/[approve|reject]
-These routes can approve or reject a friend request, respectively. A rejected friend request will be
-deleted. If the request is approved, then both users will become "friends" with each other. (That is, a
-reciprocal friendship will be created under the new friend's account.) The route must actually be called by
-the "friend" and not the user, which is a little counterintuitive.
+These routes can approve or reject a friend request, respectively. If the request is approved, then both
+users will become "friends" with each other. (That is, a reciprocal friendship will be created under the
+new friend's account.) The route must actually be called by the "friend" and not the user, which is a
+little counterintuitive.
 
 #### Route Parameters
 * **username** - Username of the user who made the initial request.
@@ -71,13 +73,13 @@ the "friend" and not the user, which is a little counterintuitive.
 HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The call succeeded and the friend request was approved/rejected.
-**400 Bad Request** | The request failed because the friend request was already approved.
+**400 Bad Request** | The request failed because the friend request was already approved/rejected.
 **403 Forbidden** | The request was rejected because the current user does not have permission to approve or reject the request. Only the *recipient* of a request (or an admin) is allowed to approve/reject a request.
 **404 Not Found** | The request failed because the friend request, the user, or the friend could not be found.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### DELETE /users/:username/friends/:friendName
-Deletes a relationship between a user and a friend. Can be used to "unfriend" or to quietly reject a friend
+Deletes a relationship between a user and a friend. Can be used to "unfriend" or to quietly dismiss a friend
 request. Though the proper way to reject a friend request would be to call
 `POST /users/:username/friends/:friendName/reject`. This method would allow the user to supply a reason and
 the friend being rejected would receive an e-mail notifying them.

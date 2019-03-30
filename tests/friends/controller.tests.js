@@ -19,6 +19,7 @@ describe('Friends controller', () => {
 		[
 			new User(fakeUser()),
 			new User(fakeUser()),
+			new User(fakeUser()),
 			new User(fakeUser())
 		],
 		u => u.username
@@ -67,18 +68,26 @@ describe('Friends controller', () => {
 					user: user.user.username,
 					friend: friends[0].username,
 					approved: true,
-					approvedOn: new Date()
+					requestedOn: new Date(),
+					evaluatedOn: new Date()
 				}),
 				new Friend({
 					user: user.user.username,
 					friend: friends[1].username,
 					approved: true,
-					approvedOn: new Date()
+					requestedOn: new Date(),
+					evaluatedOn: new Date()
 				}),
 				new Friend({
 					user: user.user.username,
 					friend: friends[2].username,
 					approved: false,
+					requestedOn: new Date(),
+					evaluatedOn: new Date()
+				}),
+				new Friend({
+					user: user.user.username,
+					friend: friends[3].username,
 					requestedOn: new Date()
 				})
 			];
@@ -97,12 +106,12 @@ describe('Friends controller', () => {
 			expect(results[0].user).to.equal(user.user.username);
 			expect(results[0].friend).to.equal(friends[0].username);
 			expect(results[0].approved).to.be.true;
-			expect(results[0].approvedOn).to.exist;
+			expect(results[0].evaluatedOn).to.exist;
 
 			expect(results[1].user).to.equal(user.user.username);
 			expect(results[1].friend).to.equal(friends[1].username);
 			expect(results[1].approved).to.be.true;
-			expect(results[1].approvedOn).to.exist;
+			expect(results[1].evaluatedOn).to.exist;
 		});
 
 		it('Will list a user\'s friends if requested', async () => {
@@ -118,12 +127,12 @@ describe('Friends controller', () => {
 			expect(results[0].user).to.equal(user.user.username);
 			expect(results[0].friend).to.equal(friends[0].username);
 			expect(results[0].approved).to.be.true;
-			expect(results[0].approvedOn).to.exist;
+			expect(results[0].evaluatedOn).to.exist;
 
 			expect(results[1].user).to.equal(user.user.username);
 			expect(results[1].friend).to.equal(friends[1].username);
 			expect(results[1].approved).to.be.true;
-			expect(results[1].approvedOn).to.exist;
+			expect(results[1].evaluatedOn).to.exist;
 		});
 
 		it('Will list a user\'s friend requests if requested', async () => {
@@ -135,12 +144,18 @@ describe('Friends controller', () => {
 				.expect(200);
 
 			const results = response.body;
-			expect(results).to.have.length(1);
+			expect(results).to.have.length(2);
 			expect(results[0].user).to.equal(user.user.username);
 			expect(results[0].friend).to.equal(friends[2].username);
 			expect(results[0].approved).to.be.false;
-			expect(results[0].approvedOn).to.not.exist;
+			expect(results[0].evaluatedOn).to.exist;
 			expect(results[0].requestedOn).to.exist;
+
+			expect(results[1].user).to.equal(user.user.username);
+			expect(results[1].friend).to.equal(friends[3].username);
+			expect(results[1].approved).to.be.null;
+			expect(results[1].evaluatedOn).to.not.exist;
+			expect(results[1].requestedOn).to.exist;
 		});
 
 		it('Will list a both a user\'s friends and friend requests if requested', async () => {
@@ -152,22 +167,28 @@ describe('Friends controller', () => {
 				.expect(200);
 
 			const results = response.body;
-			expect(results).to.have.length(3);
+			expect(results).to.have.length(4);
 			expect(results[0].user).to.equal(user.user.username);
 			expect(results[0].friend).to.equal(friends[0].username);
 			expect(results[0].approved).to.be.true;
-			expect(results[0].approvedOn).to.exist;
+			expect(results[0].evaluatedOn).to.exist;
 
 			expect(results[1].user).to.equal(user.user.username);
 			expect(results[1].friend).to.equal(friends[1].username);
 			expect(results[1].approved).to.be.true;
-			expect(results[1].approvedOn).to.exist;
+			expect(results[1].evaluatedOn).to.exist;
 
 			expect(results[2].user).to.equal(user.user.username);
 			expect(results[2].friend).to.equal(friends[2].username);
 			expect(results[2].approved).to.be.false;
-			expect(results[2].approvedOn).to.not.exist;
+			expect(results[2].evaluatedOn).to.exist;
 			expect(results[2].requestedOn).to.exist;
+
+			expect(results[3].user).to.equal(user.user.username);
+			expect(results[3].friend).to.equal(friends[3].username);
+			expect(results[3].approved).to.be.null;
+			expect(results[3].evaluatedOn).to.not.exist;
+			expect(results[3].requestedOn).to.exist;
 		});
 
 		it('Will return an empty array if user has no friends', async () => {
@@ -225,7 +246,7 @@ describe('Friends controller', () => {
 			});
 			expect(friendRequest).to.exist;
 			expect(friendRequest.requestedOn).to.exist;
-			expect(friendRequest.approved).to.be.false;
+			expect(friendRequest.approved).to.not.exist;
 
 			expect(mailerSpy.called).to.be.true;
 			expect(templateSpy.called).to.be.true;
@@ -265,11 +286,11 @@ describe('Friends controller', () => {
 			expect(friendRequests[0]).to.exist;
 			expect(friendRequests[0].requestedOn).to.exist;
 			expect(friendRequests[0].approved).to.be.true;
-			expect(friendRequests[0].approvedOn).to.exist;
+			expect(friendRequests[0].evaluatedOn).to.exist;
 			expect(friendRequests[1]).to.exist;
 			expect(friendRequests[1].requestedOn).to.exist;
 			expect(friendRequests[1].approved).to.be.true;
-			expect(friendRequests[1].approvedOn).to.exist;
+			expect(friendRequests[1].evaluatedOn).to.exist;
 
 			expect(mailerSpy.called).to.be.false;
 			expect(templateSpy.called).to.be.false;
@@ -335,7 +356,6 @@ describe('Friends controller', () => {
 			const friendRequest = new Friend({
 				user: user.user.username,
 				friend: friends[0].username,
-				approved: false,
 				requestedOn: new Date()
 			});
 			await friendRequest.save();
@@ -354,7 +374,7 @@ describe('Friends controller', () => {
 			});
 			expect(result).to.exist;
 			expect(result.approved).to.be.true;
-			expect(result.approvedOn).to.exist;
+			expect(result.evaluatedOn).to.exist;
 
 			expect(mailerSpy.called).to.be.true;
 			expect(templateSpy.called).to.be.true;
@@ -378,7 +398,29 @@ describe('Friends controller', () => {
 				friend: friends[0].username,
 				approved: true,
 				requestedOn: new Date(),
-				approvedOn: new Date()
+				evaluatedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'ApproveFriendRequestEmail');
+
+			await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
+				.send(...friendAuthHeader)
+				.expect(400);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 400 if the request has already been rejected', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				approved: false,
+				requestedOn: new Date(),
+				evaluatedOn: new Date()
 			});
 			await friendRequest.save();
 
@@ -398,7 +440,6 @@ describe('Friends controller', () => {
 			const friendRequest = new Friend({
 				user: user.user.username,
 				friend: friends[0].username,
-				approved: false,
 				requestedOn: new Date()
 			});
 			await friendRequest.save();
@@ -423,7 +464,6 @@ describe('Friends controller', () => {
 			const friendRequest = new Friend({
 				user: user.user.username,
 				friend: friends[0].username,
-				approved: false,
 				requestedOn: new Date()
 			});
 			await friendRequest.save();
@@ -465,7 +505,6 @@ describe('Friends controller', () => {
 			const friendRequest = new Friend({
 				user: user.user.username,
 				friend: friends[0].username,
-				approved: false,
 				requestedOn: new Date()
 			});
 			await friendRequest.save();
@@ -488,7 +527,6 @@ describe('Friends controller', () => {
 			const friendRequest = new Friend({
 				user: user.user.username,
 				friend: friends[0].username,
-				approved: false,
 				requestedOn: new Date()
 			});
 			await friendRequest.save();
@@ -507,7 +545,7 @@ describe('Friends controller', () => {
 			});
 			expect(result).to.exist;
 			expect(result.approved).to.be.true;
-			expect(result.approvedOn).to.exist;
+			expect(result.evaluatedOn).to.exist;
 		});
 	});
 
@@ -517,7 +555,7 @@ describe('Friends controller', () => {
 				user: user.user.username,
 				friend: friends[0].username,
 				approved: true,
-				approvedOn: new Date()
+				evaluatedOn: new Date()
 			});
 
 			await friend.save();

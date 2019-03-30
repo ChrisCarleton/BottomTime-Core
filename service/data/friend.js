@@ -14,23 +14,37 @@ const friendSchema = mongoose.Schema({
 	},
 	approved: {
 		type: Boolean,
-		required: true
+		index: true,
+		sparse: true
 	},
 	requestedOn: Date,
-	approvedOn: Date
+	evaluatedOn: Date,
+	reason: String
 });
 
-friendSchema.statics.getFriendsForUser = function (username, approved, done) {
+friendSchema.statics.getFriendsForUser = function (username, type) {
 	const query = {
 		user: username
 	};
 
-	if (typeof (approved) === 'boolean') {
-		query.approved = approved;
+	switch (type) {
+	case 'friends':
+		query.approved = true;
+		break;
+
+	case 'requests':
+		query.approved = { $ne: true };
+		break;
+
+	case 'both':
+		break;
+
+	default:
+		query.approved = true;
 	}
 
 	return this
-		.find(query, done)
+		.find(query)
 		.sort('friend')
 		.exec();
 };
@@ -44,8 +58,12 @@ friendSchema.methods.toCleanJSON = function () {
 		clean.requestedOn = moment(this.requestedOn).utc().toISOString();
 	}
 
-	if (clean.approvedOn) {
-		clean.approvedOn = moment(this.approvedOn).utc().toISOString();
+	if (clean.evaluatedOn) {
+		clean.evaluatedOn = moment(this.evaluatedOn).utc().toISOString();
+	}
+
+	if (typeof (clean.approved) === 'undefined') {
+		clean.approved = null;
 	}
 
 	return clean;

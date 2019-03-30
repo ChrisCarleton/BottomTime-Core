@@ -12,22 +12,8 @@ export async function ListFriends(req, res) {
 		return badRequest('Query string was invalid', isValid.error, res);
 	}
 
-	let approved = true;
-	switch (req.query.type) {
-	case 'requests':
-		approved = false;
-		break;
-
-	case 'both':
-		approved = null;
-		break;
-
-	default:
-		approved = true;
-	}
-
 	try {
-		const friends = await Friend.getFriendsForUser(req.account.username, approved);
+		const friends = await Friend.getFriendsForUser(req.account.username, req.query.type);
 		res.json(friends.map(f => f.toCleanJSON()));
 	} catch (err) {
 		const logId = req.logError(
@@ -45,14 +31,14 @@ async function CreateFriendRequestAdmin(req, res) {
 			friend: req.friend.username,
 			approved: true,
 			requestedOn: now,
-			approvedOn: now
+			evaluatedOn: now
 		}),
 		new Friend({
 			user: req.friend.username,
 			friend: req.account.username,
 			approved: true,
 			requestedOn: now,
-			approvedOn: now
+			evaluatedOn: now
 		})
 	];
 
@@ -69,8 +55,7 @@ export async function CreateFriendRequest(req, res) {
 		const friendRequest = new Friend({
 			user: req.account.username,
 			friend: req.friend.username,
-			requestedOn: new Date(),
-			approved: false
+			requestedOn: new Date()
 		});
 		await friendRequest.save();
 	} catch (err) {
@@ -117,7 +102,7 @@ export async function ApproveFriendRequest(req, res) {
 			return notFound(req, res);
 		}
 
-		if (friendRequest.approved) {
+		if (typeof (friendRequest.approved) !== 'undefined') {
 			return badRequest(
 				'Request could not be completed',
 				'Friend request has already been approved',
@@ -126,7 +111,7 @@ export async function ApproveFriendRequest(req, res) {
 		}
 
 		friendRequest.approved = true;
-		friendRequest.approvedOn = new Date();
+		friendRequest.evaluatedOn = new Date();
 		await friendRequest.save();
 	} catch (err) {
 		const logId = req.logError(
