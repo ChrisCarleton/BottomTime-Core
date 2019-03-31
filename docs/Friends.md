@@ -22,6 +22,15 @@ Describes a relation between a user and a friend.
 friendship request has been approved. `False` means it was rejected. If `null`, then this record
 represents an open friend request.
 
+### Handle Friend Request Object
+Can be passed in as part of a request to approve or reject a friend request.
+
+```json
+{
+	"reason": "String: The reason stated for approving or rejecting a friend request. (Max 250 characters.)"
+}
+```
+
 ## Routes
 ### GET /users/:username/friends
 Lists a user's friends and/or friend requests.
@@ -69,6 +78,10 @@ little counterintuitive.
 * **username** - Username of the user who made the initial request.
 * **friendName** - Username of the user approving/rejecting the request.
 
+#### Message Body
+The message body can contain a [Handle Friend Request](#handle-friend-request-object) Object stating a
+reason for the approval or rejection.
+
 #### Responses
 HTTP Status Code | Details
 ----- | -----
@@ -92,6 +105,24 @@ the friend being rejected would receive an e-mail notifying them.
 HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The call succeeded and the relationship was deleted. (Also returned if the relationship did not exist in the first place.)
+**403 Forbidden** | The request was rejected because the current user does not have permission to modify the friend relationships of the user specified in the **username** route parameter.
+**404 Not Found** | The request failed because the user specified in the **username** route parameter does not exist.
+**500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
+
+### DELETE /users/:username/friends
+A route for bulk deleting friend relationships/requests.
+
+#### Route Parameters
+* **username** - Username of the user whose friends will be queried.
+
+#### Message Body
+An array of `username`s of the friends or friend requests to be deleted from the user's account.
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**204 No Content** | The call succeeded and the relationships were deleted. (Relationships that did not exist in the first place will quietly succeed.)
+**400 Bad Request** | The request failed because the message body was malformed or invalid.
 **403 Forbidden** | The request was rejected because the current user does not have permission to modify the friend relationships of the user specified in the **username** route parameter.
 **404 Not Found** | The request failed because the user specified in the **username** route parameter does not exist.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.

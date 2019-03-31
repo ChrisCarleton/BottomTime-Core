@@ -1,5 +1,9 @@
 import Friend from '../data/friend';
-import { HandleFriendRequestSchema, ListFriendsSchema } from '../validation/friend';
+import {
+	BulkDeleteSchema,
+	HandleFriendRequestSchema,
+	ListFriendsSchema
+} from '../validation/friend';
 import Joi from 'joi';
 import mailer from '../mail/mailer';
 import templates from '../mail/templates';
@@ -245,8 +249,28 @@ export async function DeleteFriend(req, res) {
 	}
 }
 
-export function BulkDeleteFriends(req, res) {
-	res.sendStatus(501);
+export async function BulkDeleteFriends(req, res) {
+	const isValid = Joi.validate(req.body, BulkDeleteSchema);
+	if (isValid.error) {
+		return badRequest(
+			'Invalid request body',
+			isValid.error,
+			res
+		);
+	}
+
+	try {
+		await Friend.deleteMany({
+			user: req.account.username,
+			friend: { $in: req.body }
+		});
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError(
+			`Failed to delete friends for user ${ req.account.username }`,
+			err);
+		serverError(res, logId);
+	}
 }
 
 export async function RetrieveFriendAccount(req, res, next) {

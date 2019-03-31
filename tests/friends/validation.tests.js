@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import faker from 'faker';
 import Joi from 'joi';
 import {
+	BulkDeleteSchema,
 	HandleFriendRequestSchema,
 	ListFriendsSchema
 } from '../../service/validation/friend';
@@ -99,6 +100,55 @@ describe('Friends Validation Tests', () => {
 		it('Will fail if reason is too long', () => {
 			body.reason = faker.lorem.sentences(20);
 			validateHandleFriendRequest('string.max');
+		});
+	});
+
+	describe('Bulk Delete Users Validation', () => {
+		let body = null;
+
+		function makeUsername() {
+			return faker.internet.userName(
+				faker.name.firstName(),
+				faker.name.lastName()
+			).padEnd(6, 'a');
+		}
+
+		beforeEach(() => {
+			body = new Array(5).fill(null).map(() => makeUsername());
+		});
+
+		function validateBulkDelete(expectedError) {
+			const isValid = Joi.validate(body, BulkDeleteSchema);
+			ensureValid(isValid, expectedError);
+		}
+
+		it('Succeeds if array is valid', () => {
+			validateBulkDelete();
+		});
+
+		it('Fails if array element is not a user name', () => {
+			body[1] = '## Totally INval!d';
+			validateBulkDelete('string.regex.base');
+		});
+
+		it('Fails if array is emtpy', () => {
+			body = [];
+			validateBulkDelete('array.includesRequiredUnknowns');
+		});
+
+		it('Fails if body is empty', () => {
+			body = null;
+			validateBulkDelete('array.base');
+		});
+
+		it('Fails if array has empty elements', () => {
+			body[3] = null;
+			validateBulkDelete('string.base');
+		});
+
+		it('Fails if array contains too many elements', () => {
+			body = new Array(1200).fill(null).map(() => makeUsername());
+			validateBulkDelete('array.max');
 		});
 	});
 });

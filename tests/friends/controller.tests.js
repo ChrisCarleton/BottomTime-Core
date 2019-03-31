@@ -863,4 +863,109 @@ describe('Friends controller', () => {
 			expect(body.status).to.equal(500);
 		});
 	});
+
+	describe('DELETE /users/:username/friends', () => {
+		it('Will delete friend records', async () => {
+			const records = friends.map(f => new Friend({
+				user: user.user.username,
+				friend: f.username,
+				approved: true,
+				requestedOn: new Date(),
+				evaluatedOn: new Date()
+			}));
+			await Promise.all(records.map(f => f.save()));
+
+			await request(App)
+				.del(`/users/${ user.user.username }/friends`)
+				.set(...user.authHeader)
+				.send(friends.map(f => f.username))
+				.expect(204);
+
+			const results = await Friend.find({ user: user.user.username });
+			expect(results).to.have.length(0);
+		});
+
+		it('Will succeed even if not all friend records exist', async () => {
+			const records = friends.slice(0, 2).map(f => new Friend({
+				user: user.user.username,
+				friend: f.username,
+				approved: true,
+				requestedOn: new Date(),
+				evaluatedOn: new Date()
+			}));
+			await Promise.all(records.map(f => f.save()));
+
+			await request(App)
+				.del(`/users/${ user.user.username }/friends`)
+				.set(...user.authHeader)
+				.send(friends.map(f => f.username))
+				.expect(204);
+
+			const results = await Friend.find({ user: user.user.username });
+			expect(results).to.have.length(0);
+		});
+
+		it('Returns 400 if request body is malformed', async () => {
+			const records = friends.map(f => new Friend({
+				user: user.user.username,
+				friend: f.username,
+				approved: true,
+				requestedOn: new Date(),
+				evaluatedOn: new Date()
+			}));
+			await Promise.all(records.map(f => f.save()));
+
+			const requestArray = friends.map(f => f.username);
+			requestArray[1] = 42;
+			const { body } = await request(App)
+				.del(`/users/${ user.user.username }/friends`)
+				.set(...user.authHeader)
+				.send(requestArray)
+				.expect(400);
+
+			expect(body.status).to.equal(400);
+			expect(body.errorId).to.equal(ErrorIds.badRequest);
+
+			const results = await Friend.find({ user: user.user.username });
+			expect(results).to.have.length(4);
+		});
+
+		it('Returns 404 if the user specified in the route does not exist', async () => {
+			const { body } = await request(App)
+				.del('/users/not.a.user/friends')
+				.set(...user.authHeader)
+				.send(friends.map(f => f.username))
+				.expect(404);
+
+			expect(body.status).to.equal(404);
+			expect(body.errorId).to.equal(ErrorIds.notFound);
+		});
+
+		it('Returns 500 if a server error occurs', async () => {
+			stub = sinon.stub(Friend, 'deleteMany');
+			stub.rejects('nope');
+
+			const records = friends.map(f => new Friend({
+				user: user.user.username,
+				friend: f.username,
+				approved: true,
+				requestedOn: new Date(),
+				evaluatedOn: new Date()
+			}));
+			await Promise.all(records.map(f => f.save()));
+
+			const { body } = await request(App)
+				.del(`/users/${ user.user.username }/friends`)
+				.set(...user.authHeader)
+				.send(friends.map(f => f.username))
+				.expect(500);
+
+			expect(body.status).to.equal(500);
+			expect(body.errorId).to.equal(ErrorIds.serverError);
+			expect(body.logId).to.exist;
+
+			const results = await Friend.find({ user: user.user.username });
+			expect(results).to.have.length(4);
+		});
+	});
 });
