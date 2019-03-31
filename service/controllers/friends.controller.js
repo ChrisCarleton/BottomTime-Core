@@ -142,6 +142,7 @@ export async function ApproveFriendRequest(req, res) {
 
 		friendRequest.approved = true;
 		friendRequest.evaluatedOn = new Date();
+		friendRequest.reason = req.body.reason;
 		await friendRequest.save();
 	} catch (err) {
 		const logId = req.logError(
@@ -205,7 +206,6 @@ export async function RejectFriendRequest(req, res) {
 		friendRequest.reason = req.body.reason;
 		await friendRequest.save();
 	} catch (err) {
-		console.error(err);
 		const logId = req.logError(
 			`Failed to approve friend request from ${ req.params.username } to ${ req.params.friendName }.`,
 			err);
