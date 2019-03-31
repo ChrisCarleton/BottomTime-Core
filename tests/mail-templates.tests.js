@@ -4,6 +4,7 @@ import path from 'path';
 import {
 	ApproveFriendRequestEmail,
 	NewFriendRequestEmail,
+	RejectFriendRequestEmail,
 	ResetPasswordEmail
 } from '../service/mail/templates';
 
@@ -70,4 +71,17 @@ describe('Templating Engine', () => {
 			});
 	});
 
+	it('Friend Request Rejected Template', done => {
+		const message = RejectFriendRequestEmail(
+			'John',
+			'Reggie Birkham',
+			'I don\'t like you.'
+		);
+
+		fs.writeFile(
+			path.join(__dirname, 'assets/friend-request-rejected.html'),
+			message,
+			{ encoding: 'utf8' },
+			done);
+	});
 });

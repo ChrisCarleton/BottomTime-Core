@@ -296,6 +296,27 @@ describe('Friends controller', () => {
 			expect(templateSpy.called).to.be.false;
 		});
 
+		it('Will return 400 if friend request already exists', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				requestedOn: new Date()
+			});
+
+			await friendRequest.save();
+
+			templateSpy = sinon.spy(templates, 'NewFriendRequestEmail');
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+
+			await request(App)
+				.put(`/users/${ user.user.username }/friends/${ friends[0].username }`)
+				.set(...user.authHeader)
+				.expect(400);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
 		it('Will return 404 if user does not exist', async () => {
 			const response = await request(App)
 				.put(`/users/no.such.user/friends/${ friends[0].username }`)
@@ -365,7 +386,7 @@ describe('Friends controller', () => {
 
 			await request(App)
 				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
-				.send(...friendAuthHeader)
+				.set(...friendAuthHeader)
 				.expect(204);
 
 			const result = await Friend.findOne({
@@ -407,7 +428,7 @@ describe('Friends controller', () => {
 
 			await request(App)
 				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
-				.send(...friendAuthHeader)
+				.set(...friendAuthHeader)
 				.expect(400);
 
 			expect(mailerSpy.called).to.be.false;
@@ -429,7 +450,28 @@ describe('Friends controller', () => {
 
 			await request(App)
 				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
-				.send(...friendAuthHeader)
+				.set(...friendAuthHeader)
+				.expect(400);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 400 if request body is invalid', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'ApproveFriendRequestEmail');
+
+			await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
+				.set(...friendAuthHeader)
+				.send({ lol: 'wat' })
 				.expect(400);
 
 			expect(mailerSpy.called).to.be.false;
@@ -449,7 +491,7 @@ describe('Friends controller', () => {
 
 			const response = await request(App)
 				.post(`/users/no.such.user/friends/${ friends[0].username }/approve`)
-				.send(...friendAuthHeader)
+				.set(...friendAuthHeader)
 				.expect(404);
 
 			const { body } = response;
@@ -473,7 +515,7 @@ describe('Friends controller', () => {
 
 			const response = await request(App)
 				.post(`/users/${ user.user.username }/friends/no.such.user/approve`)
-				.send(...friendAuthHeader)
+				.set(...friendAuthHeader)
 				.expect(404);
 
 			const { body } = response;
@@ -490,7 +532,7 @@ describe('Friends controller', () => {
 
 			const response = await request(App)
 				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
-				.send(...friendAuthHeader)
+				.set(...friendAuthHeader)
 				.expect(404);
 
 			const { body } = response;
@@ -514,7 +556,7 @@ describe('Friends controller', () => {
 
 			const response = await request(App)
 				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
-				.send(...friendAuthHeader)
+				.set(...friendAuthHeader)
 				.expect(500);
 
 			const { body } = response;
@@ -536,7 +578,7 @@ describe('Friends controller', () => {
 
 			await request(App)
 				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
-				.send(...friendAuthHeader)
+				.set(...friendAuthHeader)
 				.expect(204);
 
 			const result = await Friend.findOne({
@@ -545,6 +587,233 @@ describe('Friends controller', () => {
 			});
 			expect(result).to.exist;
 			expect(result.approved).to.be.true;
+			expect(result.evaluatedOn).to.exist;
+		});
+	});
+
+	describe('POST /users/:username/friends/:friendName/reject', () => {
+		let friendAuthHeader = null;
+
+		before(async () => {
+			friendAuthHeader = await generateAuthHeader(friends[0].username);
+		});
+
+		it('Will reject a friend request and send a notification email', async () => {
+			const expectedReason = 'New phone. Who dis?';
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'RejectFriendRequestEmail');
+
+			await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/reject`)
+				.set(...friendAuthHeader)
+				.send({ reason: expectedReason })
+				.expect(204);
+
+			const result = await Friend.findOne({
+				user: user.user.username,
+				friend: friends[0].username
+			});
+			expect(result).to.exist;
+			expect(result.approved).to.be.false;
+			expect(result.evaluatedOn).to.exist;
+
+			expect(mailerSpy.called).to.be.true;
+			expect(templateSpy.called).to.be.true;
+
+			const [ userFriendlyName, friendFriendlyName, reason ]
+				= templateSpy.getCall(0).args;
+			expect(userFriendlyName).to.equal(user.user.firstName);
+			expect(friendFriendlyName).to.equal(`${ friends[0].firstName } ${ friends[0].lastName }`);
+			expect(reason).to.equal(expectedReason);
+
+			const [ mailOptions ] = mailerSpy.getCall(0).args;
+			expect(mailOptions.to).to.equal(user.user.email);
+			expect(mailOptions.from).to.not.exist;
+			expect(mailOptions.subject).to.equal('Dive Buddy Request Rejected');
+			expect(mailOptions.html).to.exist;
+		});
+
+		it('Will return 400 if the request has already been approved', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				approved: true,
+				requestedOn: new Date(),
+				evaluatedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'RejectFriendRequestEmail');
+
+			await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/reject`)
+				.set(...friendAuthHeader)
+				.expect(400);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 400 if the request has already been rejected', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				approved: false,
+				requestedOn: new Date(),
+				evaluatedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'RejectFriendRequestEmail');
+
+			await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/reject`)
+				.set(...friendAuthHeader)
+				.expect(400);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 400 if request body is invalid', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'RejectFriendRequestEmail');
+
+			await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/reject`)
+				.set(...friendAuthHeader)
+				.send({ lol: 'wat' })
+				.expect(400);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 404 if user does not exist', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'RejectFriendRequestEmail');
+
+			const response = await request(App)
+				.post(`/users/no.such.user/friends/${ friends[0].username }/reject`)
+				.set(...friendAuthHeader)
+				.expect(404);
+
+			const { body } = response;
+			expect(body.errorId).to.equal(ErrorIds.notFound);
+			expect(body.status).to.equal(404);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 404 if friend does not exist', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'RejectFriendRequestEmail');
+
+			const response = await request(App)
+				.post(`/users/${ user.user.username }/friends/no.such.user/reject`)
+				.set(...friendAuthHeader)
+				.expect(404);
+
+			const { body } = response;
+			expect(body.errorId).to.equal(ErrorIds.notFound);
+			expect(body.status).to.equal(404);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 404 if the friend request does not exist', async () => {
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			templateSpy = sinon.spy(templates, 'RejectFriendRequestEmail');
+
+			const response = await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/reject`)
+				.set(...friendAuthHeader)
+				.expect(404);
+
+			const { body } = response;
+			expect(body.errorId).to.equal(ErrorIds.notFound);
+			expect(body.status).to.equal(404);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 500 if an error occurs approving the request', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub.rejects('nope');
+
+			const response = await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/reject`)
+				.set(...friendAuthHeader)
+				.expect(500);
+
+			const { body } = response;
+			expect(body.errorId).to.equal(ErrorIds.serverError);
+			expect(body.status).to.equal(500);
+			expect(body.logId).to.exist;
+		});
+
+		it('Will succeed even if the notification e-mail cannot be sent', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			stub = sinon.stub(mailer, 'sendMail');
+			stub.rejects('nope');
+
+			await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/reject`)
+				.set(...friendAuthHeader)
+				.expect(204);
+
+			const result = await Friend.findOne({
+				user: user.user.username,
+				friend: friends[0].username
+			});
+			expect(result).to.exist;
+			expect(result.approved).to.be.false;
 			expect(result.evaluatedOn).to.exist;
 		});
 	});

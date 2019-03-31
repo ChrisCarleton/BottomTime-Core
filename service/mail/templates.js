@@ -44,8 +44,14 @@ export function ApproveFriendRequestEmail(userFriendlyName, friendUsername, frie
 	});
 }
 
-export function RejectFriendRequestEmail() {
-	return rejectFriendRequestTemplate({});
+export function RejectFriendRequestEmail(userFriendlyName, friendFriendlyName, reason) {
+	reason = reason || 'None.';
+
+	return rejectFriendRequestTemplate({
+		userFriendlyName,
+		friendFriendlyName,
+		reason
+	});
 }
 
 export default {

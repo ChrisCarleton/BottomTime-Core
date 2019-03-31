@@ -1,6 +1,10 @@
 import { expect } from 'chai';
+import faker from 'faker';
 import Joi from 'joi';
-import { ListFriendsSchema } from '../../service/validation/friend';
+import {
+	HandleFriendRequestSchema,
+	ListFriendsSchema
+} from '../../service/validation/friend';
 
 function ensureValid(isValid, expectedError) {
 	if (expectedError) {
@@ -60,6 +64,41 @@ describe('Friends Validation Tests', () => {
 		it('Fails if type parameter is not a recognised value.', () => {
 			query.type = 'not-valid';
 			validateListFriendsQuery('any.allowOnly');
+		});
+	});
+
+	describe('Handle Friend Request Validation', () => {
+
+		let body = null;
+
+		beforeEach(() => {
+			body = {
+				reason: 'A good reason'
+			};
+		});
+
+		function validateHandleFriendRequest(expectedError) {
+			const isValid = Joi.validate(body, HandleFriendRequestSchema);
+			ensureValid(isValid, expectedError);
+		}
+
+		it('Will succeed if request is valid', () => {
+			validateHandleFriendRequest();
+		});
+
+		it('Will succeed if reason is missing', () => {
+			delete body.reason;
+			validateHandleFriendRequest();
+		});
+
+		it('Will fail if reason is not a string', () => {
+			body.reason = 42;
+			validateHandleFriendRequest('string.base');
+		});
+
+		it('Will fail if reason is too long', () => {
+			body.reason = faker.lorem.sentences(20);
+			validateHandleFriendRequest('string.max');
 		});
 	});
 });
