@@ -1,4 +1,5 @@
 import { forbidden, notFound, serverError, unauthorized } from '../utils/error-response';
+import Friend from '../data/friend';
 import User from '../data/user';
 
 export function RequireUser(req, res, next) {
@@ -16,6 +17,19 @@ export async function RetrieveUserAccount(req, res, next) {
 			return notFound(req, res);
 		}
 
+		const friends = await Friend
+			.find({
+				user: user.username,
+				approved: true
+			})
+			.sort('friend')
+			.select('friend')
+			.exec();
+		req.friends = {};
+		friends.forEach(f => {
+			req.friends[f.friend] = true;
+		});
+
 		req.account = user;
 		return next();
 	} catch (err) {
@@ -31,6 +45,14 @@ export function AssertUserReadPermission(req, res, next) {
 	}
 
 	if (req.account.logsVisibility === 'public') {
+		req.readOnlyResource = true;
+		return next();
+	}
+
+	if (!req.friends) {
+		console.error('dafuq?');
+	}
+	if (req.user && req.friends[req.user.username]) {
 		req.readOnlyResource = true;
 		return next();
 	}
