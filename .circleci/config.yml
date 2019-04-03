@@ -112,6 +112,12 @@ jobs:
       - attach_workspace:
           at: terraform/env/
       - run:
+          name: Package Database Maintenance Function
+          working_directory: lambda/db-maintenance
+          command: |
+            npm install
+            zip ../../terraform/modules/resources/db-maintenance.zip -r *
+      - run:
           name: Deploy Prod Environment
           working_directory: terraform/env/prod/us-east-1
           command: |
