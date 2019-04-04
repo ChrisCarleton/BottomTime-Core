@@ -33,7 +33,9 @@ const config = {
 		Do not set! This will be set automatically by the ECS agent hosting the application container.
 		(That's why the BT_ prefix is missing from the environment variable!)
 	*/
-	containerMetadataFile: process.env.ECS_CONTAINER_METADATA_FILE
+	containerMetadataFile: process.env.ECS_CONTAINER_METADATA_FILE,
+
+	friendLimit: process.env.BT_FRIEND_LIMIT || 1000
 };
 
 if (!config.smtp.auth.user) {

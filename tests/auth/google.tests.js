@@ -109,11 +109,11 @@ describe('Sign-In With Google', () => {
 		try {
 			await SignInWithGoogle(null, null, ExpectedProfile, spy);
 			const [ error, account ] = spy.firstCall.args;
-			expect(error).to.exist;
-			expect(error.errorId).to.equal(ErrorIds.serverError);
-			expect(error.status).to.equal(500);
-			expect(error.logId).to.exist;
-			expect(account).to.not.exist;
+			expect(account).to.exist;
+			expect(account.errorId).to.equal(ErrorIds.authError);
+			expect(account.status).to.equal(500);
+			expect(account.logId).to.exist;
+			expect(error).to.not.exist;
 		} finally {
 			stub.restore();
 		}

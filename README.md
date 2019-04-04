@@ -14,6 +14,7 @@ Dependencies [![Dependencies](https://david-dm.org/ChrisCarleton/BottomTime-Core
 The application is configured through the use of environment variables. Any of these can be set to change
 the behaviour of the running application:
 
+* **BT_FRIEND_LIMIT** Sets the maximum number of friends users are limitted to. The default is 1000.
 * **BT_LOG_FILE** Setting this to a file name will force the application to write its logs to the file
 rather than `stdout`.
 * **BT_LOG_LEVEL** Sets the level of verbosity of the log output. Valid values are `trace`, `debug`, `info`,
