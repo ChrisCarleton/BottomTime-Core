@@ -118,6 +118,18 @@ userSchema.methods.getProfileJSON = function () {
 	};
 };
 
+userSchema.methods.getFriendlyName = function () {
+	return this.firstName || this.username;
+};
+
+userSchema.methods.getFullName = function () {
+	if (this.firstName && this.lastName) {
+		return `${ this.firstName } ${ this.lastName }`;
+	}
+
+	return this.firstName || this.username;
+};
+
 export default mongoose.model('User', userSchema);
 
 export function cleanUpUser(user) {

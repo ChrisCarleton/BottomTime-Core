@@ -2,6 +2,7 @@ import containerMetadata from '../utils/container-metadata';
 import uuid from 'uuid/v4';
 
 export const ErrorIds = {
+	authError: 'bottom-time/errors/auth',
 	badRequest: 'bottom-time/errors/bad-request',
 	conflict: 'bottom-time/errors/conflict',
 	forbidden: 'bottom-time/errors/forbidden',

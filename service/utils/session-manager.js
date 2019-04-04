@@ -16,7 +16,7 @@ async function purgeExpiredSessions() {
 
 	setTimeout(
 		purgeExpiredSessions,
-		moment.duration(1, 'm').milliseconds());
+		moment.duration(10, 'm').milliseconds());
 }
 
 async function createSessionToken(username, device) {

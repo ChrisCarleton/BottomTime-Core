@@ -12,6 +12,17 @@ import sessionManager from './utils/session-manager';
 import url from 'url';
 import User from './data/user';
 
+function generateServerError(err) {
+	const logId = logError(err);
+	return {
+		errorId: ErrorIds.authError,
+		logId,
+		status: 500,
+		message: 'A server error occurred.',
+		details: 'Your request could not be completed at this time. Please try again later.'
+	};
+}
+
 passport.use(new LocalStrategy(async (username, password, done) => {
 	try {
 		const user = await User.findByUsername(username);
@@ -42,14 +53,10 @@ passport.use(new JwtStrategy(
 
 			return done(null, user);
 		} catch (err) {
-			const logId = logError(err);
-			return done({
-				errorId: ErrorIds.serverError,
-				logId,
-				status: 500,
-				message: 'A server error occurred.',
-				details: 'Your request could not be completed at this time. Please try again later.'
-			});
+			return done(
+				null,
+				generateServerError(err)
+			);
 		}
 	}
 ));
@@ -96,14 +103,10 @@ export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
 		log.info('Created new user account based on Google Sign In:', user.username);
 		return cb(null, user);
 	} catch (err) {
-		const logId = logError('An error occurred while attempting to authenticate a user using Google', err);
-		return cb({
-			errorId: ErrorIds.serverError,
-			logId,
-			status: 500,
-			message: 'A server error occurred.',
-			details: 'Your request could not be completed at this time. Please try again later.'
-		});
+		return cb(
+			null,
+			generateServerError(err)
+		);
 	}
 }
 
@@ -124,5 +127,19 @@ export default app => {
 		} else {
 			return next();
 		}
+	});
+
+	// Passport likes to do its own thing when errors occur. It does not conform to the
+	// conventions of the application as documented in the API documentation.
+	//
+	// To avoid this, errors that occur during authentication are passed back to Passport as
+	// "users" rather than errors. This additional piece of middleware captures those errors
+	// and handles them properly.
+	app.use((req, res, next) => {
+		if (req.user && req.user.errorId) {
+			return res.status(500).json(req.user);
+		}
+
+		return next();
 	});
 };

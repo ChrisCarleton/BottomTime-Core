@@ -35,19 +35,19 @@ describe('Log Entry Searching', () => {
 		privateUser = await createFakeAccount('user', 'private');
 		adminUser = await createFakeAccount('admin');
 
-		await Promise.all(
-			_.map(new Array(500), () => new LogEntry(fakeLogEntry(friendsOnlyUser.user.id)).save())
+		await LogEntry.insertMany(
+			_.map(new Array(500), () => new LogEntry(fakeLogEntry(friendsOnlyUser.user.id)))
 		);
-		await Promise.all(
-			_.map(new Array(20), () => new LogEntry(fakeLogEntry(publicUser.user.id)).save())
+		await LogEntry.insertMany(
+			_.map(new Array(20), () => new LogEntry(fakeLogEntry(publicUser.user.id)))
 		);
-		await Promise.all(
+		await LogEntry.insertMany(
 			_.map(new Array(100), () => {
 				const newEntry = new LogEntry(fakeLogEntry(privateUser.user.id));
 				newEntry.entryTime = faker.random.arrayElement(SameyEntryTimes);
 				newEntry.maxDepth = faker.random.arrayElement(SameyMaxDepths);
 				newEntry.bottomTime = faker.random.arrayElement(SameyBottomTimes);
-				return newEntry.save();
+				return newEntry;
 			})
 		);
 	});
