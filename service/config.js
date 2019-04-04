@@ -29,6 +29,10 @@ const config = {
 		}
 	},
 
+	/*
+		Do not set! This will be set automatically by the ECS agent hosting the application container.
+		(That's why the BT_ prefix is missing from the environment variable!)
+	*/
 	containerMetadataFile: process.env.ECS_CONTAINER_METADATA_FILE
 };
 

@@ -40,25 +40,21 @@ const Friend = mongoose.model('Friend', friendsSchema);
 
 exports.handler = async () => {
 	await mongoose.connect(
-		process.env.CONNECTION_STRING,
+		process.env.BT_MONGO_ENDPOINT || 'mongodb://localhost/dev',
 		{
 			autoIndex: false,
 			family: 4,
 			useNewUrlParser: true
 		});
 
-	const sessionExpiration = moment().subtract(
-		process.env.SESSION_EXPIRATION_PERIOD,
-		'h'
-	).toDate();
 	const friendRequestExpiration = moment().subtract(
-		process.env.FRIEND_REQUEST_EXPIRATION_PERIOD,
+		process.env.BT_FRIEND_REQUEST_EXPIRATION_PERIOD || 240,
 		'h'
 	).toDate();
 
 	await Promise.all([
 		Session.deleteMany({
-			expires: { $lte: sessionExpiration }
+			expires: { $lte: moment().utc().unix() }
 		}),
 		Friend.deleteMany({
 			approved: false,

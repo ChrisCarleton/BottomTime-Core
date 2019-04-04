@@ -45,7 +45,7 @@ resource "aws_cloudwatch_metric_alarm" "service_high_latency" {
 
 resource "aws_cloudwatch_event_rule" "regular-maintenance" {
 	name = "BottomTime-RegularDBMaintenance-${var.region}-${var.env}"
-	schedule_expression = "cron(0 1/6 ? * * *)"
+	schedule_expression = "${var.database_maintenance_frequency}"
 }
 
 resource "aws_cloudwatch_event_target" "regular-maintenance" {

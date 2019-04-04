@@ -79,6 +79,20 @@ Terraform is used to spin up an AWS ECS-powered environment to host the applicat
 found in `terraform/env/`.
 * The CircleCI deployment pipeline is controlled by editing `.circleci/config.yml`.
 
+## Lambda Functions
+Currently, the application does have one Node.JS component that is meant to run as an AWS Lambda function.
+The task can be found at `lambda/db-maintenance/`. The task is responsible for purging old expired records
+from the database. (Specifically, it will delete expired user sessions and friend requests that have been
+rejected.) It will be run on a scheduled event triggered by AWS CloudWatch.
+
+There is a test suite to exercise the function. The tests can be found at `tests/lambdas.tests.js`.
+
+The function takes a few environment variables to do its job:
+* **BT_MONGO_ENDPOINT** Same as documented above. It's the connection string needed to access the MongoDB
+database. The default is `mongodb://localhost/dev`.
+* **BT_FRIEND_REQUEST_EXPIRATION_PERIOD** Number of hours a rejected friend request should be kept around
+for before being expired and deleted. The default is 240 hours.
+
 ## Administrative Tasks
 A number of one-off administrative tasks have been created as runnable Gulp tasks. These are largely for
 working with the database to set up initial data in a new environment.

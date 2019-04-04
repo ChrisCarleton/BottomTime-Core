@@ -12,9 +12,8 @@ resource "aws_lambda_function" "db_maintenance" {
 
 	environment {
 		variables = {
-			CONNECTION_STRING = "${var.mongodb_endpoint}"
-			SESSION_EXPIRATION_PERIOD = 72
-			FRIEND_REQUEST_EXPIRATION_PERIOD = 240
+			BT_MONGO_ENDPOINT = "${var.mongodb_endpoint}"
+			BT_FRIEND_REQUEST_EXPIRATION_PERIOD = "${var.friend_request_expiration_period}"
 		}
 	}
 }
