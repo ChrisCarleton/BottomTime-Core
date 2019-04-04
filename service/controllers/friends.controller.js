@@ -4,6 +4,7 @@ import {
 	HandleFriendRequestSchema,
 	ListFriendsSchema
 } from '../validation/friend';
+import config from '../config';
 import Joi from 'joi';
 import mailer from '../mail/mailer';
 import templates from '../mail/templates';
@@ -61,6 +62,18 @@ export async function CreateFriendRequest(req, res) {
 			return badRequest(
 				'Could not create friend request.',
 				'Friend relation already exists between the requested users.',
+				res);
+		}
+
+		const friendCount = await Friend.estimatedDocumentCount({
+			user: req.account.username,
+			approved: true
+		});
+
+		if (friendCount >= config.friendLimit) {
+			return badRequest(
+				'Could not create friend request.',
+				`Friend limit of ${ config.friendLimit } has been reached.`,
 				res);
 		}
 

@@ -29,7 +29,9 @@ const config = {
 		}
 	},
 
-	containerMetadataFile: process.env.ECS_CONTAINER_METADATA_FILE
+	containerMetadataFile: process.env.ECS_CONTAINER_METADATA_FILE,
+
+	friendLimit: process.env.BT_FRIEND_LIMIT || 1000
 };
 
 if (!config.smtp.auth.user) {

@@ -1,8 +1,10 @@
 import _ from 'lodash';
 import { App } from '../../service/server';
 import createFakeAccount from '../util/create-fake-account';
+import config from '../../service/config';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
+import faker from 'faker';
 import fakeUser from '../util/fake-user';
 import Friend from '../../service/data/friend';
 import generateAuthHeader from '../util/generate-auth-header';
@@ -292,6 +294,36 @@ describe('Friends controller', () => {
 			expect(friendRequests[1].approved).to.be.true;
 			expect(friendRequests[1].evaluatedOn).to.exist;
 
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will return 400 if friend limit is exceeded', async () => {
+			templateSpy = sinon.spy(templates, 'NewFriendRequestEmail');
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+
+			const relations = new Array(config.friendLimit)
+				.fill(null)
+				.map(() => new Friend({
+					user: user.user.username,
+					friend: faker.internet.userName(),
+					approved: true,
+					requestedOn: new Date(),
+					evaluatedOn: new Date()
+				}));
+			await Promise.all(relations.map(r => r.save()));
+
+			await request(App)
+				.put(`/users/${ user.user.username }/friends/${ friends[0].username }`)
+				.set(...user.authHeader)
+				.expect(400);
+
+			const friendRequest = await Friend.findOne({
+				user: user.user.username,
+				friend: friends[0].username
+			});
+
+			expect(friendRequest).to.not.exist;
 			expect(mailerSpy.called).to.be.false;
 			expect(templateSpy.called).to.be.false;
 		});
