@@ -311,7 +311,7 @@ describe('Friends controller', () => {
 					requestedOn: new Date(),
 					evaluatedOn: new Date()
 				}));
-			await Promise.all(relations.map(r => r.save()));
+			await Friend.insertMany(relations);
 
 			await request(App)
 				.put(`/users/${ user.user.username }/friends/${ friends[0].username }`)
@@ -347,6 +347,50 @@ describe('Friends controller', () => {
 
 			expect(mailerSpy.called).to.be.false;
 			expect(templateSpy.called).to.be.false;
+		});
+
+		it('Will simply replace a previously-rejected request', async () => {
+			templateSpy = sinon.spy(templates, 'NewFriendRequestEmail');
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+
+			let friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				approved: false,
+				requestedOn: new Date(),
+				evaluatedOn: new Date()
+			});
+			await friendRequest.save();
+			const expectedId = friendRequest.id;
+
+			await request(App)
+				.put(`/users/${ user.user.username }/friends/${ friends[0].username }`)
+				.set(...user.authHeader)
+				.expect(204);
+
+			friendRequest = await Friend.findOne({
+				user: user.user.username,
+				friend: friends[0].username
+			});
+			expect(friendRequest).to.exist;
+			expect(friendRequest.id).to.equal(expectedId);
+			expect(friendRequest.requestedOn).to.exist;
+			expect(friendRequest.approved).to.not.exist;
+
+			expect(mailerSpy.called).to.be.true;
+			expect(templateSpy.called).to.be.true;
+
+			const [ userFriendlyName, friendUsername, friendFriendlyName ]
+				= templateSpy.getCall(0).args;
+			expect(userFriendlyName).to.equal(`${ user.user.firstName } ${ user.user.lastName }`);
+			expect(friendUsername).to.equal(friends[0].username);
+			expect(friendFriendlyName).to.equal(friends[0].firstName);
+
+			const [ mailOptions ] = mailerSpy.getCall(0).args;
+			expect(mailOptions.to).to.equal(friends[0].email);
+			expect(mailOptions.from).to.not.exist;
+			expect(mailOptions.subject).to.equal('Dive Buddy Request');
+			expect(mailOptions.html).to.exist;
 		});
 
 		it('Will return 404 if user does not exist', async () => {

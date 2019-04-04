@@ -8,6 +8,17 @@ import {
 	ResetPasswordEmail
 } from '../service/mail/templates';
 
+function compareFile(file, message, done) {
+	fs.readFile(file, 'utf8', (err, data) => {
+		if (err) {
+			return done(err);
+		}
+
+		expect(message).to.equal(data);
+		done();
+	});
+}
+
 describe('Templating Engine', () => {
 
 	it('Reset Password Template', done => {
@@ -16,18 +27,11 @@ describe('Templating Engine', () => {
 			'Mike Rogers',
 			'1521ace0-0551-11e9-9679-08606e10bc93');
 
-		fs.readFile(
+		compareFile(
 			path.join(__dirname, 'assets/reset-email.html'),
-			'utf8',
-			(err, data) => {
-				if (err) {
-					return done(err);
-				}
-
-				expect(message).to.equal(data);
-				done();
-			});
-
+			message,
+			done
+		);
 	});
 
 	it('New Friend Request Template', done => {
@@ -37,17 +41,10 @@ describe('Templating Engine', () => {
 			'Timmy McDougal'
 		);
 
-		fs.readFile(
+		compareFile(
 			path.join(__dirname, 'assets/new-friend-request.html'),
-			'utf8',
-			(err, data) => {
-				if (err) {
-					return done(err);
-				}
-
-				expect(message).to.equal(data);
-				done();
-			}
+			message,
+			done
 		);
 	});
 
@@ -58,17 +55,11 @@ describe('Templating Engine', () => {
 			'Steve Michaelson'
 		);
 
-		fs.readFile(
+		compareFile(
 			path.join(__dirname, 'assets/friend-request-approved.html'),
-			'utf8',
-			(err, data) => {
-				if (err) {
-					return done(err);
-				}
-
-				expect(data).to.equal(message);
-				done();
-			});
+			message,
+			done
+		);
 	});
 
 	it('Friend Request Rejected Template', done => {
@@ -78,10 +69,10 @@ describe('Templating Engine', () => {
 			'I don\'t like you.'
 		);
 
-		fs.writeFile(
+		compareFile(
 			path.join(__dirname, 'assets/friend-request-rejected.html'),
 			message,
-			{ encoding: 'utf8' },
-			done);
+			done
+		);
 	});
 });

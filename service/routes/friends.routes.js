@@ -9,6 +9,7 @@ import {
 	CreateFriendRequest,
 	DeleteFriend,
 	ListFriends,
+	LoadFriendRequestData,
 	RejectFriendRequest,
 	RetrieveFriendAccount
 } from '../controllers/friends.controller';
@@ -25,6 +26,6 @@ module.exports = app => {
 		.put(RetrieveUserAccount, RetrieveFriendAccount, CreateFriendRequest)
 		.delete(RetrieveUserAccount, DeleteFriend);
 
-	app.post(`${ FriendRoute }/approve`, ApproveFriendRequest);
-	app.post(`${ FriendRoute }/reject`, RejectFriendRequest);
+	app.post(`${ FriendRoute }/approve`, LoadFriendRequestData, ApproveFriendRequest);
+	app.post(`${ FriendRoute }/reject`, LoadFriendRequestData, RejectFriendRequest);
 };

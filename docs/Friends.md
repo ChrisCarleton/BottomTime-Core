@@ -64,6 +64,7 @@ friends with each other (that is, a two-way relationship will be established.) I
 HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The call succeeded and the friend request was created.
+**400 Bad Request** | The request failed because the friend request already exists or the user has reached the friend limit. An exception will be made if the friend request exists but has already been rejected. In this case it is simply re-opened.
 **403 Forbidden** | The request was rejected because the current user does not have permission to modify the indicated user's friends.
 **404 Not Found** | The request failed because the user specified in the **username** route parameter does not exist or the user specified in **friendName** route parameter does not exist.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
