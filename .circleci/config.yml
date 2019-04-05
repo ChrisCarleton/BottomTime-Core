@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: node:10.15.3-jessie
+      - image: node:10.15.3
         environment:
           BT_MONGO_ENDPOINT: mongodb://mongo/dev
           BT_SMTP_HOST: smtp
@@ -19,12 +19,10 @@ jobs:
             - bt_core_{{ checksum "package.json" }}
             - bt_core_
       - run:
-          name: Package Database Maintenance Lambda
+          name: Database Maintenance Lambda Dependencies
           working_directory: lambda/db-maintenance
           command: |
             npm install
-            mkdir ../../temp/
-            zip -rq ../../temp/db-maintenance.zip index.js node_modules/
       - run:
           name: Test
           command: |
@@ -40,8 +38,23 @@ jobs:
           paths:
             - node_modules/
             - lambda/db-maintenance/node_modules/
+
+  package-lambdas:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - bt_core_{{ checksum "package.json" }}
+            - bt_core_
+      - run:
+          name: Package Database Maintenance Lambda
+          working_directory: lambda/db-maintenance/
+          command: |
+            zip -rq ../db-maintenance.zip index.js node_modules/
       - persist_to_workspace:
-          root: temp/
+          root: lambda/
           paths:
             - db-maintenance.zip
 
@@ -135,6 +148,14 @@ workflows:
   build-and-deploy:
     jobs:
       - test
+      - package-lambdas:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - master
+                - prod
       - deploy-image-dev:
           requires:
             - test
@@ -151,6 +172,7 @@ workflows:
                 - prod
       - terraform-dev:
           requires:
+            - package-lambdas
             - deploy-image-dev
           filters:
             branches:
@@ -158,6 +180,7 @@ workflows:
                 - master
       - terraform-prod:
           requires:
+            - package-lambdas
             - deploy-image-prod
           filters:
             branches:
