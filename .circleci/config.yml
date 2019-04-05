@@ -24,7 +24,7 @@ jobs:
           command: |
             npm install
             mkdir ../../temp/
-            zip -qr ../../temp/db-maintenance.zip index.js node_modules/
+            tar -cpzf ../../temp/db-maintenance.tar.gz index.js node_modules/
       - run:
           name: Test
           command: |
@@ -43,7 +43,7 @@ jobs:
       - persist_to_workspace:
           root: temp/
           paths:
-            - build
+            - db-maintenance.tar.gz
 
   deploy-image-dev:
     machine:
@@ -67,7 +67,7 @@ jobs:
       - persist_to_workspace:
           root: temp/
           paths:
-            - db-maintenance.zip
+            - build
 
   deploy-image-prod:
     machine:
@@ -104,7 +104,7 @@ jobs:
           name: Deploy Dev Environment
           working_directory: terraform/env/dev/us-east-1
           command: |
-            mv ../../db-maintenance.zip ../../../modules/resources/
+            mv ../../db-maintenance.tar.gz ../../../modules/resources/
             echo "mongodb_endpoint = \"$DEV_DATABASE\"" >> secret.tfvars
             echo "google_client_secret = \"$GOOGLE_CLIENT_SECRET\"" >> secret.tfvars
             echo "build_number = \"$(cat ../../build)\"" >> secret.tfvars
@@ -119,15 +119,10 @@ jobs:
       - attach_workspace:
           at: terraform/env/
       - run:
-          name: Package Database Maintenance Function
-          working_directory: lambda/db-maintenance
-          command: |
-            npm install
-            zip ../../terraform/modules/resources/db-maintenance.zip -r *
-      - run:
           name: Deploy Prod Environment
           working_directory: terraform/env/prod/us-east-1
           command: |
+            mv ../../db-maintenance.tar.gz ../../../modules/resources/
             echo "mongodb_endpoint = \"$PROD_DATABASE\"" >> secret.tfvars
             echo "google_client_secret = \"$GOOGLE_CLIENT_SECRET\"" >> secret.tfvars
             echo "build_number = \"$(cat ../../build)\"" >> secret.tfvars
