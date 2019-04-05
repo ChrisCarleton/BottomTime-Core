@@ -1,5 +1,5 @@
 locals {
-	db_maintenance_payload = "resources/db-maintenance.tar.gz"
+	db_maintenance_payload = "resources/db-maintenance.zip"
 }
 
 resource "aws_lambda_function" "db_maintenance" {
