@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: circleci/node:10.15.3-jessie
+      - image: node:10.15.3-jessie
         environment:
           BT_MONGO_ENDPOINT: mongodb://mongo/dev
           BT_SMTP_HOST: smtp
