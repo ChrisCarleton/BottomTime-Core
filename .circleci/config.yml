@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: node:10.15.3
+      - image: node:10.15.3-jessie
         environment:
           BT_MONGO_ENDPOINT: mongodb://mongo/dev
           BT_SMTP_HOST: smtp
@@ -18,6 +18,9 @@ jobs:
           keys:
             - bt_core_{{ checksum "package.json" }}
             - bt_core_
+      - run:
+          name: Get Zip
+          command: apt update && apt install -y zip
       - run:
           name: Database Maintenance Lambda Dependencies
           working_directory: lambda/db-maintenance
