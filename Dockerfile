@@ -1,4 +1,4 @@
-FROM	node:10.11.0
+FROM	node:10.15.3
 
 ENV		NODE_ENV production
 

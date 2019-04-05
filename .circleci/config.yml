@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: node:10.11.0
+      - image: circleci/node:10.15.3-jessie
         environment:
           BT_MONGO_ENDPOINT: mongodb://mongo/dev
           BT_SMTP_HOST: smtp
@@ -22,7 +22,6 @@ jobs:
           name: Package Database Maintenance Lambda
           working_directory: lambda/db-maintenance
           command: |
-            apt update && apt install -y zip
             npm install
             mkdir ../../temp/
             zip -rq ../../temp/db-maintenance.zip index.js node_modules/
