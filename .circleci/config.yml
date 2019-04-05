@@ -36,26 +36,15 @@ jobs:
             npm run coverage
           environment:
             NODE_ENV: test
+      - run:
+          name: Package Database Maintenance Lambda
+          working_directory: lambda/db-maintenance
+          command: zip -rq ../db-maintenance.zip index.js node_modules/
       - save_cache:
           key: bt_core_{{ checksum "package.json" }}
           paths:
             - node_modules/
             - lambda/db-maintenance/node_modules/
-
-  package-lambdas:
-    docker:
-      - image: ubuntu:18.04
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - bt_core_{{ checksum "package.json" }}
-            - bt_core_
-      - run:
-          name: Package Database Maintenance Lambda
-          working_directory: lambda/db-maintenance/
-          command: |
-            zip -rq ../db-maintenance.zip index.js node_modules/
       - persist_to_workspace:
           root: lambda/
           paths:
@@ -151,14 +140,6 @@ workflows:
   build-and-deploy:
     jobs:
       - test
-      - package-lambdas:
-          requires:
-            - test
-          filters:
-            branches:
-              only:
-                - master
-                - prod
       - deploy-image-dev:
           requires:
             - test
@@ -175,7 +156,6 @@ workflows:
                 - prod
       - terraform-dev:
           requires:
-            - package-lambdas
             - deploy-image-dev
           filters:
             branches:
@@ -183,7 +163,6 @@ workflows:
                 - master
       - terraform-prod:
           requires:
-            - package-lambdas
             - deploy-image-prod
           filters:
             branches:
