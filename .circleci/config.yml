@@ -22,7 +22,7 @@ jobs:
           name: Package Database Maintenance Lambda
           working_directory: lambda/db-maintenance
           command: |
-            sudo apt update && sudo apt install -y zip
+            apt update && apt install -y zip
             npm install
             mkdir ../../temp/
             zip -rq ../../temp/db-maintenance.zip index.js node_modules/
