@@ -8,7 +8,7 @@ async function createSessionToken(username, device) {
 	const session = new Session({
 		username: username.toLowerCase(),
 		device,
-		expires: moment().add(3, 'd').valueOf()
+		expires: moment().utc().add(3, 'd').toDate()
 	});
 
 	await session.save();
@@ -25,7 +25,7 @@ async function createSessionToken(username, device) {
 
 async function getSessionFromToken(token) {
 	const session = await Session.findById(token.sessionId);
-	if (!session || session.expires < moment().valueOf()) {
+	if (!session || session.expires < moment().utc().toDate()) {
 		return null;
 	}
 

@@ -54,11 +54,13 @@ exports.handler = async () => {
 
 	await Promise.all([
 		Session.deleteMany({
-			expires: { $lte: moment().utc().unix() }
+			expires: { $lte: moment().utc().toDate() }
 		}),
 		Friend.deleteMany({
 			approved: false,
 			evaluatedOn: { $lte: friendRequestExpiration }
 		})
 	]);
+
+	await mongoose.connection.close();
 };

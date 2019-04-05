@@ -17,7 +17,7 @@ function lint() {
 			'service/**/*.js',
 			'tests/**/*.js',
 			'admin/**/*.js',
-			'lambda/**/*.js'
+			'lambda/db-maintenance/index.js'
 		])
 		.pipe(eslint())
 		.pipe(eslint.format())
