@@ -19,6 +19,10 @@ jobs:
             - bt_core_{{ checksum "package.json" }}
             - bt_core_
       - run:
+          name: Database Maintenance Lambda Dependencies
+          working_directory: lambda/db-maintenance
+          command: npm install
+      - run:
           name: Test
           command: |
             npm install -g gulp-cli nyc
@@ -32,6 +36,7 @@ jobs:
           key: bt_core_{{ checksum "package.json" }}
           paths:
             - node_modules/
+            - lambda/db-maintenance/node_modules/
 
   deploy-image-dev:
     machine:
