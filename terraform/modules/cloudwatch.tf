@@ -42,3 +42,14 @@ resource "aws_cloudwatch_metric_alarm" "service_high_latency" {
 		LoadBalancer = "${aws_lb.main.arn_suffix}"
 	}
 }
+
+resource "aws_cloudwatch_event_rule" "regular-maintenance" {
+	name = "BottomTime-RegularDBMaintenance-${var.region}-${var.env}"
+	schedule_expression = "${var.database_maintenance_frequency}"
+}
+
+resource "aws_cloudwatch_event_target" "regular-maintenance" {
+	rule = "${aws_cloudwatch_event_rule.regular-maintenance.name}"
+	target_id = "db_maintenance"
+	arn = "${aws_lambda_function.db_maintenance.arn}"
+}

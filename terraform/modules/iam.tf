@@ -192,3 +192,43 @@ resource "aws_iam_instance_profile" "instance" {
 	name = "BottomTime-Instance-Role-${var.region}-${var.env}"
 	role = "${aws_iam_role.instance.id}"
 }
+
+resource "aws_iam_role" "lambda" {
+	name = "BottomTime-Lambda-Role-${var.region}-${var.env}"
+	assume_role_policy = <<EOF
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "lambda" {
+	name = "BottomTime-Lambda-Role-Policy"
+	role = "${aws_iam_role.lambda.id}"
+
+	policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}

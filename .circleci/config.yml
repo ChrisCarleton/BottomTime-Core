@@ -19,6 +19,10 @@ jobs:
             - bt_core_{{ checksum "package.json" }}
             - bt_core_
       - run:
+          name: Database Maintenance Lambda Dependencies
+          working_directory: lambda/db-maintenance
+          command: npm install
+      - run:
           name: Test
           command: |
             npm install -g gulp-cli nyc
@@ -32,6 +36,7 @@ jobs:
           key: bt_core_{{ checksum "package.json" }}
           paths:
             - node_modules/
+            - lambda/db-maintenance/node_modules/
 
   deploy-image-dev:
     machine:
@@ -89,6 +94,12 @@ jobs:
       - attach_workspace:
           at: terraform/env/
       - run:
+          name: Package Database Maintenance Function
+          working_directory: lambda/db-maintenance
+          command: |
+            npm install
+            zip ../../terraform/modules/resources/db-maintenance.zip -r *
+      - run:
           name: Deploy Dev Environment
           working_directory: terraform/env/dev/us-east-1
           command: |
@@ -105,6 +116,12 @@ jobs:
       - checkout
       - attach_workspace:
           at: terraform/env/
+      - run:
+          name: Package Database Maintenance Function
+          working_directory: lambda/db-maintenance
+          command: |
+            npm install
+            zip ../../terraform/modules/resources/db-maintenance.zip -r *
       - run:
           name: Deploy Prod Environment
           working_directory: terraform/env/prod/us-east-1

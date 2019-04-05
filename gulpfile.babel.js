@@ -11,7 +11,14 @@ import path from 'path';
 const devServer = new GLS('service/index.js');
 
 function lint() {
-	return gulp.src([ 'gulpfile.babel.js', 'service/**/*.js', 'tests/**/*.js', 'admin/**/*.js' ])
+	return gulp.src(
+		[
+			'gulpfile.babel.js',
+			'service/**/*.js',
+			'tests/**/*.js',
+			'admin/**/*.js',
+			'lambda/db-maintenance/index.js'
+		])
 		.pipe(eslint())
 		.pipe(eslint.format())
 		.pipe(eslint.failAfterError());

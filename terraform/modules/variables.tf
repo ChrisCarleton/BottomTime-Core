@@ -18,6 +18,17 @@ variable "env" {
 	default = "dev"
 }
 
+# cron or rate expression (https://docs.aws.amazon.com/lambda/latest/dg/tutorial-scheduled-events-schedule-expressions.html)
+variable "database_maintenance_frequency" {
+	type = "string"
+	default = "cron(15 1/2 ? * * *)"
+}
+
+variable "friend_request_expiration_period" {
+	type = "string"
+	default = 240	# hours
+}
+
 variable "docker_image" {
 	type = "string"
 	default = "961445962603.dkr.ecr.us-east-1.amazonaws.com/bottom-time/core"

@@ -3,11 +3,13 @@ import mongoose from './database';
 const sessionSchema = mongoose.Schema({
 	username: {
 		type: String,
-		index: true
+		index: true,
+		required: true
 	},
 	expires: {
-		type: Number,
-		index: true
+		type: Date,
+		index: true,
+		sparse: true
 	},
 	device: String
 });

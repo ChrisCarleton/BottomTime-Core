@@ -1,0 +1,16 @@
+{
+  "name": "db-maintenance",
+  "version": "1.0.0",
+  "description": "Runs scheduled database maintenance for the Bottom Time application.",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Chris Carleton",
+  "license": "ISC",
+  "dependencies": {
+    "moment": "^2.24.0",
+    "mongoose": "^5.4.21"
+  }
+}
