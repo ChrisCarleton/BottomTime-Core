@@ -19,9 +19,12 @@ jobs:
             - bt_core_{{ checksum "package.json" }}
             - bt_core_
       - run:
-          name: Database Maintenance Lambda Dependencies
+          name: Package Database Maintenance Lambda
           working_directory: lambda/db-maintenance
-          command: npm install
+          command: |
+            npm install
+            mkdir ../../temp/
+            zip -qr ../../temp/db-maintenance.zip index.js node_modules/
       - run:
           name: Test
           command: |
@@ -37,6 +40,10 @@ jobs:
           paths:
             - node_modules/
             - lambda/db-maintenance/node_modules/
+      - persist_to_workspace:
+          root: temp/
+          paths:
+            - build
 
   deploy-image-dev:
     machine:
@@ -60,7 +67,7 @@ jobs:
       - persist_to_workspace:
           root: temp/
           paths:
-            - build
+            - db-maintenance.zip
 
   deploy-image-prod:
     machine:
@@ -94,15 +101,10 @@ jobs:
       - attach_workspace:
           at: terraform/env/
       - run:
-          name: Package Database Maintenance Function
-          working_directory: lambda/db-maintenance
-          command: |
-            npm install
-            zip ../../terraform/modules/resources/db-maintenance.zip -r *
-      - run:
           name: Deploy Dev Environment
           working_directory: terraform/env/dev/us-east-1
           command: |
+            mv ../../db-maintenance.zip ../../../modules/resources/
             echo "mongodb_endpoint = \"$DEV_DATABASE\"" >> secret.tfvars
             echo "google_client_secret = \"$GOOGLE_CLIENT_SECRET\"" >> secret.tfvars
             echo "build_number = \"$(cat ../../build)\"" >> secret.tfvars
