@@ -1,9 +1,10 @@
-import Friend from '../data/friend';
 import {
 	BulkDeleteSchema,
 	HandleFriendRequestSchema,
 	ListFriendsSchema
 } from '../validation/friend';
+import config from '../config';
+import Friend from '../data/friend';
 import Joi from 'joi';
 import mailer from '../mail/mailer';
 import templates from '../mail/templates';
@@ -46,29 +47,51 @@ async function CreateFriendRequestAdmin(req, res) {
 		})
 	];
 
-	await Promise.all([ friends[0].save(), friends[1].save() ]);
+	await Promise.all([
+		Friend.deleteOne({ user: req.account.username, friend: req.friend.username }),
+		Friend.deleteOne({ user: req.friend.username, friend: req.account.username })
+	]);
+	await Friend.insertMany(friends);
 	res.sendStatus(204);
 }
 
 export async function CreateFriendRequest(req, res) {
 	try {
+		if (req.user.role === 'admin') {
+			return CreateFriendRequestAdmin(req, res);
+		}
+
 		let friendRequest = await Friend.findOne({
 			user: req.account.username,
 			friend: req.friend.username
 		});
 
 		if (friendRequest) {
+			if (friendRequest.approved === false) {
+				// A previously-rejected friend request can simply be re-enabled.
+				friendRequest.approved = null;
+				friendRequest.evaluatedOn = null;
+			} else {
+				return badRequest(
+					'Could not create friend request.',
+					'Friend relation already exists between the requested users.',
+					res);
+			}
+		}
+
+		const friendCount = await Friend.estimatedDocumentCount({
+			user: req.account.username,
+			approved: { $ne: false }
+		});
+
+		if (friendCount >= config.friendLimit) {
 			return badRequest(
 				'Could not create friend request.',
-				'Friend relation already exists between the requested users.',
+				`Friend limit of ${ config.friendLimit } has been reached.`,
 				res);
 		}
 
-		if (req.user.role === 'admin') {
-			return CreateFriendRequestAdmin(req, res);
-		}
-
-		friendRequest = new Friend({
+		friendRequest = friendRequest || new Friend({
 			user: req.account.username,
 			friend: req.friend.username,
 			requestedOn: new Date()
@@ -99,24 +122,7 @@ export async function CreateFriendRequest(req, res) {
 	res.sendStatus(204);
 }
 
-async function GetDataForFriendRequest(username, friendName) {
-	const results = await Promise.all([
-		User.findByUsername(username),
-		User.findByUsername(friendName),
-		Friend.findOne({
-			user: username,
-			friend: friendName
-		})
-	]);
-
-	return results;
-}
-
-export async function ApproveFriendRequest(req, res) {
-	let user = null;
-	let friend = null;
-	let friendRequest = null;
-
+export async function LoadFriendRequestData(req, res, next) {
 	const isValid = Joi.validate(req.body, HandleFriendRequestSchema);
 	if (isValid.error) {
 		return badRequest(
@@ -127,27 +133,40 @@ export async function ApproveFriendRequest(req, res) {
 	}
 
 	try {
-		[ user, friend, friendRequest ] = await GetDataForFriendRequest(
-			req.params.username,
-			req.params.friendName
-		);
+		[ req.account, req.friend, req.friendRequest ] = await Promise.all([
+			User.findByUsername(req.params.username),
+			User.findByUsername(req.params.friendName),
+			Friend.findOne({
+				user: req.params.username,
+				friend: req.params.friendName
+			})
+		]);
 
-		if (!user || !friend || !friendRequest) {
+		if (!req.account || !req.friend || !req.friendRequest) {
 			return notFound(req, res);
 		}
 
-		if (typeof (friendRequest.approved) !== 'undefined') {
+		if (typeof (req.friendRequest.approved) !== 'undefined') {
 			return badRequest(
 				'Request could not be completed',
-				'Friend request has already been approved',
+				'Friend request has already been approved or rejected.',
 				res
 			);
 		}
+	} catch (err) {
+		const logId = req.logError('Failed to retrieve information for friend request', err);
+		return serverError(res, logId);
+	}
 
-		friendRequest.approved = true;
-		friendRequest.evaluatedOn = new Date();
-		friendRequest.reason = req.body.reason;
-		await friendRequest.save();
+	return next();
+}
+
+export async function ApproveFriendRequest(req, res) {
+	try {
+		req.friendRequest.approved = true;
+		req.friendRequest.evaluatedOn = new Date();
+		req.friendRequest.reason = req.body.reason;
+		await req.friendRequest.save();
 	} catch (err) {
 		const logId = req.logError(
 			`Failed to approve friend request from ${ req.params.username } to ${ req.params.friendName }.`,
@@ -157,12 +176,12 @@ export async function ApproveFriendRequest(req, res) {
 
 	try {
 		const html = templates.ApproveFriendRequestEmail(
-			user.getFriendlyName(),
-			friend.username,
-			friend.getFullName()
+			req.account.getFriendlyName(),
+			req.friend.username,
+			req.friend.getFullName()
 		);
 		await mailer.sendMail({
-			to: user.email,
+			to: req.account.email,
 			subject: 'Dive Buddy Request Accepted',
 			html
 		});
@@ -174,41 +193,11 @@ export async function ApproveFriendRequest(req, res) {
 }
 
 export async function RejectFriendRequest(req, res) {
-	let user = null;
-	let friend = null;
-	let friendRequest = null;
-
-	const isValid = Joi.validate(req.body, HandleFriendRequestSchema);
-	if (isValid.error) {
-		return badRequest(
-			'Request body was invalid',
-			isValid.error,
-			res
-		);
-	}
-
 	try {
-		[ user, friend, friendRequest ] = await GetDataForFriendRequest(
-			req.params.username,
-			req.params.friendName
-		);
-
-		if (!user || !friend || !friendRequest) {
-			return notFound(req, res);
-		}
-
-		if (typeof (friendRequest.approved) === 'boolean') {
-			return badRequest(
-				'Request could not be completed',
-				'Friend request has already been rejected',
-				res
-			);
-		}
-
-		friendRequest.approved = false;
-		friendRequest.evaluatedOn = new Date();
-		friendRequest.reason = req.body.reason;
-		await friendRequest.save();
+		req.friendRequest.approved = false;
+		req.friendRequest.evaluatedOn = new Date();
+		req.friendRequest.reason = req.body.reason;
+		await req.friendRequest.save();
 	} catch (err) {
 		const logId = req.logError(
 			`Failed to approve friend request from ${ req.params.username } to ${ req.params.friendName }.`,
@@ -218,12 +207,12 @@ export async function RejectFriendRequest(req, res) {
 
 	try {
 		const html = templates.RejectFriendRequestEmail(
-			user.getFriendlyName(),
-			friend.getFullName(),
+			req.account.getFriendlyName(),
+			req.friend.getFullName(),
 			req.body.reason
 		);
 		await mailer.sendMail({
-			to: user.email,
+			to: req.account.email,
 			subject: 'Dive Buddy Request Rejected',
 			html
 		});

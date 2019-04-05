@@ -42,24 +42,11 @@ describe('Friends Validation Tests', () => {
 			validateListFriendsQuery();
 		});
 
-		it('Succeeds if type parameter is null', () => {
-			query.type = null;
-			validateListFriendsQuery();
-		});
-
-		it('Succeeds if type parameter is "friends"', () => {
-			query.type = 'friends';
-			validateListFriendsQuery();
-		});
-
-		it('Succeeds if type parameter is "requests"', () => {
-			query.type = 'requests';
-			validateListFriendsQuery();
-		});
-
-		it('Succeeds if type parameter is "both"', () => {
-			query.type = 'both';
-			validateListFriendsQuery();
+		[ null, 'friends', 'requests', 'both' ].forEach(t => {
+			it(`Succeeds if type parameter is "${ t }"`, () => {
+				query.type = t;
+				validateListFriendsQuery();
+			});
 		});
 
 		it('Fails if type parameter is not a recognised value.', () => {
