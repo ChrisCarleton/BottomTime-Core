@@ -33,7 +33,7 @@ describe('Friends API Security', () => {
 		]);
 
 		friends = new Array(3).fill(null).map(() => new User(fakeUser()));
-		await Promise.all(friends.map(f => f.save()));
+		await User.insertMany(friends);
 	});
 
 	after(async () => {
@@ -59,12 +59,34 @@ describe('Friends API Security', () => {
 					}));
 				});
 			});
-
-			await Promise.all(relations.map(r => r.save()));
+			await Friend.insertMany(relations);
 		});
 
 		afterEach(async () => {
 			await Friend.deleteMany({});
+		});
+
+		it('Anonymous users cannot request private users\' friends', async () => {
+			const response = await request(App)
+				.get(`/users/${ privateUser.user.username }/friends`)
+				.expect(403);
+			expect403Response(response);
+		});
+
+		it('Anonymous users cannot request friends-only users\' friends', async () => {
+			const response = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/friends`)
+				.expect(403);
+			expect403Response(response);
+		});
+
+		it('Anonymous users can request public users\' friends', async () => {
+			const response = await request(App)
+				.get(`/users/${ publicUser.user.username }/friends`)
+				.expect(200);
+
+			expect(response.body).to.be.an('array');
+			expect(response.body).to.have.lengthOf(friends.length);
 		});
 
 		it('Users cannot request private users\' friends if not friended', async () => {
@@ -112,7 +134,7 @@ describe('Friends API Security', () => {
 				.expect(200);
 
 			expect(response.body).to.be.an('array');
-			expect(response.body).to.have.lengthOf(friends.length);
+			expect(response.body).to.have.lengthOf(friends.length + 1);
 		});
 
 		it('Users can request public users\'s friends if not friended', async () => {
@@ -139,7 +161,7 @@ describe('Friends API Security', () => {
 				.expect(200);
 
 			expect(response.body).to.be.an('array');
-			expect(response.body).to.have.lengthOf(friends.length);
+			expect(response.body).to.have.lengthOf(friends.length + 1);
 		});
 
 		it('Admins can request private users\' friends', async () => {

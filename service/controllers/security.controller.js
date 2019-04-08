@@ -49,15 +49,17 @@ export function AssertUserReadPermission(req, res, next) {
 		return next();
 	}
 
-	if (!req.friends) {
-		console.error('dafuq?');
-	}
-	if (req.user && req.friends[req.user.username]) {
+	if (
+		req.account.logsVisibility === 'friends-only'
+		&& req.user
+		&& req.friends
+		&& req.friends[req.user.username]
+	) {
 		req.readOnlyResource = true;
 		return next();
 	}
 
-	forbidden(res, 'You are not permitted to perform the requested action on this log entry');
+	return forbidden(res, 'You are not permitted to perform the requested action on this log entry');
 }
 
 export function AssertUserWritePermission(req, res, next) {
