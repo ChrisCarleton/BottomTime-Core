@@ -1,9 +1,9 @@
 import { App } from '../../service/server';
 import createFakeAccount from '../util/create-fake-account';
-import fakeUser from '../util/fake-user';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import faker from 'faker';
+import fakeUser from '../util/fake-user';
 import Friend from '../../service/data/friend';
 import request from 'supertest';
 import Session from '../../service/data/session';
@@ -358,7 +358,7 @@ describe('Friends API Security', () => {
 					user: t.to().user.username,
 					friend: t.from().user.username
 				});
-				expect(friendRequest).to.not.exist;
+				expect(friendRequest).to.be.null;
 			})
 		);
 

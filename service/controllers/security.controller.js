@@ -59,7 +59,7 @@ export function AssertUserReadPermission(req, res, next) {
 		return next();
 	}
 
-	return forbidden(res, 'You are not permitted to perform the requested action on this log entry');
+	return forbidden(res, 'You are not permitted to perform the requested action.');
 }
 
 export function AssertUserWritePermission(req, res, next) {
