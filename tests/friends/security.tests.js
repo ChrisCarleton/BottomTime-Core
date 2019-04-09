@@ -24,6 +24,22 @@ describe('Friends API Security', () => {
 	let admin = null;
 	let friends = null;
 
+	async function friendEveryone() {
+		const relations = [];
+		friends.forEach(f => {
+			[ privateUser, friendsOnlyUser, publicUser ].forEach(u => {
+				relations.push(new Friend({
+					user: u.user.username,
+					friend: f.username,
+					approved: true,
+					requestedOn: faker.date.recent(60),
+					evaluatedOn: faker.date.recent(60)
+				}));
+			});
+		});
+		await Friend.insertMany(relations);
+	}
+
 	before(async () => {
 		[ privateUser, friendsOnlyUser, publicUser, admin ] = await Promise.all([
 			createFakeAccount('user', 'private'),
@@ -46,21 +62,7 @@ describe('Friends API Security', () => {
 
 	describe('GET /users/:username/friends', () => {
 
-		beforeEach(async () => {
-			const relations = [];
-			friends.forEach(f => {
-				[ privateUser, friendsOnlyUser, publicUser ].forEach(u => {
-					relations.push(new Friend({
-						user: u.user.username,
-						friend: f.username,
-						approved: true,
-						requestedOn: faker.date.recent(60),
-						evaluatedOn: faker.date.recent(60)
-					}));
-				});
-			});
-			await Friend.insertMany(relations);
-		});
+		beforeEach(friendEveryone);
 
 		afterEach(async () => {
 			await Friend.deleteMany({});
@@ -192,6 +194,113 @@ describe('Friends API Security', () => {
 
 			expect(response.body).to.be.an('array');
 			expect(response.body).to.have.lengthOf(friends.length);
+		});
+	});
+
+	describe('DELETE /users/:username/friends', () => {
+		beforeEach(friendEveryone);
+
+		afterEach(async () => {
+			await Friend.deleteMany({});
+		});
+
+		it('Anonymous users cannot delete friends', async () => {
+			const response = await request(App)
+				.del(`/users/${ publicUser.user.username }/friends`)
+				.send([ friends[0].username, friends[1].username ])
+				.expect(403);
+			expect403Response(response);
+		});
+
+		it('Users cannot delete other users\' friends', async () => {
+			const response = await request(App)
+				.del(`/users/${ publicUser.user.username }/friends`)
+				.set(...privateUser.authHeader)
+				.send([ friends[0].username, friends[1].username ])
+				.expect(403);
+			expect403Response(response);
+		});
+
+		it('Users cannot delete other users\' friends if friended', async () => {
+			const relation = new Friend({
+				user: publicUser.user.username,
+				friend: privateUser.user.username,
+				approved: true,
+				requestedOn: new Date(),
+				evaluatedOn: new Date()
+			});
+			await relation.save();
+
+			const response = await request(App)
+				.del(`/users/${ publicUser.user.username }/friends`)
+				.set(...privateUser.authHeader)
+				.send([ friends[0].username, friends[1].username ])
+				.expect(403);
+			expect403Response(response);
+		});
+
+		it('Admins can delete other users\' friends', async () => {
+			await request(App)
+				.del(`/users/${ publicUser.user.username }/friends`)
+				.set(...admin.authHeader)
+				.send([ friends[0].username, friends[1].username ])
+				.expect(204);
+
+			const results = await Friend.find({ user: publicUser.user.username });
+			expect(results).to.have.lengthOf(1);
+		});
+	});
+
+	describe('DELETE /users/:username/friends/:friendName', () => {
+		beforeEach(friendEveryone);
+
+		afterEach(async () => {
+			await Friend.deleteMany({});
+		});
+
+		it('Anonymous users cannot delete friends', async () => {
+			const response = await request(App)
+				.del(`/users/${ publicUser.user.username }/friends/${ friends[0].username }`)
+				.expect(403);
+			expect403Response(response);
+		});
+
+		it('Users cannot delete other users\' friends', async () => {
+			const response = await request(App)
+				.del(`/users/${ publicUser.user.username }/friends/${ friends[0].username }`)
+				.set(...privateUser.authHeader)
+				.expect(403);
+			expect403Response(response);
+		});
+
+		it('Users cannot delete other users\' friends if friended', async () => {
+			const relation = new Friend({
+				user: publicUser.user.username,
+				friend: privateUser.user.username,
+				approved: true,
+				requestedOn: new Date(),
+				evaluatedOn: new Date()
+			});
+			await relation.save();
+
+			const response = await request(App)
+				.del(`/users/${ publicUser.user.username }/friends/${ friends[0].username }`)
+				.set(...privateUser.authHeader)
+				.expect(403);
+			expect403Response(response);
+		});
+
+		it('Admins can delete other users\' friends', async () => {
+			await request(App)
+				.del(`/users/${ publicUser.user.username }/friends/${ friends[0].username }`)
+				.set(...admin.authHeader)
+				.expect(204);
+
+			const result = await Friend.findOne({
+				user: publicUser.user.username,
+				friend: friends[0].username
+			});
+			expect(result).to.be.null;
 		});
 	});
 });

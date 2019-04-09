@@ -1,6 +1,6 @@
 import {
 	AssertUserReadPermission,
-	// AssertUserWritePermission,
+	AssertUserWritePermission,
 	RetrieveUserAccount
 } from '../controllers/security.controller';
 import {
@@ -20,11 +20,11 @@ const FriendRoute = `${ FriendsRoute }/:friendName`;
 module.exports = app => {
 	app.route(FriendsRoute)
 		.get(RetrieveUserAccount, AssertUserReadPermission, ListFriends)
-		.delete(RetrieveUserAccount, BulkDeleteFriends);
+		.delete(RetrieveUserAccount, AssertUserWritePermission, BulkDeleteFriends);
 
 	app.route(FriendRoute)
 		.put(RetrieveUserAccount, RetrieveFriendAccount, CreateFriendRequest)
-		.delete(RetrieveUserAccount, DeleteFriend);
+		.delete(RetrieveUserAccount, AssertUserWritePermission, DeleteFriend);
 
 	app.post(`${ FriendRoute }/approve`, LoadFriendRequestData, ApproveFriendRequest);
 	app.post(`${ FriendRoute }/reject`, LoadFriendRequestData, RejectFriendRequest);
