@@ -8,7 +8,7 @@ import Friend from '../data/friend';
 import Joi from 'joi';
 import mailer from '../mail/mailer';
 import templates from '../mail/templates';
-import { badRequest, serverError, notFound } from '../utils/error-response';
+import { badRequest, serverError, notFound, forbidden } from '../utils/error-response';
 import User from '../data/user';
 
 export async function ListFriends(req, res) {
@@ -154,6 +154,10 @@ export async function LoadFriendRequestData(req, res, next) {
 
 		if (!req.account || !req.friend || !req.friendRequest) {
 			return notFound(req, res);
+		}
+
+		if (req.user.id !== req.friend.id) {
+			return forbidden(res, 'Users cannot approve or reject their own friend requests.');
 		}
 
 		if (typeof (req.friendRequest.approved) !== 'undefined') {

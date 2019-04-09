@@ -35,6 +35,6 @@ module.exports = app => {
 		)
 		.delete(RequireUser, RetrieveUserAccount, AssertUserWritePermission, DeleteFriend);
 
-	app.post(`${ FriendRoute }/approve`, LoadFriendRequestData, ApproveFriendRequest);
-	app.post(`${ FriendRoute }/reject`, LoadFriendRequestData, RejectFriendRequest);
+	app.post(`${ FriendRoute }/approve`, RequireUser, LoadFriendRequestData, ApproveFriendRequest);
+	app.post(`${ FriendRoute }/reject`, RequireUser, LoadFriendRequestData, RejectFriendRequest);
 };

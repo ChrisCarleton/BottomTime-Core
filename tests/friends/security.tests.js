@@ -375,6 +375,73 @@ describe('Friends API Security', () => {
 	});
 
 	describe('POST /users/:username/friends/:friendName/[approve/reject]', () => {
+		afterEach(async () => {
+			await Friend.deleteMany({});
+		});
 
+		[ 'approve', 'reject' ].forEach(t => {
+			it(`Anonymous users cannot ${ t } friend requests`, async () => {
+				const friendRequest = new Friend({
+					user: friendsOnlyUser.user.username,
+					friend: publicUser.user.username,
+					requestedOn: new Date()
+				});
+				await friendRequest.save();
+
+				const response = await request(App)
+					.post(`/users/${ friendsOnlyUser.user.username }/friends/${ publicUser.user.username }/${ t }`)
+					.send({ reason: 'For the lulz.' })
+					.expect(401);
+				expect401Response(response);
+			});
+
+			it(`Users cannot ${ t } friend requests for other users`, async () => {
+				const friendRequest = new Friend({
+					user: friendsOnlyUser.user.username,
+					friend: publicUser.user.username,
+					requestedOn: new Date()
+				});
+				await friendRequest.save();
+
+				const response = await request(App)
+					.post(`/users/${ friendsOnlyUser.user.username }/friends/${ publicUser.user.username }/${ t }`)
+					.send({ reason: 'For the lulz.' })
+					.set(...privateUser.authHeader)
+					.expect(403);
+				expect403Response(response);
+			});
+
+			it(`Users cannot ${ t } their own friend requests`, async () => {
+				const friendRequest = new Friend({
+					user: friendsOnlyUser.user.username,
+					friend: publicUser.user.username,
+					requestedOn: new Date()
+				});
+				await friendRequest.save();
+
+				const response = await request(App)
+					.post(`/users/${ friendsOnlyUser.user.username }/friends/${ publicUser.user.username }/${ t }`)
+					.send({ reason: 'For the lulz.' })
+					.set(...friendsOnlyUser.authHeader)
+					.expect(403);
+				expect403Response(response);
+			});
+
+			it(`Admins cannot ${ t } friend requests for other users`, async () => {
+				const friendRequest = new Friend({
+					user: friendsOnlyUser.user.username,
+					friend: publicUser.user.username,
+					requestedOn: new Date()
+				});
+				await friendRequest.save();
+
+				const response = await request(App)
+					.post(`/users/${ friendsOnlyUser.user.username }/friends/${ publicUser.user.username }/${ t }`)
+					.send({ reason: 'For the lulz.' })
+					.set(...admin.authHeader)
+					.expect(403);
+				expect403Response(response);
+			});
+		});
 	});
 });
