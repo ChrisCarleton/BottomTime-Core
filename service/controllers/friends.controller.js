@@ -28,7 +28,7 @@ export async function ListFriends(req, res) {
 	}
 }
 
-async function CreateFriendRequestAdmin(req, res) {
+export async function CreateFriendRequestAdmin(req, res) {
 	const now = new Date();
 	const friends = [
 		new Friend({
@@ -48,17 +48,23 @@ async function CreateFriendRequestAdmin(req, res) {
 	];
 
 	await Promise.all([
-		Friend.deleteOne({ user: req.account.username, friend: req.friend.username }),
-		Friend.deleteOne({ user: req.friend.username, friend: req.account.username })
+		Friend.deleteMany({
+			user: req.account.username,
+			friend: req.friend.username
+		}),
+		Friend.deleteMany({
+			user: req.friend.username,
+			friend: req.account.username
+		})
 	]);
 	await Friend.insertMany(friends);
 	res.sendStatus(204);
 }
 
-export async function CreateFriendRequest(req, res) {
+export async function CreateFriendRequest(req, res, next) {
 	try {
-		if (req.user.role === 'admin') {
-			return CreateFriendRequestAdmin(req, res);
+		if (req.account.username === req.friend.username) {
+			return badRequest('Users cannot be friends with themselves', null, res);
 		}
 
 		let friendRequest = await Friend.findOne({
@@ -77,6 +83,10 @@ export async function CreateFriendRequest(req, res) {
 					'Friend relation already exists between the requested users.',
 					res);
 			}
+		}
+
+		if (req.user.role === 'admin') {
+			return next();
 		}
 
 		const friendCount = await Friend.estimatedDocumentCount({

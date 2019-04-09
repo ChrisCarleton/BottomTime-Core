@@ -16,6 +16,13 @@ function expect403Response(response) {
 	expect(body.errorId).to.equal(ErrorIds.forbidden);
 }
 
+function expect401Response(response) {
+	const { body } = response;
+	expect(body).to.exist;
+	expect(body.status).to.equal(401);
+	expect(body.errorId).to.equal(ErrorIds.notAuthorized);
+}
+
 describe('Friends API Security', () => {
 
 	let privateUser = null;
@@ -208,8 +215,8 @@ describe('Friends API Security', () => {
 			const response = await request(App)
 				.del(`/users/${ publicUser.user.username }/friends`)
 				.send([ friends[0].username, friends[1].username ])
-				.expect(403);
-			expect403Response(response);
+				.expect(401);
+			expect401Response(response);
 		});
 
 		it('Users cannot delete other users\' friends', async () => {
@@ -261,8 +268,8 @@ describe('Friends API Security', () => {
 		it('Anonymous users cannot delete friends', async () => {
 			const response = await request(App)
 				.del(`/users/${ publicUser.user.username }/friends/${ friends[0].username }`)
-				.expect(403);
-			expect403Response(response);
+				.expect(401);
+			expect401Response(response);
 		});
 
 		it('Users cannot delete other users\' friends', async () => {
@@ -302,5 +309,72 @@ describe('Friends API Security', () => {
 			});
 			expect(result).to.be.null;
 		});
+	});
+
+	describe('PUT /users/:username/friends/:friendName', () => {
+		afterEach(async () => {
+			await Friend.deleteMany({});
+		});
+
+		it('Anonymous users cannot create friend requests', async () => {
+			const response = await request(App)
+				.put(`/users/${ publicUser.user.username }/friends/${ privateUser.user.username }`)
+				.expect(401);
+			expect401Response(response);
+		});
+
+		[
+			{ type: 'private', to: () => privateUser, from: () => publicUser },
+			{ type: 'friends-only', to: () => friendsOnlyUser, from: () => privateUser },
+			{ type: 'public', to: () => publicUser, from: () => privateUser }
+		].forEach(t =>
+			it(`Users can create friend requests for "${ t.type }" users`, async () => {
+				await request(App)
+					.put(`/users/${ t.from().user.username }/friends/${ t.to().user.username }`)
+					.set(...t.from().authHeader)
+					.expect(204);
+
+				const friendRequest = await Friend.findOne({
+					user: t.from().user.username,
+					friend: t.to().user.username
+				});
+				expect(friendRequest).to.exist;
+			})
+		);
+
+		[
+			{ type: 'private', to: () => privateUser, from: () => publicUser },
+			{ type: 'friends-only', to: () => friendsOnlyUser, from: () => privateUser },
+			{ type: 'public', to: () => publicUser, from: () => privateUser }
+		].forEach(t =>
+			it(`Users cannot create friend requests from "${ t.type }" users to themselves`, async () => {
+				const response = await request(App)
+					.put(`/users/${ t.to().user.username }/friends/${ t.from().user.username }`)
+					.set(...t.from().authHeader)
+					.expect(403);
+				expect403Response(response);
+
+				const friendRequest = await Friend.findOne({
+					user: t.to().user.username,
+					friend: t.from().user.username
+				});
+				expect(friendRequest).to.not.exist;
+			})
+		);
+
+		it('Users cannot request to be friends with themselves', async () => {
+			const response = await request(App)
+				.put(`/users/${ privateUser.user.username }/friends/${ privateUser.user.username }`)
+				.set(...privateUser.authHeader)
+				.expect(400);
+			const { body } = response;
+			expect(body).to.exist;
+			expect(body.status).to.equal(400);
+			expect(body.errorId).to.equal(ErrorIds.badRequest);
+		});
+	});
+
+	describe('POST /users/:username/friends/:friendName/[approve/reject]', () => {
+
 	});
 });
