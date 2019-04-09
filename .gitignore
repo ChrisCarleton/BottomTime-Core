@@ -70,3 +70,6 @@ temp/
 
 # Environment variable files
 env/
+
+# VS Code Project Configuration
+.vscode/

@@ -1,6 +1,7 @@
 .circleci/
 .git/
 .nyc_output/
+.vscode/
 admin/
 coverage/
 docs/
