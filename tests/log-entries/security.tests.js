@@ -5,6 +5,7 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import fakeMongoId from '../util/fake-mongo-id';
+import Friend from '../../service/data/friend';
 import LogEntry from '../../service/data/log-entry';
 import request from 'supertest';
 import Session from '../../service/data/session';
@@ -17,14 +18,12 @@ describe('Log Entry Security', () => {
 	let user3 = null;
 
 	before(async () => {
-		const results = await Promise.all([
+		[ admin, user1, user2, user3 ] = await Promise.all([
 			createAccount('admin'),
 			createAccount('user', 'public'),
 			createAccount('user', 'friends-only'),
 			createAccount('user', 'private')
 		]);
-
-		[ admin, user1, user2, user3 ] = results;
 	});
 
 	after(async () => {
@@ -37,6 +36,10 @@ describe('Log Entry Security', () => {
 	});
 
 	describe('GET /users/:username/logs/:logId', () => {
+		afterEach(async () => {
+			await Friend.deleteMany({});
+		});
+
 		it('Returns Not Found if user does not exist', async () => {
 			const fake = fakeLogEntry(user1.user.id);
 			const logEntry = new LogEntry(fake);
@@ -207,8 +210,34 @@ describe('Log Entry Security', () => {
 			expect(res.body).to.eql(fake);
 		});
 
-		it.skip('Users can view logs from friends\' "friends-only" log book', async () => {
-			// TODO: Make the 'friending' logic.
+		it('Users can view logs from friends\' "friends-only" log book', async () => {
+			const relations = [
+				new Friend({
+					user: user1.user.username,
+					friend: user2.user.username,
+					approved: true
+				}),
+				new Friend({
+					user: user2.user.username,
+					friend: user1.user.username,
+					approved: true
+				})
+			];
+
+			const fake = fakeLogEntry(user2.user.id);
+			const logEntry = new LogEntry(fake);
+			const entity = await logEntry.save();
+			await Friend.insertMany(relations);
+			fake.entryId = entity.id;
+			delete fake.userId;
+
+			const res = await request(App)
+				.get(`/users/${ user2.user.username }/logs/${ entity.id }`)
+				.set(...user1.authHeader)
+				.expect(200);
+
+			fake.readOnly = true;
+			expect(res.body).to.eql(fake);
 		});
 
 		it('Users cannot view logs from "friends-only" log books when they are not friended', async () => {

@@ -5,6 +5,7 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
 import fakeProfile from '../util/fake-profile';
+import Friend from '../../service/data/friend';
 import LogEntry from '../../service/data/log-entry';
 import moment from 'moment';
 import mongoose from 'mongoose';
@@ -95,6 +96,10 @@ describe('Profiles Controller', () => {
 	});
 
 	describe('GET /users/:username/profile', () => {
+		afterEach(async () => {
+			await Friend.deleteMany({});
+		});
+
 		it('Will return the user\'s profile', async () => {
 			const result = await request(App)
 				.get(`/users/${ privateUser.user.username }/profile`)
@@ -117,8 +122,29 @@ describe('Profiles Controller', () => {
 			compareProfiles(result.body, publicUser.user);
 		});
 
-		it.skip('Will return friends-only profile if friended', async () => {
-			// TODO: Implement friend logic!
+		it('Will return friends-only profile if friended', async () => {
+			const relations = [
+				new Friend({
+					user: friendsOnlyUser.user.username,
+					friend: privateUser.user.username,
+					approved: true
+				}),
+				new Friend({
+					user: privateUser.user.username,
+					friend: friendsOnlyUser.user.username,
+					approved: true
+				})
+			];
+			await Friend.insertMany(relations);
+
+			const result = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/profile`)
+				.set(...privateUser.authHeader)
+				.expect(200);
+			expect(result.body).to.exist;
+			expect(result.body.readOnly).to.be.true;
+			expect(result.body).to.have.keys(expectedKeys);
+			compareProfiles(result.body, friendsOnlyUser.user);
 		});
 
 		it('Will not return friends-only profile if not friended', async () => {
@@ -150,8 +176,29 @@ describe('Profiles Controller', () => {
 			compareProfiles(result.body, publicUser.user);
 		});
 
-		it.skip('Admins can view friends-only profiles when friended', async () => {
-			// TODO: Write the logic for this.
+		it('Admins can view friends-only profiles when friended', async () => {
+			const relations = [
+				new Friend({
+					user: adminUser.user.username,
+					friend: friendsOnlyUser.user.username,
+					approved: true
+				}),
+				new Friend({
+					user: friendsOnlyUser.user.username,
+					friend: adminUser.user.username,
+					approved: true
+				})
+			];
+			await Friend.insertMany(relations);
+
+			const result = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/profile`)
+				.set(...adminUser.authHeader)
+				.expect(200);
+			expect(result.body).to.exist;
+			expect(result.body.readOnly).to.false;
+			expect(result.body).to.have.keys(expectedKeys);
+			compareProfiles(result.body, friendsOnlyUser.user);
 		});
 
 		it('Admins can view friends-only profiles when not friended', async () => {
