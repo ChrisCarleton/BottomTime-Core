@@ -1,4 +1,5 @@
 import { forbidden, notFound, serverError, unauthorized } from '../utils/error-response';
+import Friend from '../data/friend';
 import User from '../data/user';
 
 export function RequireUser(req, res, next) {
@@ -15,6 +16,19 @@ export async function RetrieveUserAccount(req, res, next) {
 		if (!user) {
 			return notFound(req, res);
 		}
+
+		const friends = await Friend
+			.find({
+				user: user.username,
+				approved: true
+			})
+			.sort('friend')
+			.select('friend')
+			.exec();
+		req.friends = {};
+		friends.forEach(f => {
+			req.friends[f.friend] = true;
+		});
 
 		req.account = user;
 		return next();
@@ -35,7 +49,17 @@ export function AssertUserReadPermission(req, res, next) {
 		return next();
 	}
 
-	forbidden(res, 'You are not permitted to perform the requested action on this log entry');
+	if (
+		req.account.logsVisibility === 'friends-only'
+		&& req.user
+		&& req.friends
+		&& req.friends[req.user.username]
+	) {
+		req.readOnlyResource = true;
+		return next();
+	}
+
+	return forbidden(res, 'You are not permitted to perform the requested action.');
 }
 
 export function AssertUserWritePermission(req, res, next) {

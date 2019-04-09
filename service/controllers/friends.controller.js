@@ -8,7 +8,7 @@ import Friend from '../data/friend';
 import Joi from 'joi';
 import mailer from '../mail/mailer';
 import templates from '../mail/templates';
-import { badRequest, serverError, notFound } from '../utils/error-response';
+import { badRequest, forbidden, notFound, serverError } from '../utils/error-response';
 import User from '../data/user';
 
 export async function ListFriends(req, res) {
@@ -28,7 +28,7 @@ export async function ListFriends(req, res) {
 	}
 }
 
-async function CreateFriendRequestAdmin(req, res) {
+export async function CreateFriendRequestAdmin(req, res) {
 	const now = new Date();
 	const friends = [
 		new Friend({
@@ -48,17 +48,23 @@ async function CreateFriendRequestAdmin(req, res) {
 	];
 
 	await Promise.all([
-		Friend.deleteOne({ user: req.account.username, friend: req.friend.username }),
-		Friend.deleteOne({ user: req.friend.username, friend: req.account.username })
+		Friend.deleteMany({
+			user: req.account.username,
+			friend: req.friend.username
+		}),
+		Friend.deleteMany({
+			user: req.friend.username,
+			friend: req.account.username
+		})
 	]);
 	await Friend.insertMany(friends);
 	res.sendStatus(204);
 }
 
-export async function CreateFriendRequest(req, res) {
+export async function CreateFriendRequest(req, res, next) {
 	try {
-		if (req.user.role === 'admin') {
-			return CreateFriendRequestAdmin(req, res);
+		if (req.account.username === req.friend.username) {
+			return badRequest('Users cannot be friends with themselves', null, res);
 		}
 
 		let friendRequest = await Friend.findOne({
@@ -77,6 +83,10 @@ export async function CreateFriendRequest(req, res) {
 					'Friend relation already exists between the requested users.',
 					res);
 			}
+		}
+
+		if (req.user.role === 'admin') {
+			return next();
 		}
 
 		const friendCount = await Friend.estimatedDocumentCount({
@@ -144,6 +154,13 @@ export async function LoadFriendRequestData(req, res, next) {
 
 		if (!req.account || !req.friend || !req.friendRequest) {
 			return notFound(req, res);
+		}
+
+		if (req.user.id !== req.friend.id) {
+			return forbidden(
+				res,
+				'Users cannot approve or reject their own friend request and/or those of another user.'
+			);
 		}
 
 		if (typeof (req.friendRequest.approved) !== 'undefined') {
