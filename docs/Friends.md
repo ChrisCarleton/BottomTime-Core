@@ -65,7 +65,8 @@ HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The call succeeded and the friend request was created.
 **400 Bad Request** | The request failed because the friend request already exists or the user has reached the friend limit. An exception will be made if the friend request exists but has already been rejected. In this case it is simply re-opened.
-**403 Forbidden** | The request was rejected because the current user does not have permission to modify the indicated user's friends.
+**401 Unauthorized** | The request was rejected because the current request could not be authenticated. (Bearer token was missing or invalid.)
+**403 Forbidden** | The request was rejected because the current user does not have permission to modify the indicated user's friends or the current user tried to create a friend request to themselves.
 **404 Not Found** | The request failed because the user specified in the **username** route parameter does not exist or the user specified in **friendName** route parameter does not exist.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
@@ -88,6 +89,7 @@ HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The call succeeded and the friend request was approved/rejected.
 **400 Bad Request** | The request failed because the friend request was already approved/rejected.
+**401 Unauthorized** | The request was rejected because the current request could not be authenticated. (Bearer token was missing or invalid.)
 **403 Forbidden** | The request was rejected because the current user does not have permission to approve or reject the request. Only the *recipient* of a request (or an admin) is allowed to approve/reject a request.
 **404 Not Found** | The request failed because the friend request, the user, or the friend could not be found.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
@@ -106,6 +108,7 @@ the friend being rejected would receive an e-mail notifying them.
 HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The call succeeded and the relationship was deleted. (Also returned if the relationship did not exist in the first place.)
+**401 Unauthorized** | The request was rejected because the current request could not be authenticated. (Bearer token was missing or invalid.)
 **403 Forbidden** | The request was rejected because the current user does not have permission to modify the friend relationships of the user specified in the **username** route parameter.
 **404 Not Found** | The request failed because the user specified in the **username** route parameter does not exist.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
@@ -123,6 +126,7 @@ An array of `username`s of the friends or friend requests to be deleted from the
 HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The call succeeded and the relationships were deleted. (Relationships that did not exist in the first place will quietly succeed.)
+**401 Unauthorized** | The request was rejected because the current request could not be authenticated. (Bearer token was missing or invalid.)
 **400 Bad Request** | The request failed because the message body was malformed or invalid.
 **403 Forbidden** | The request was rejected because the current user does not have permission to modify the friend relationships of the user specified in the **username** route parameter.
 **404 Not Found** | The request failed because the user specified in the **username** route parameter does not exist.
