@@ -5,6 +5,7 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import faker from 'faker';
 import fakeLogEntry from '../util/fake-log-entry';
+import Friend from '../../service/data/friend';
 import LogEntry from '../../service/data/log-entry';
 import mongoose from '../../service/data/database';
 import request from 'supertest';
@@ -61,6 +62,10 @@ describe('Log Entry Searching', () => {
 	});
 
 	describe('Security', () => {
+		afterEach(async () => {
+			await Friend.deleteMany({});
+		});
+
 		it('Anonymous users can view public log books', async () => {
 			const result = await request(App).get(`/users/${ publicUser.user.username }/logs`);
 			expect(result.status).to.equal(200);
@@ -89,15 +94,33 @@ describe('Log Entry Searching', () => {
 			expect(result.body).to.be.an('Array');
 		});
 
-		it.skip('Users can view friends-only log books if they are friends with the owner', async () => {
-			// TODO: Test once we have friends logic.
+		it('Users can view friends-only log books if they are friends with the owner', async () => {
+			const relations = [
+				new Friend({
+					user: privateUser.user.username,
+					friend: friendsOnlyUser.user.username,
+					approved: true
+				}),
+				new Friend({
+					user: friendsOnlyUser.user.username,
+					friend: privateUser.user.username,
+					approved: true
+				})
+			];
+			await Friend.insertMany(relations);
+
+			const result = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...privateUser.authHeader)
+				.expect(200);
+			expect(result.body).to.be.an('Array');
 		});
 
 		it('Users cannot view friends-only log books if they are not friends of the owner', async () => {
 			const result = await request(App)
 				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
-				.set(...privateUser.authHeader);
-			expect(result.status).to.equal(403);
+				.set(...privateUser.authHeader)
+				.expect(403);
 			expect(result.body.status).to.equal(403);
 			expect(result.body.errorId).to.equal(ErrorIds.forbidden);
 		});

@@ -21,10 +21,6 @@ describe('Admin Controller', () => {
 	describe('GET /health', () => {
 		let stub = null;
 
-		before(async () => {
-			// TODO: Ensure Mongo Connection before testing.
-		});
-
 		afterEach(() => {
 			if (stub) {
 				stub.restore();

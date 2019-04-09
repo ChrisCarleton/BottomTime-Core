@@ -8,7 +8,6 @@ import {
 } from '../validation/log-entry';
 import Joi from 'joi';
 import LogEntry, { assignLogEntry } from '../data/log-entry';
-import User from '../data/user';
 
 function getWhereClauseForSearch(query) {
 	const whereClause = {};
@@ -199,19 +198,9 @@ export async function DeleteLog(req, res) {
 
 export async function RetrieveLogEntry(req, res, next) {
 	try {
-		const results = await Promise.all(
-			[
-				User.findByUsername(req.params.username),
-				LogEntry.findById(req.params.logId)
-			]
-		);
+		req.logEntry = await LogEntry.findById(req.params.logId);
 
-		[ req.account, req.logEntry ] = results;
-
-		if (!req.account
-			|| !req.logEntry
-			|| req.account.id !== req.logEntry.userId.toString()) {
-
+		if (!req.logEntry || req.account.id !== req.logEntry.userId.toString()) {
 			return notFound(req, res);
 		}
 

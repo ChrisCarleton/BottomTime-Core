@@ -22,7 +22,7 @@ module.exports = app => {
 		.delete(RetrieveUserAccount, AssertUserWritePermission, DeleteLogs);
 
 	app.route('/users/:username/logs/:logId([a-f0-9]{24})')
-		.get(RetrieveLogEntry, AssertUserReadPermission, GetLog)
-		.put(RetrieveLogEntry, AssertUserWritePermission, UpdateLog)
-		.delete(RetrieveLogEntry, AssertUserWritePermission, DeleteLog);
+		.get(RetrieveUserAccount, RetrieveLogEntry, AssertUserReadPermission, GetLog)
+		.put(RetrieveUserAccount, RetrieveLogEntry, AssertUserWritePermission, UpdateLog)
+		.delete(RetrieveUserAccount, RetrieveLogEntry, AssertUserWritePermission, DeleteLog);
 };
