@@ -39,9 +39,14 @@ Lists a user's friends and/or friend requests.
 * **username** - Name of the user whose friends will be queried.
 
 #### Query Parameters
-* **type** - Indicates whether friends, friend requests, or both should be returned. Valid values are
-`friends`, `requests`, or `both`. If this parameter is omitted, the default will be `friends`.
-`requests` includes both pending and rejected friend requests.
+* **type** - Indicates whether friends, or friend requests should be returned. Valid values are
+`friends`, `requests-incoming`, or `requests-outgoing`. If this parameter is omitted, the default will be
+`friends`.
+
+**Notes:** Here are what the different values of the `type` query parameter will do.
+* `friends` - Will return the user's established friends.
+* `requests-incoming` - Will list open friend requests to the user from other users.
+* `requests-outgoing` - Will list the user's open friend requests to other users.
 
 #### Responses
 HTTP Status Code | Details

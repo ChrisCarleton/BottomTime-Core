@@ -23,30 +23,30 @@ const friendSchema = mongoose.Schema({
 });
 
 friendSchema.statics.getFriendsForUser = function (username, type) {
-	const query = {
-		user: username
-	};
+	const query = {};
 
 	switch (type) {
 	case 'friends':
+		query.user = username;
 		query.approved = true;
 		break;
 
-	case 'requests':
+	case 'requests-incoming':
+		query.friend = username;
+		query.approved = null;
+		break;
+
+	case 'requests-outgoing':
+		query.user = username;
 		query.approved = { $ne: true };
 		break;
 
-	case 'both':
-		break;
-
 	default:
+		query.user = username;
 		query.approved = true;
 	}
 
-	return this
-		.find(query)
-		.sort('friend')
-		.exec();
+	return this.find(query);
 };
 
 friendSchema.methods.toCleanJSON = function () {
