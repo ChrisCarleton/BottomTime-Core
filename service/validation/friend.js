@@ -2,7 +2,7 @@ import Joi from 'joi';
 import { UsernameSchema } from './user';
 
 export const ListFriendsSchema = Joi.object({
-	type: Joi.string().valid([ 'friends', 'requests', 'both' ]).allow(null)
+	type: Joi.string().valid([ 'friends', 'requests-incoming', 'requests-outgoing' ]).allow(null)
 });
 
 export const HandleFriendRequestSchema = Joi.object({

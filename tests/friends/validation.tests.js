@@ -42,7 +42,7 @@ describe('Friends Validation Tests', () => {
 			validateListFriendsQuery();
 		});
 
-		[ null, 'friends', 'requests', 'both' ].forEach(t => {
+		[ null, 'friends', 'requests-incoming', 'requests-outgoing' ].forEach(t => {
 			it(`Succeeds if type parameter is "${ t }"`, () => {
 				query.type = t;
 				validateListFriendsQuery();

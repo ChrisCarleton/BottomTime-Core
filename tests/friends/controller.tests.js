@@ -22,6 +22,8 @@ describe('Friends controller', () => {
 			new User(fakeUser()),
 			new User(fakeUser()),
 			new User(fakeUser()),
+			new User(fakeUser()),
+			new User(fakeUser()),
 			new User(fakeUser())
 		],
 		u => u.username
@@ -35,7 +37,7 @@ describe('Friends controller', () => {
 	before(async () => {
 		user = await createFakeAccount();
 		admin = await createFakeAccount('admin');
-		await Promise.all(friends.map(f => f.save()));
+		await User.insertMany(friends);
 	});
 
 	afterEach(async () => {
@@ -81,6 +83,13 @@ describe('Friends controller', () => {
 					evaluatedOn: new Date()
 				}),
 				new Friend({
+					user: friends[1].username,
+					friend: user.user.username,
+					approved: true,
+					requestedOn: new Date(),
+					evaluatedOn: new Date()
+				}),
+				new Friend({
 					user: user.user.username,
 					friend: friends[2].username,
 					approved: false,
@@ -91,9 +100,21 @@ describe('Friends controller', () => {
 					user: user.user.username,
 					friend: friends[3].username,
 					requestedOn: new Date()
+				}),
+				new Friend({
+					user: friends[4].username,
+					friend: user.user.username,
+					requestedOn: new Date()
+				}),
+				new Friend({
+					user: friends[5].username,
+					friend: user.user.username,
+					approved: false,
+					requestedOn: new Date(),
+					evaluatedOn: new Date()
 				})
 			];
-			await Promise.all(friendAssociations.map(fa => fa.save()));
+			await Friend.insertMany(friendAssociations);
 		}
 
 		it('Will list a user\'s friends by default', async () => {
@@ -105,15 +126,8 @@ describe('Friends controller', () => {
 
 			const results = response.body;
 			expect(results).to.have.length(2);
-			expect(results[0].user).to.equal(user.user.username);
-			expect(results[0].friend).to.equal(friends[0].username);
-			expect(results[0].approved).to.be.true;
-			expect(results[0].evaluatedOn).to.exist;
-
-			expect(results[1].user).to.equal(user.user.username);
-			expect(results[1].friend).to.equal(friends[1].username);
-			expect(results[1].approved).to.be.true;
-			expect(results[1].evaluatedOn).to.exist;
+			expect(results).to.deep.include(friendAssociations[0].toCleanJSON());
+			expect(results).to.deep.include(friendAssociations[1].toCleanJSON());
 		});
 
 		it('Will list a user\'s friends if requested', async () => {
@@ -126,71 +140,35 @@ describe('Friends controller', () => {
 
 			const results = response.body;
 			expect(results).to.have.length(2);
-			expect(results[0].user).to.equal(user.user.username);
-			expect(results[0].friend).to.equal(friends[0].username);
-			expect(results[0].approved).to.be.true;
-			expect(results[0].evaluatedOn).to.exist;
-
-			expect(results[1].user).to.equal(user.user.username);
-			expect(results[1].friend).to.equal(friends[1].username);
-			expect(results[1].approved).to.be.true;
-			expect(results[1].evaluatedOn).to.exist;
+			expect(results).to.deep.include(friendAssociations[0].toCleanJSON());
+			expect(results).to.deep.include(friendAssociations[1].toCleanJSON());
 		});
 
-		it('Will list a user\'s friend requests if requested', async () => {
+		it('Will list a user\'s incoming friend requests if requested', async () => {
 			await createFriendAssociations();
 			const response = await request(App)
 				.get(`/users/${ user.user.username }/friends`)
-				.query({ type: 'requests' })
+				.query({ type: 'requests-incoming' })
+				.set(...user.authHeader)
+				.expect(200);
+
+			const results = response.body;
+			expect(results).to.have.length(1);
+			expect(results).to.deep.include(friendAssociations[5].toCleanJSON());
+		});
+
+		it('Will list a user\'s outgoing friend requests if requested', async () => {
+			await createFriendAssociations();
+			const response = await request(App)
+				.get(`/users/${ user.user.username }/friends`)
+				.query({ type: 'requests-outgoing' })
 				.set(...user.authHeader)
 				.expect(200);
 
 			const results = response.body;
 			expect(results).to.have.length(2);
-			expect(results[0].user).to.equal(user.user.username);
-			expect(results[0].friend).to.equal(friends[2].username);
-			expect(results[0].approved).to.be.false;
-			expect(results[0].evaluatedOn).to.exist;
-			expect(results[0].requestedOn).to.exist;
-
-			expect(results[1].user).to.equal(user.user.username);
-			expect(results[1].friend).to.equal(friends[3].username);
-			expect(results[1].approved).to.be.null;
-			expect(results[1].evaluatedOn).to.not.exist;
-			expect(results[1].requestedOn).to.exist;
-		});
-
-		it('Will list a both a user\'s friends and friend requests if requested', async () => {
-			await createFriendAssociations();
-			const response = await request(App)
-				.get(`/users/${ user.user.username }/friends`)
-				.query({ type: 'both' })
-				.set(...user.authHeader)
-				.expect(200);
-
-			const results = response.body;
-			expect(results).to.have.length(4);
-			expect(results[0].user).to.equal(user.user.username);
-			expect(results[0].friend).to.equal(friends[0].username);
-			expect(results[0].approved).to.be.true;
-			expect(results[0].evaluatedOn).to.exist;
-
-			expect(results[1].user).to.equal(user.user.username);
-			expect(results[1].friend).to.equal(friends[1].username);
-			expect(results[1].approved).to.be.true;
-			expect(results[1].evaluatedOn).to.exist;
-
-			expect(results[2].user).to.equal(user.user.username);
-			expect(results[2].friend).to.equal(friends[2].username);
-			expect(results[2].approved).to.be.false;
-			expect(results[2].evaluatedOn).to.exist;
-			expect(results[2].requestedOn).to.exist;
-
-			expect(results[3].user).to.equal(user.user.username);
-			expect(results[3].friend).to.equal(friends[3].username);
-			expect(results[3].approved).to.be.null;
-			expect(results[3].evaluatedOn).to.not.exist;
-			expect(results[3].requestedOn).to.exist;
+			expect(results).to.deep.include(friendAssociations[3].toCleanJSON());
+			expect(results).to.deep.include(friendAssociations[4].toCleanJSON());
 		});
 
 		it('Will return an empty array if user has no friends', async () => {
@@ -949,7 +927,7 @@ describe('Friends controller', () => {
 				requestedOn: new Date(),
 				evaluatedOn: new Date()
 			}));
-			await Promise.all(records.map(f => f.save()));
+			await Friend.insertMany(records);
 
 			await request(App)
 				.del(`/users/${ user.user.username }/friends`)
@@ -958,7 +936,7 @@ describe('Friends controller', () => {
 				.expect(204);
 
 			const results = await Friend.find({ user: user.user.username });
-			expect(results).to.have.length(0);
+			expect(results).to.be.empty;
 		});
 
 		it('Will succeed even if not all friend records exist', async () => {
@@ -969,7 +947,7 @@ describe('Friends controller', () => {
 				requestedOn: new Date(),
 				evaluatedOn: new Date()
 			}));
-			await Promise.all(records.map(f => f.save()));
+			await Friend.insertMany(records);
 
 			await request(App)
 				.del(`/users/${ user.user.username }/friends`)
@@ -989,7 +967,7 @@ describe('Friends controller', () => {
 				requestedOn: new Date(),
 				evaluatedOn: new Date()
 			}));
-			await Promise.all(records.map(f => f.save()));
+			await Friend.insertMany(records);
 
 			const requestArray = friends.map(f => f.username);
 			requestArray[1] = 42;
@@ -1003,7 +981,7 @@ describe('Friends controller', () => {
 			expect(body.errorId).to.equal(ErrorIds.badRequest);
 
 			const results = await Friend.find({ user: user.user.username });
-			expect(results).to.have.length(4);
+			expect(results).to.have.length(friends.length);
 		});
 
 		it('Returns 404 if the user specified in the route does not exist', async () => {
@@ -1028,7 +1006,7 @@ describe('Friends controller', () => {
 				requestedOn: new Date(),
 				evaluatedOn: new Date()
 			}));
-			await Promise.all(records.map(f => f.save()));
+			await Friend.insertMany(records);
 
 			const { body } = await request(App)
 				.del(`/users/${ user.user.username }/friends`)
@@ -1041,7 +1019,7 @@ describe('Friends controller', () => {
 			expect(body.logId).to.exist;
 
 			const results = await Friend.find({ user: user.user.username });
-			expect(results).to.have.length(4);
+			expect(results).to.have.length(friends.length);
 		});
 	});
 });
