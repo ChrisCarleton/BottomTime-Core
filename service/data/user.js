@@ -59,6 +59,11 @@ const userSchema = mongoose.Schema({
 		default: 'm',
 		required: true
 	},
+	temperatureUnit: {
+		type: String,
+		default: 'c',
+		required: true
+	},
 	firstName: String,
 	lastName: String,
 	location: String,
@@ -94,7 +99,10 @@ userSchema.methods.getAccountJSON = function () {
 				'username',
 				'email',
 				'role',
-				'isLockedOut'
+				'isLockedOut',
+				'weightUnit',
+				'distanceUnit',
+				'temperatureUnit'
 			]),
 		isAnonymous: false,
 		hasPassword,
@@ -120,7 +128,10 @@ userSchema.methods.getProfileJSON = function () {
 				'certificationLevel',
 				'certificationAgencies',
 				'specialties',
-				'about'
+				'about',
+				'weightUnit',
+				'distanceUnit',
+				'temperatureUnit'
 			]
 		),
 		memberSince: moment(this.createdAt).toISOString(),

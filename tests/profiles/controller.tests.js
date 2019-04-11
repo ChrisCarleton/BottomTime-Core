@@ -31,7 +31,10 @@ const expectedKeys = [
 	'about',
 	'divesLogged',
 	'bottomTimeLogged',
-	'readOnly'
+	'readOnly',
+	'distanceUnit',
+	'temperatureUnit',
+	'weightUnit'
 ];
 
 function compareProfiles(result, user) {
@@ -55,6 +58,9 @@ function compareProfiles(result, user) {
 	expect(result.certificationAgencies).to.equal(user.certificationAgencies);
 	expect(result.specialties).to.equal(user.specialties);
 	expect(result.about).to.equal(user.about);
+	expect(result.distanceUnit).to.equal(user.distanceUnit);
+	expect(result.weightUnit).to.equal(user.weightUnit);
+	expect(result.temperatureUnit).to.equal(user.temperatureUnit);
 }
 
 describe('Profiles Controller', () => {
@@ -417,7 +423,10 @@ describe('Profiles Controller', () => {
 				certificationLevel: null,
 				certificationAgencies: null,
 				specialties: null,
-				about: null
+				about: null,
+				temperatureUnit: 'f',
+				weightUnit: 'lb',
+				distanceUnit: 'ft'
 			};
 
 			await request(App)

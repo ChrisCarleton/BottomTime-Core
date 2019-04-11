@@ -75,6 +75,9 @@ export default logsVisibility => {
 			'BSAC'
 		]),
 		specialties: fakeSpecialties(),
-		about: faker.lorem.paragraph(4)
+		about: faker.lorem.paragraph(4),
+		weightUnit: faker.random.arrayElement([ 'kg', 'lb' ]),
+		distanceUnit: faker.random.arrayElement([ 'm', 'ft' ]),
+		temperatureUnit: faker.random.arrayElement([ 'c', 'f' ])
 	};
 };
