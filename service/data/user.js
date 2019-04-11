@@ -49,6 +49,16 @@ const userSchema = mongoose.Schema({
 		required: true,
 		default: 'friends-only'
 	},
+	weightUnit: {
+		type: String,
+		default: 'kg',
+		required: true
+	},
+	distanceUnit: {
+		type: String,
+		default: 'm',
+		required: true
+	},
 	firstName: String,
 	lastName: String,
 	location: String,
