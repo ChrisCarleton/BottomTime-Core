@@ -10,6 +10,14 @@ Usernames are used to uniquely identify users in the system. They conform to sev
 * They may contain only letters, numbers, dashes (`-`), dots (`.`), and underscores (`_`).
 * They must be unique on the system. No two users can have the same username.
 
+## A Note on Units
+The back-end application works exclusively in **metric**. All of the APIs below that accept or return data
+related to temperature, depth/distance, or weight will use/take values in degrees celcius, meters, and
+kilograms, respectively. Though user profiles support the `temperatureUnit`, `distanceUnit`, and
+`weightUnit` properties, these units are not checked when saving/retrieving log entry information. It is up
+to the front-end application to consume these properties and make the appropriate conversions... Or just
+stick with **metric** ;)
+
 ## Classes
 ### NewUserAccount Object
 This object gets passed in when creating new user accounts. (Sign up.)

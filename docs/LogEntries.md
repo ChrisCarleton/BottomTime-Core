@@ -3,6 +3,14 @@
 # Log Entries
 The log entries domain deals with log entries in a user's log book.
 
+## A Note on Units
+The back-end application works exclusively in **metric**. All of the APIs below that accept or return data
+related to temperature, depth/distance, or weight will use/take values in degrees celcius, meters, and
+kilograms, respectively. Though user profiles support the `temperatureUnit`, `distanceUnit`, and
+`weightUnit` properties, these units are not checked when saving/retrieving log entry information. It is up
+to the front-end application to consume these properties and make the appropriate conversions... Or just
+stick with **metric** ;)
+
 ## Classes
 ### LogEntry Object
 Describes a single log entry from a user's log book.
