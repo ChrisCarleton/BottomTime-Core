@@ -93,8 +93,13 @@ export async function CreateLogs(req, res) {
 				res);
 		}
 
-		const logEntries = _.map(req.body, e => {
+		const logEntries = req.body.map(e => {
 			e.userId = req.account.id;
+			if (e.gps) {
+				e.gps = {
+					coordinates: [ e.gps.longitude, e.gps.latitude ]
+				};
+			}
 			return new LogEntry(e).save();
 		});
 
