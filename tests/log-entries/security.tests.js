@@ -3,6 +3,7 @@ import { App } from '../../service/server';
 import createAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
+import fakeLogDocument from '../util/fake-log-document';
 import fakeLogEntry from '../util/fake-log-entry';
 import fakeMongoId from '../util/fake-mongo-id';
 import Friend from '../../service/data/friend';
@@ -42,7 +43,7 @@ describe('Log Entry Security', () => {
 
 		it('Returns Not Found if user does not exist', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			const res = await request(App)
@@ -55,7 +56,7 @@ describe('Log Entry Security', () => {
 
 		it('Returns Not Found if log entry does not belong to the specified user', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			const res = await request(App)
@@ -77,7 +78,7 @@ describe('Log Entry Security', () => {
 
 		it('Anonymous users can view logs when log books are public', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			fake.entryId = entity.id;
@@ -92,7 +93,7 @@ describe('Log Entry Security', () => {
 
 		it('Anonymous users cannot view logs when log books are friends-only', async () => {
 			const fake = fakeLogEntry(user2.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			const res = await request(App)
@@ -104,7 +105,7 @@ describe('Log Entry Security', () => {
 
 		it('Anonmyous users cannot view logs when log books are private', async () => {
 			const fake = fakeLogEntry(user3.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			const res = await request(App)
@@ -116,7 +117,7 @@ describe('Log Entry Security', () => {
 
 		it('Admins can view logs when log books are private', async () => {
 			const fake = fakeLogEntry(user3.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			fake.entryId = entity.id;
@@ -132,7 +133,7 @@ describe('Log Entry Security', () => {
 
 		it('Admins can view logs when log books are friends-only', async () => {
 			const fake = fakeLogEntry(user2.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			fake.entryId = entity.id;
@@ -148,7 +149,7 @@ describe('Log Entry Security', () => {
 
 		it('Users can view their own private logs', async () => {
 			const fake = fakeLogEntry(user3.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			fake.entryId = entity.id;
@@ -164,7 +165,7 @@ describe('Log Entry Security', () => {
 
 		it('Users can view their own friends-only logs', async () => {
 			const fake = fakeLogEntry(user2.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			fake.entryId = entity.id;
@@ -180,7 +181,7 @@ describe('Log Entry Security', () => {
 
 		it('Admins can view logs when log books are public', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			fake.entryId = entity.id;
@@ -196,7 +197,7 @@ describe('Log Entry Security', () => {
 
 		it('Users can view logs when log books are public', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			fake.entryId = entity.id;
@@ -225,7 +226,7 @@ describe('Log Entry Security', () => {
 			];
 
 			const fake = fakeLogEntry(user2.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 			const entity = await logEntry.save();
 			await Friend.insertMany(relations);
 			fake.entryId = entity.id;
@@ -242,7 +243,7 @@ describe('Log Entry Security', () => {
 
 		it('Users cannot view logs from "friends-only" log books when they are not friended', async () => {
 			const fake = fakeLogEntry(user2.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 			const entity = await logEntry.save();
 			const res = await request(App)
 				.get(`/users/${ user2.user.username }/logs/${ entity.id }`)
@@ -254,7 +255,7 @@ describe('Log Entry Security', () => {
 
 		it('Users cannot view logs from private log books', async () => {
 			const fake = fakeLogEntry(user3.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 			const entity = await logEntry.save();
 			const res = await request(App)
 				.get(`/users/${ user3.user.username }/logs/${ entity.id }`)
@@ -278,7 +279,7 @@ describe('Log Entry Security', () => {
 
 		it('Returns Not Found if log entry does not belong to the specified user', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			const res = await request(App)
@@ -291,7 +292,7 @@ describe('Log Entry Security', () => {
 
 		it('Returns Not Found if log entry does not exist', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			await logEntry.save();
 			const res = await request(App)
@@ -304,7 +305,7 @@ describe('Log Entry Security', () => {
 
 		it('Returns Not Found if user does not exist', async () => {
 			const fake = fakeLogEntry(user3.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 			const entity = await logEntry.save();
 			const res = await request(App)
 				.put(`/users/not_a_user/logs/${ entity.id }`)
@@ -328,7 +329,7 @@ describe('Log Entry Security', () => {
 
 		it('Returns Not Found if log entry does not belong to specified user', async () => {
 			const fake = fakeLogEntry(user3.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 			const entity = await logEntry.save();
 			const res = await request(App)
 				.put(`/users/${ user1.user.username }/logs/${ entity.id }`)
@@ -347,7 +348,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			const entries = await Promise.all(_.map(fakes, f => new LogEntry(f).save()));
+			const entries = await Promise.all(_.map(fakes, f => fakeLogDocument(f).save()));
 			fakes.forEach(f => {
 				delete f.userId;
 			});
@@ -380,7 +381,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(user3.user.id)
 			];
 
-			const entries = await Promise.all(_.map(fakes, f => new LogEntry(f).save()));
+			const entries = await Promise.all(_.map(fakes, f => fakeLogDocument(f).save()));
 			fakes.forEach(f => {
 				delete f.userId;
 			});
@@ -411,7 +412,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			const entries = await Promise.all(_.map(fakes, f => new LogEntry(f).save()));
+			const entries = await Promise.all(_.map(fakes, f => fakeLogDocument(f).save()));
 			fakes.forEach(f => {
 				delete f.userId;
 			});
@@ -451,7 +452,7 @@ describe('Log Entry Security', () => {
 
 		it('Returns Not Found if log entry does not belong to the specified user', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			const res = await request(App)
@@ -473,7 +474,7 @@ describe('Log Entry Security', () => {
 
 		it('Returns Not Found if user does not exist', async () => {
 			const fake = fakeLogEntry(user3.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			const res = await request(App)
@@ -498,7 +499,7 @@ describe('Log Entry Security', () => {
 
 		it('Returns Not Found if log entry does not belong to specified user', async () => {
 			const fake = fakeLogEntry(user3.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = fakeLogDocument(fake);
 
 			const entity = await logEntry.save();
 			const res = await request(App)
@@ -518,7 +519,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			const entries = await Promise.all(_.map(fakes, f => new LogEntry(f).save()));
+			const entries = await Promise.all(_.map(fakes, f => fakeLogDocument(f).save()));
 			fakes.forEach(f => {
 				delete f.userId;
 			});
@@ -551,7 +552,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(user3.user.id)
 			];
 
-			const entries = await Promise.all(_.map(fakes, f => new LogEntry(f).save()));
+			const entries = await Promise.all(_.map(fakes, f => fakeLogDocument(f).save()));
 			fakes.forEach(f => {
 				delete f.userId;
 			});
@@ -582,7 +583,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			const entries = await Promise.all(_.map(fakes, f => new LogEntry(f).save()));
+			const entries = await Promise.all(_.map(fakes, f => fakeLogDocument(f).save()));
 			fakes.forEach(f => {
 				delete f.userId;
 			});
@@ -770,7 +771,7 @@ describe('Log Entry Security', () => {
 
 			const savePromises = [];
 			fakes.forEach(fake => {
-				savePromises.push(new LogEntry(fake).save());
+				savePromises.push(fakeLogDocument(fake).save());
 			});
 
 			const entities = await Promise.all(savePromises);
@@ -811,7 +812,7 @@ describe('Log Entry Security', () => {
 			];
 			let expected = null;
 
-			const entities = await Promise.all(_.map(fakes, f => new LogEntry(f).save()));
+			const entities = await Promise.all(_.map(fakes, f => fakeLogDocument(f).save()));
 			expected = _.map(entities, e => {
 				const newData = {
 					entryId: e.id,
@@ -853,7 +854,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			const entities = await Promise.all(_.map(fakes, f => new LogEntry(f).save()));
+			const entities = await Promise.all(_.map(fakes, f => fakeLogDocument(f).save()));
 			const expected = _.map(entities, e => ({
 				entryId: e.id,
 				...fakeLogEntry()
@@ -919,7 +920,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			const entries = await Promise.all(_.map(fakes, f => new LogEntry(f).save()));
+			const entries = await Promise.all(_.map(fakes, f => fakeLogDocument(f).save()));
 			const res = await Promise.all([
 				request(App)
 					.del(`/users/${ user1.user.username }/logs`)
@@ -952,7 +953,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(user3.user.id)
 			];
 
-			const entries = await Promise.all(_.map(fakes, f => new LogEntry(f).save()));
+			const entries = await Promise.all(_.map(fakes, f => fakeLogDocument(f).save()));
 			await Promise.all([
 				request(App)
 					.del(`/users/${ user1.user.username }/logs`)
@@ -982,7 +983,7 @@ describe('Log Entry Security', () => {
 				fakeLogEntry(admin.user.id)
 			];
 
-			const entries = await Promise.all(_.map(fakes, f => new LogEntry(f).save()));
+			const entries = await Promise.all(_.map(fakes, f => fakeLogDocument(f).save()));
 			const res = await Promise.all([
 				request(App)
 					.del(`/users/${ user1.user.username }/logs`)

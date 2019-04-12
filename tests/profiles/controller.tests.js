@@ -3,10 +3,10 @@ import { App } from '../../service/server';
 import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
+import fakeLogDocument from '../util/fake-log-document';
 import fakeLogEntry from '../util/fake-log-entry';
 import fakeProfile from '../util/fake-profile';
 import Friend from '../../service/data/friend';
-import LogEntry from '../../service/data/log-entry';
 import moment from 'moment';
 import mongoose from 'mongoose';
 import request from 'supertest';
@@ -77,7 +77,7 @@ describe('Profiles Controller', () => {
 			logEntries[i] = fakeLogEntry(publicUser.user.id);
 		}
 
-		await Promise.all(_.map(logEntries, e => new LogEntry(e).save()));
+		await Promise.all(_.map(logEntries, e => fakeLogDocument(e).save()));
 	});
 
 	afterEach(() => {
