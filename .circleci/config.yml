@@ -114,7 +114,7 @@ jobs:
             echo "google_client_secret = \"$GOOGLE_CLIENT_SECRET\"" >> secret.tfvars
             echo "build_number = \"$(cat ../../build)\"" >> secret.tfvars
             terraform init -from-module=../../../modules/ -backend-config="key=dev.us-east-1.tfstate"
-            terraform apply -auto-approve -var-file secret.tfvars -var-file config.tfvars
+            terraform apply -auto-approve -var-file secret.tfvars -var-file config.tfvars > /dev/null
 
   terraform-prod:
     docker:
@@ -133,7 +133,7 @@ jobs:
             echo "build_number = \"$(cat ../../build)\"" >> secret.tfvars
             echo "session_secret = \"$PROD_SESSION_SECRET\"" >> secret.tfvars
             terraform init -from-module=../../../modules/ -backend-config="key=prod.us-east-1.tfstate"
-            terraform apply -auto-approve -var-file secret.tfvars -var-file config.tfvars
+            terraform apply -auto-approve -var-file secret.tfvars -var-file config.tfvars > /dev/null
 
 workflows:
   version: 2
