@@ -18,6 +18,8 @@
 			}
 		},
 		"environment": [
+			{ "name": "BT_BUILD_NUMBER", "value": "${build}" },
+			{ "name": "BT_AWS_REGION", "value": "${region}" },
 			{ "name": "BT_GOOGLE_CLIENT_ID", "value": "${google_id}" },
 			{ "name": "BT_GOOGLE_CLIENT_SECRET", "value": "${google_secret}" },
 			{ "name": "BT_LOG_LEVEL", "value": "${log_level}" },

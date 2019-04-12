@@ -1,3 +1,4 @@
+import config from '../config';
 import database from '../data/database';
 
 async function GetMongoDbHealth(req) {
@@ -46,9 +47,10 @@ export async function GetHealth(req, res) {
 }
 
 export function GetVersion(req, res) {
-	// This should probably return some Siren or other hypermedia response... meh. Maybe later.
 	res.json({
 		appVersion: '1.0.0',
-		apiVersion: '1.0.0'
+		apiVersion: '1.0.0',
+		build: config.buildNumber || '[unknown]',
+		region: config.awsRegion || '[unknown]'
 	});
 }
