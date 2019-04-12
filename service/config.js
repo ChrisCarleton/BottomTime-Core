@@ -2,6 +2,8 @@
 
 const config = {
 	nodeEnv: process.env.NODE_ENV,
+	buildNumber: process.env.BT_BUILD_NUMBER,
+	awsRegion: process.env.BT_AWS_REGION,
 
 	logLevel: process.env.BT_LOG_LEVEL || 'debug',
 	logFileName: process.env.BT_LOG_FILE,
