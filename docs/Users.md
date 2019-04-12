@@ -10,8 +10,18 @@ Usernames are used to uniquely identify users in the system. They conform to sev
 * They may contain only letters, numbers, dashes (`-`), dots (`.`), and underscores (`_`).
 * They must be unique on the system. No two users can have the same username.
 
+## A Note on Units
+The back-end application works exclusively in **metric**. All of the APIs below that accept or return data
+related to temperature, depth/distance, or weight will use/take values in degrees celcius, meters, and
+kilograms, respectively. Though user profiles support the `temperatureUnit`, `distanceUnit`, and
+`weightUnit` properties, these units are not checked when saving/retrieving log entry information. It is up
+to the front-end application to consume these properties and make the appropriate conversions... Or just
+stick with **metric** ;)
+
 ## Classes
-### UserAccount Object
+### NewUserAccount Object
+This object gets passed in when creating new user accounts. (Sign up.)
+
 ```json
 {
 	"email": "REQUIRED String: A valid e-mail address.",
@@ -51,7 +61,10 @@ Passwords must meet several strength requirements. All passwords must:
 	"specialties": "String: A list of specialty certifications the user has earned.",
 	"about": "String: A free-form paragraph allowing the user to describe their diving background.",
 	"divesLogged": "Number: The number of dives the user has logged in the application.",
-	"bottomTimeLogged": "Number: The total bottom time (in minutes) that the user has logged in the application."
+	"bottomTimeLogged": "Number: The total bottom time (in minutes) that the user has logged in the application.",
+	"distanceUnit": "String: The user's preferred unit for distance. (Valid values are 'm' and 'ft'.)",
+	"weightUnit": "String: The user's preferred unit for weight. (Valid values are 'kg' and 'lb'.)",
+	"temperatureUnit": "String: The user's preferred unit for temperature. (Valid values are 'c' and 'f'.)"
 }
 ```
 
@@ -95,13 +108,13 @@ create a new account.
 * **username** - A valid [username](#usernames) that will identify the user account once it is created.
 
 #### Message Body
-The message body must contain a valid [UserAccount](#useraccount-object) object describing the new account.
+The message body must contain a valid [NewUserAccount](#newuseraccount-object) object describing the new account.
 
 #### Responses
 HTTP Status Code | Details
 ----- | -----
 **201 Created** | The call succeeded and the new user account has been created. A [LoginSucceeded](Authentication.md#loginsucceeded-object) will be returned containing information on the user that was signed in as well as a JWT bearer token that can be used to authenticate future requests as the new user.
-**400 Bad Request** | The request was rejected because the request body was empty or the [UserAccount](#useraccount-object) object was invalid, or because the username route parameter was not valid.
+**400 Bad Request** | The request was rejected because the request body was empty or the [NewUserAccount](#newuseraccount-object) object was invalid, or because the username route parameter was not valid.
 **403 Forbidden** | This is returned if the action being taken is not allowed. See above for details.
 **409 Conflict** | A Conflict error is returned if either the requested username or e-mail address is already taken by another user. Check the `field` property of the [Error](General.md#error-object) to see which one is problematic. It will be set to one of `email` or `username`.
 **500 Server Error** | The request could not be completed because something went wrong on the server-side.
@@ -188,11 +201,15 @@ will be updated.
 
 #### Message Body
 The message body must contain a valid [UserProfile](#userprofile-object) object containing the new profile
-information. Fields that are set to null will be cleared (their values will be removed.) Fields that are
+information. Fields that are set to `null` will be cleared (their values will be removed.) Fields that are
 omitted will be left unchanged.
 
-The **memberSince**, **divesLogged**, and **bottomTimeLogged** fields are considered read-only. Their values
+The `memberSince`, `divesLogged`, and `bottomTimeLogged` fields are considered read-only. Their values
 may be included in the **UserProfile** object but their values will be ignored.
+
+The `logsVisibility`, `distanceUnit`, `weightUnit`, and `temperatureUnit` fields are considered
+*required* fields and cannot be cleared. That is, a 400 error will be returned if any of them are set to
+`null`.
 
 #### Responses
 HTTP Status Code | Details

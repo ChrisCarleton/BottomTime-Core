@@ -13,7 +13,10 @@ The authentication domain deals with access to user accounts.
 	"role": "String: Indicates the user's privilege level in the system. One of user|admin.",
 	"isAnonymous": "Boolean: True if the user is unauthenticated; otherwise, false.",
 	"hasPassword": "Boolean: True if the user has a password set on his/her account.",
-	"isLockedOut": "Boolean: True if the account is locked out (not allowed to log in.)"
+	"isLockedOut": "Boolean: True if the account is locked out (not allowed to log in.)",
+	"distanceUnit": "String: The user's preferred unit for distance. (Valid values are 'm' and 'ft'.)",
+	"weightUnit": "String: The user's preferred unit for weight. (Valid values are 'kg' and 'lb'.)",
+	"temperatureUnit": "String: The user's preferred unit for temperature. (Valid values are 'c' and 'f'.)"
 }
 ```
 Some user accounts may not have a password set on them because the user opted to sign up using one of the

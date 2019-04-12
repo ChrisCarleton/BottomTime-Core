@@ -283,4 +283,55 @@ describe('Update profile validation', () => {
 		delete profile.about;
 		validateProfile();
 	});
+
+	[ 'ft', 'm' ].forEach(d => {
+		it(`Distance unit can be set to "${ d }"`, () => {
+			profile.distanceUnit = d;
+			validateProfile();
+		});
+	});
+
+	it('Distance unit cannot be null', () => {
+		profile.distanceUnit = null;
+		validateProfile('string.base');
+	});
+
+	it('Distance unit can be omitted', () => {
+		delete profile.distanceUnit;
+		validateProfile();
+	});
+
+	[ 'c', 'f' ].forEach(t => {
+		it(`Temperature unit can be set to "${ t }"`, () => {
+			profile.temperatureUnit = t;
+			validateProfile();
+		});
+	});
+
+	it('Temperature unit cannot be null', () => {
+		profile.temperatureUnit = null;
+		validateProfile('string.base');
+	});
+
+	it('Temperature unit can be omitted', () => {
+		delete profile.temperatureUnit;
+		validateProfile();
+	});
+
+	[ 'kg', 'lb' ].forEach(w => {
+		it(`Weight unit can be set to "${ w }"`, () => {
+			profile.weightUnit = w;
+			validateProfile();
+		});
+	});
+
+	it('Weight unit cannot be null', () => {
+		profile.weightUnit = null;
+		validateProfile('string.base');
+	});
+
+	it('Weight unit can be omitted', () => {
+		delete profile.weightUnit;
+		validateProfile();
+	});
 });
