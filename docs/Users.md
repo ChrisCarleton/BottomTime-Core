@@ -201,11 +201,15 @@ will be updated.
 
 #### Message Body
 The message body must contain a valid [UserProfile](#userprofile-object) object containing the new profile
-information. Fields that are set to null will be cleared (their values will be removed.) Fields that are
+information. Fields that are set to `null` will be cleared (their values will be removed.) Fields that are
 omitted will be left unchanged.
 
-The **memberSince**, **divesLogged**, and **bottomTimeLogged** fields are considered read-only. Their values
+The `memberSince`, `divesLogged`, and `bottomTimeLogged` fields are considered read-only. Their values
 may be included in the **UserProfile** object but their values will be ignored.
+
+The `logsVisibility`, `distanceUnit`, `weightUnit`, and `temperatureUnit` fields are considered
+*required* fields and cannot be cleared. That is, a 400 error will be returned if any of them are set to
+`null`.
 
 #### Responses
 HTTP Status Code | Details
