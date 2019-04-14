@@ -1,7 +1,7 @@
 import moment from 'moment';
 import mongoose from './database';
 
-const friendSchema = new mongoose.Schema({
+const friendSchema = mongoose.Schema({
 	user: {
 		type: String,
 		required: true,

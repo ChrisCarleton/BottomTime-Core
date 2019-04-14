@@ -1,6 +1,6 @@
 import mongoose from './database';
 
-const sessionSchema = new mongoose.Schema({
+const sessionSchema = mongoose.Schema({
 	username: {
 		type: String,
 		index: true,
