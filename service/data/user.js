@@ -2,7 +2,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import mongoose from './database';
 
-const userSchema = new mongoose.Schema({
+const userSchema = mongoose.Schema({
 	usernameLower: {
 		type: String,
 		unique: true,
