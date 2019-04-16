@@ -50,6 +50,22 @@ jobs:
           paths:
             - db-maintenance.zip
 
+  validate-terraform:
+    docker:
+      - image: hashicorp/terraform:0.11.10
+    steps:
+      - checkout
+      - run:
+          name: Validate Terraform
+          working_directory: terraform/env/dev/us-east-1
+          command: |
+            echo "mongodb_endpoint = \"$DEV_DATABASE\"" >> secret.tfvars
+            echo "google_client_secret = \"$GOOGLE_CLIENT_SECRET\"" >> secret.tfvars
+            echo "build_number = \"$(cat ../../build)\"" >> secret.tfvars
+            terraform init -from-module=../../../modules/ -backend-config="key=dev.us-east-1.tfstate"
+            terraform validate -var-file=config.tfvars -var-file=secret.tfvars
+            terraform plan -var-file secret.tfvars -var-file config.tfvars > /dev/null
+
   deploy-image-dev:
     machine:
       enabled: true
@@ -140,9 +156,11 @@ workflows:
   build-and-deploy:
     jobs:
       - test
+      - validate-terraform
       - deploy-image-dev:
           requires:
             - test
+            - validate-terraform
           filters:
             branches:
               only:
@@ -150,6 +168,7 @@ workflows:
       - deploy-image-prod:
           requires:
             - test
+            - validate-terraform
           filters:
             branches:
               only:
