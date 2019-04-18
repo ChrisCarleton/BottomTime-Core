@@ -318,7 +318,7 @@ describe('Update profile validation', () => {
 		validateProfile();
 	});
 
-	[ 'kg', 'lb' ].forEach(w => {
+	[ 'kg', 'lbs' ].forEach(w => {
 		it(`Weight unit can be set to "${ w }"`, () => {
 			profile.weightUnit = w;
 			validateProfile();

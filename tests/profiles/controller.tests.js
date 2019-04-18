@@ -425,7 +425,7 @@ describe('Profiles Controller', () => {
 				specialties: null,
 				about: null,
 				temperatureUnit: 'f',
-				weightUnit: 'lb',
+				weightUnit: 'lbs',
 				distanceUnit: 'ft'
 			};
 

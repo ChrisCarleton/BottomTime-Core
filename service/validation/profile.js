@@ -17,7 +17,7 @@ export const UpdateProfileSchema = Joi.object().keys({
 	certificationAgencies: Joi.string().max(100).allow(null),
 	specialties: Joi.string().max(200).allow(null),
 	about: Joi.string().max(1000).allow(null),
-	weightUnit: Joi.string().only([ 'kg', 'lb' ]),
+	weightUnit: Joi.string().only([ 'kg', 'lbs' ]),
 	temperatureUnit: Joi.string().only([ 'c', 'f' ]),
 	distanceUnit: Joi.string().only([ 'm', 'ft' ])
 });

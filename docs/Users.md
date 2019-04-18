@@ -63,7 +63,7 @@ Passwords must meet several strength requirements. All passwords must:
 	"divesLogged": "Number: The number of dives the user has logged in the application.",
 	"bottomTimeLogged": "Number: The total bottom time (in minutes) that the user has logged in the application.",
 	"distanceUnit": "String: The user's preferred unit for distance. (Valid values are 'm' and 'ft'.)",
-	"weightUnit": "String: The user's preferred unit for weight. (Valid values are 'kg' and 'lb'.)",
+	"weightUnit": "String: The user's preferred unit for weight. (Valid values are 'kg' and 'lbs'.)",
 	"temperatureUnit": "String: The user's preferred unit for temperature. (Valid values are 'c' and 'f'.)"
 }
 ```
