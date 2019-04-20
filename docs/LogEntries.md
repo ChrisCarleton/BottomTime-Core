@@ -25,10 +25,10 @@ Describes a single log entry from a user's log book.
 		"latitude": "REQUIRED Number: Between -90.0 and 90.0",
 		"longitude": "REQUIRED Number: Between -180.0 and 180.0"
 	},
-	"bottomTime": "Number: Bottom time minutes (must be positive)",
+	"bottomTime": "REQUIRED Number: Bottom time minutes (must be positive)",
 	"totalTime": "Number: Total dive time, including ascent/stops (must be positive and >= 'bottomTime')",
 	"averageDepth": "Number: Average depth in meters",
-	"maxDepth": "Number: Maximum depth in meters (must be >= 'averageDepth')",
+	"maxDepth": "REQUIRED Number: Maximum depth in meters (must be >= 'averageDepth')",
 	"weight": {  // Optional object
 		"amount": "Number: Amount of weight worn in kilograms."
 	}
