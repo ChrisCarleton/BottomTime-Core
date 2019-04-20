@@ -65,6 +65,11 @@ describe('Log entry validation', () => {
 		validateCreate('any.required');
 	});
 
+	it('Bottom time is required', () => {
+		delete logEntry.bottomTime;
+		validateCreate('any.required');
+	});
+
 	it('Bottom time cannot be zero', () => {
 		logEntry.bottomTime = 0;
 		validateCreate('number.positive');
@@ -81,14 +86,19 @@ describe('Log entry validation', () => {
 		validateCreate();
 	});
 
+	it('Total time can be omitted', () => {
+		delete logEntry.totalTime;
+		validateCreate();
+	});
+
 	it('Total time cannot be zero', () => {
-		delete logEntry.bottomTime;
+		logEntry.bottomTime = 0;
 		logEntry.totalTime = 0;
 		validateCreate('number.positive');
 	});
 
 	it('Total time cannot be negative', () => {
-		delete logEntry.bottomTime;
+		logEntry.bottomTime = 1;
 		logEntry.totalTime = -4;
 		validateCreate('number.positive');
 	});
@@ -142,6 +152,11 @@ describe('Log entry validation', () => {
 	it('Average depth can be fractional', () => {
 		logEntry.averageDepth = logEntry.maxDepth - 2.23;
 		validateCreate();
+	});
+
+	it('Max depth is required', () => {
+		delete logEntry.maxDepth;
+		validateCreate('any.required');
 	});
 
 	it('Max depth cannot be zero', () => {
