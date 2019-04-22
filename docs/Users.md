@@ -64,7 +64,8 @@ Passwords must meet several strength requirements. All passwords must:
 	"bottomTimeLogged": "Number: The total bottom time (in minutes) that the user has logged in the application.",
 	"distanceUnit": "String: The user's preferred unit for distance. (Valid values are 'm' and 'ft'.)",
 	"weightUnit": "String: The user's preferred unit for weight. (Valid values are 'kg' and 'lbs'.)",
-	"temperatureUnit": "String: The user's preferred unit for temperature. (Valid values are 'c' and 'f'.)"
+	"temperatureUnit": "String: The user's preferred unit for temperature. (Valid values are 'c' and 'f'.)",
+	"pressureUnit": "String: The user's preferred unit for pressure. (Valid values are 'bar' and 'psi'.)"
 }
 ```
 
@@ -207,9 +208,9 @@ omitted will be left unchanged.
 The `memberSince`, `divesLogged`, and `bottomTimeLogged` fields are considered read-only. Their values
 may be included in the **UserProfile** object but their values will be ignored.
 
-The `logsVisibility`, `distanceUnit`, `weightUnit`, and `temperatureUnit` fields are considered
-*required* fields and cannot be cleared. That is, a 400 error will be returned if any of them are set to
-`null`.
+The `logsVisibility`, `distanceUnit`, `weightUnit`, `pressureUnit`, and `temperatureUnit` fields are
+considered *required* fields and cannot be cleared. That is, a 400 error will be returned if any of them
+are set to `null`.
 
 #### Responses
 HTTP Status Code | Details
