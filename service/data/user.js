@@ -64,6 +64,11 @@ const userSchema = mongoose.Schema({
 		default: 'c',
 		required: true
 	},
+	pressureUnit: {
+		type: String,
+		default: 'bar',
+		required: true
+	},
 	firstName: String,
 	lastName: String,
 	location: String,
@@ -131,7 +136,8 @@ userSchema.methods.getProfileJSON = function () {
 				'about',
 				'weightUnit',
 				'distanceUnit',
-				'temperatureUnit'
+				'temperatureUnit',
+				'pressureUnit'
 			]
 		),
 		memberSince: moment(this.createdAt).toISOString(),

@@ -78,6 +78,7 @@ export default logsVisibility => {
 		about: faker.lorem.paragraph(4),
 		weightUnit: faker.random.arrayElement([ 'kg', 'lbs' ]),
 		distanceUnit: faker.random.arrayElement([ 'm', 'ft' ]),
-		temperatureUnit: faker.random.arrayElement([ 'c', 'f' ])
+		temperatureUnit: faker.random.arrayElement([ 'c', 'f' ]),
+		pressureUnit: faker.random.arrayElement([ 'bar', 'psi' ])
 	};
 };
