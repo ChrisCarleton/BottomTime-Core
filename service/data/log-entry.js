@@ -66,6 +66,18 @@ logEntrySchema.methods.toCleanJSON = function () {
 	/* eslint-enable no-underscore-dangle */
 	delete clean.userId;
 	clean.entryTime = moment(this.entryTime).utc().toISOString();
+
+	if (clean.decoStops) {
+		clean.decoStops = clean.decoStops.map(ds => ({
+			depth: ds.depth,
+			duration: ds.duration
+		}));
+	}
+
+	if (clean.temperature && clean.temperature.thermoclines && clean.temperature.thermoclines.length === 0) {
+		delete clean.temperature.thermoclines;
+	}
+
 	return clean;
 };
 

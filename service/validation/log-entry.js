@@ -4,49 +4,59 @@ const logEntryBaseSchema = {
 	// Basic info
 	entryTime: Joi.string().isoDate().required(),
 	bottomTime: Joi.number().positive().required(),
+	diveNumber: Joi.number().integer().positive(),
 	totalTime: Joi.number().positive().min(Joi.ref('bottomTime')),
+	surfaceInterval: Joi.number().positive(),
 	location: Joi.string().max(200).required(),
 	site: Joi.string().max(200).required(),
 	averageDepth: Joi.number().positive(),
 	maxDepth: Joi.number().positive().required().min(Joi.ref('averageDepth')),
+
 	gps: Joi.object().keys({
 		latitude: Joi.number().min(-90.0).max(90.0).required(),
 		longitude: Joi.number().min(-180.0).max(180.0).required()
 	}),
 
-	gas: Joi.array().items(Joi.object().keys({
-		capacity: Joi.number().positive().required(),
-		type: Joi.string().only([ 'Steel', 'Aluminum' ]).required(),
-		doubles: Joi.boolean().default(false).required()
-	}).min(1).max(10)),
+	air: Joi.object().keys({
+		in: Joi.number().positive(),
+		out: Joi.when(
+			'in',
+			{
+				is: Joi.exist(),
+				then: Joi.number().positive().max(Joi.ref('in')),
+				otherwise: Joi.number().positive()
+			}
+		),
+		doubles: Joi.boolean(),
+		volume: Joi.number().positive(),
+		volumeUnit: Joi.string().only([ 'L', 'cf' ]),
+		material: Joi.string().only([ 'aluminum', 'steel' ]),
+		oxygen: Joi.number().positive(),
+		helium: Joi.number().min(0)
+	}).and('volume', 'volumeUnit'),
+
+	decoStops: Joi.array().items(
+		Joi.object().keys({
+			depth: Joi.number().positive(),
+			duration: Joi.number().positive()
+		})
+	),
+
+	temperature: Joi.object().keys({
+		surface: Joi.number(),
+		water: Joi.number(),
+		thermoclines: Joi.array().items(Joi.number())
+	}),
 
 	// Weighting
 	weight: Joi.object().keys({
-		amount: Joi.number().min(0.0),
-		accuracy: Joi.string().only([ 'Good', 'TooLittle', 'TooMuch' ]),
-		trim: Joi.string().only([ 'Good', 'HeadDown', 'FeetDown' ]),
-		notes: Joi.string().max(200)
+		amount: Joi.number().min(0),
+		correctness: Joi.string().only([ 'good', 'too little', 'too much' ]),
+		trim: Joi.string().only([ 'good', 'feet down', 'feet up' ])
 	}),
 
-	// Exposure
-	exposure: Joi.object().keys({
-		suit: Joi.string().only([ 'Wetsuit', 'Shorty', 'Drysuit', 'None' ]),
-		thickness: Joi.number().integer().positive()
-	}),
-
-	equipment: Joi.object().keys({
-
-	}),
-
-	// Conditions
-	conditions: Joi.object().keys({
-
-	}),
-
-	diveType: Joi.object().keys({
-
-	})
-
+	tags: Joi.array().items(Joi.string()),
+	comments: Joi.string().max(1000)
 };
 
 export const NewEntrySchema = Joi.object().keys({

@@ -228,7 +228,7 @@ describe('Log entry validation', () => {
 				'livingTheDream'
 			];
 
-			validateCreate('whatever');
+			validateCreate('string.base');
 		});
 
 		it('Tags array cannot contain empty strings', () => {
@@ -239,7 +239,7 @@ describe('Log entry validation', () => {
 				'livingTheDream'
 			];
 
-			validateCreate('whatever');
+			validateCreate('any.empty');
 		});
 
 		it('Tags must be strings', () => {
@@ -260,8 +260,7 @@ describe('Log entry validation', () => {
 
 	describe('GPS', () => {
 		it('Latitude and longitude are optional', () => {
-			delete logEntry.gps.latitude;
-			delete logEntry.gps.longitude;
+			delete logEntry.gps;
 			validateCreate();
 		});
 
@@ -285,24 +284,24 @@ describe('Log entry validation', () => {
 			validateCreate('number.base');
 		});
 
-		it('Longitude cannot be less than -90', () => {
-			logEntry.gps.longitude = -90.1;
+		it('Longitude cannot be less than -180', () => {
+			logEntry.gps.longitude = -180.1;
 			validateCreate('number.min');
 		});
 
-		it('Longitude cannot be more than 90', () => {
-			logEntry.gps.longitude = 90.1;
+		it('Longitude cannot be more than 180', () => {
+			logEntry.gps.longitude = 180.1;
 			validateCreate('number.max');
 		});
 
 		it('Latitude is required if longitude is specified', () => {
 			delete logEntry.gps.latitude;
-			validateCreate('object.and');
+			validateCreate('any.required');
 		});
 
 		it('Longitude is required if latitude is specified', () => {
 			delete logEntry.gps.longitude;
-			validateCreate('object.and');
+			validateCreate('any.required');
 		});
 	});
 
@@ -339,7 +338,7 @@ describe('Log entry validation', () => {
 
 		it('Air out must be less than air in', () => {
 			logEntry.air.out = logEntry.air.in + 5;
-			validateCreate('lol');
+			validateCreate('number.max');
 		});
 
 		it('Air doubles is optional', () => {
@@ -404,7 +403,7 @@ describe('Log entry validation', () => {
 
 		it('Air tank material cannot be set to an invalid value', () => {
 			logEntry.air.material = 'adamantium';
-			validateCreate();
+			validateCreate('any.allowOnly');
 		});
 
 		it('Oxygen content is optional', () => {
@@ -521,17 +520,17 @@ describe('Log entry validation', () => {
 		});
 
 		it('Thermoclines must be an array', () => {
-			logEntry.tempuerature.thermoclines = 9;
+			logEntry.temperature.thermoclines = 9;
 			validateCreate('array.base');
 		});
 
 		it('Thermocline array cannot be sparse', () => {
-			logEntry.temperature.thermoclines[0] = null;
-			validateCreate('array.something');
+			logEntry.temperature.thermoclines = [ null ];
+			validateCreate('number.base');
 		});
 
 		it('Thermocline values must be numbers', () => {
-			logEntry.temperature.thermoclines[0] = 'cold';
+			logEntry.temperature.thermoclines = [ 'cold' ];
 			validateCreate('number.base');
 		});
 	});
