@@ -9,9 +9,11 @@ export const LoginSchema = Joi.object().keys({
 	password: Joi.string().max(50).required()
 }).required();
 
+export const UsernameRegex = /^[a-z0-9_.-]+$/i;
+
 export const UsernameSchema = Joi
 	.string()
-	.regex(/^[a-zA-Z0-9_.-]+$/)
+	.regex(UsernameRegex)
 	.min(5)
 	.max(50)
 	.required();
