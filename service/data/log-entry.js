@@ -7,6 +7,7 @@ const logEntrySchema = mongoose.Schema({
 		required: true,
 		index: true
 	},
+	diveNumber: Number,
 	entryTime: {
 		type: Date,
 		required: true,
@@ -20,11 +21,45 @@ const logEntrySchema = mongoose.Schema({
 	},
 	bottomTime: Number,
 	totalTime: Number,
+	surfaceInterval: Number,
 	maxDepth: Number,
 	averageDepth: Number,
+	air: {
+		in: Number,
+		out: Number,
+		doubles: Boolean,
+		volume: Number,
+		volumeUnit: String,
+		material: String,
+		oxygen: Number,
+		helium: Number
+	},
+	decoStops: [
+		{
+			depth: Number,
+			duration: Number
+		}
+	],
 	weight: {
-		amount: Number
-	}
+		amount: Number,
+		correctness: String,
+		trim: String
+	},
+	temperature: {
+		surface: Number,
+		water: Number,
+		thermoclines: [
+			{
+				depth: Number,
+				temperature: {
+					type: Number,
+					required: true
+				}
+			}
+		]
+	},
+	tags: [ String ],
+	comments: String
 });
 
 logEntrySchema.statics.searchByUser = function (userId, options, done) {
@@ -39,6 +74,21 @@ logEntrySchema.methods.toCleanJSON = function () {
 	/* eslint-enable no-underscore-dangle */
 	delete clean.userId;
 	clean.entryTime = moment(this.entryTime).utc().toISOString();
+
+	if (clean.decoStops) {
+		clean.decoStops = clean.decoStops.map(ds => ({
+			depth: ds.depth,
+			duration: ds.duration
+		}));
+	}
+
+	if (clean.temperature && clean.temperature.thermoclines) {
+		clean.temperature.thermoclines = clean.temperature.thermoclines.map(t => ({
+			temperature: t.temperature,
+			depth: t.depth
+		}));
+	}
+
 	return clean;
 };
 
@@ -46,12 +96,19 @@ export default mongoose.model('LogEntry', logEntrySchema);
 
 export function assignLogEntry(entity, newLogEntry) {
 	entity.entryTime = moment(newLogEntry.entryTime).utc().toDate();
+	entity.diveNumber = newLogEntry.diveNumber;
 	entity.bottomTime = newLogEntry.bottomTime;
 	entity.totalTime = newLogEntry.totalTime;
 	entity.location = newLogEntry.location;
 	entity.site = newLogEntry.site;
+	entity.surfaceInterval = newLogEntry.surfaceInterval;
 	entity.averageDepth = newLogEntry.averageDepth;
 	entity.maxDepth = newLogEntry.maxDepth;
 	entity.gps = newLogEntry.gps;
 	entity.weight = newLogEntry.weight;
+	entity.air = newLogEntry.air;
+	entity.temperature = newLogEntry.temperature;
+	entity.tags = newLogEntry.tags;
+	entity.comments = newLogEntry.comments;
+	entity.decoStops = newLogEntry.decoStops;
 }
