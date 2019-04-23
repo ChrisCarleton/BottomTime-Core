@@ -291,6 +291,11 @@ describe('Update profile validation', () => {
 		});
 	});
 
+	it('Distance unit cannot be set to an invalid value', () => {
+		profile.distanceUnit = 'y';
+		validateProfile('any.allowOnly');
+	});
+
 	it('Distance unit cannot be null', () => {
 		profile.distanceUnit = null;
 		validateProfile('string.base');
@@ -306,6 +311,11 @@ describe('Update profile validation', () => {
 			profile.temperatureUnit = t;
 			validateProfile();
 		});
+	});
+
+	it('Temperature unit cannot be set to an invalid value', () => {
+		profile.temperatureUnit = 'K';
+		validateProfile('any.allowOnly');
 	});
 
 	it('Temperature unit cannot be null', () => {
@@ -325,6 +335,11 @@ describe('Update profile validation', () => {
 		});
 	});
 
+	it('Weight unit cannot be set to an invalid value', () => {
+		profile.weightUnit = 'st';
+		validateProfile('any.allowOnly');
+	});
+
 	it('Weight unit cannot be null', () => {
 		profile.weightUnit = null;
 		validateProfile('string.base');
@@ -332,6 +347,28 @@ describe('Update profile validation', () => {
 
 	it('Weight unit can be omitted', () => {
 		delete profile.weightUnit;
+		validateProfile();
+	});
+
+	[ 'bar', 'psi' ].forEach(p => {
+		it(`Pressure unit can be set to "${ p }"`, () => {
+			profile.pressureUnit = p;
+			validateProfile();
+		});
+	});
+
+	it('Pressure unit cannot be set to an invalid value', () => {
+		profile.pressureUnit = 'kPa';
+		validateProfile('any.allowOnly');
+	});
+
+	it('Pressure unit cannot be null', () => {
+		profile.pressureUnit = null;
+		validateProfile('string.base');
+	});
+
+	it('Pressure unit can be omitted', () => {
+		delete profile.pressureUnit;
 		validateProfile();
 	});
 });
