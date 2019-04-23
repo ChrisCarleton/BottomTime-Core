@@ -306,7 +306,7 @@ describe('Friends controller', () => {
 			expect(templateSpy.called).to.be.false;
 		});
 
-		it('Will return 400 if friend request already exists', async () => {
+		it('Will return 409 if friend request already exists', async () => {
 			const friendRequest = new Friend({
 				user: user.user.username,
 				friend: friends[0].username,
@@ -321,7 +321,7 @@ describe('Friends controller', () => {
 			await request(App)
 				.put(`/users/${ user.user.username }/friends/${ friends[0].username }`)
 				.set(...user.authHeader)
-				.expect(400);
+				.expect(409);
 
 			expect(mailerSpy.called).to.be.false;
 			expect(templateSpy.called).to.be.false;
