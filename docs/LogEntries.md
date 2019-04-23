@@ -43,12 +43,8 @@ Describes a single log entry from a user's log book.
 	},
 	"decoStops": [
 		{
-			"depth": "REQUIRED Number: The depth (in meters) that the stop was made at. (Must be positive.",
+			"depth": "REQUIRED Number: The depth (in meters) that the stop was made at. (Must be positive.)",
 			"duration": "REQUIRED Number: The duration (in minutes) of the stop. (Must be positive.)"
-		},
-		{
-			"depth": "...",
-			"duration": "..."
 		}
 	],
 	"temperature": {
