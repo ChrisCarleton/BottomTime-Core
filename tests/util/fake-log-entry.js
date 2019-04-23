@@ -73,7 +73,13 @@ export default userId => {
 		},
 		temperature: {
 			surface: faker.random.number({ min: 20, max: 35 }),
-			water: faker.random.number({ min: 3, max: 18 })
+			water: faker.random.number({ min: 3, max: 18 }),
+			thermoclines: [
+				{
+					depth: faker.random.number({ min: 15, max: 25 }),
+					temperature: faker.random.number({ min: -2, max: 3 })
+				}
+			]
 		},
 		tags: generateTags(),
 		comments: faker.lorem.sentences(4)

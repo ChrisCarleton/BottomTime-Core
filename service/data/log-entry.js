@@ -48,7 +48,15 @@ const logEntrySchema = mongoose.Schema({
 	temperature: {
 		surface: Number,
 		water: Number,
-		thermoclines: [ Number ]
+		thermoclines: [
+			{
+				depth: Number,
+				temperature: {
+					type: Number,
+					required: true
+				}
+			}
+		]
 	},
 	tags: [ String ],
 	comments: String
@@ -74,8 +82,11 @@ logEntrySchema.methods.toCleanJSON = function () {
 		}));
 	}
 
-	if (clean.temperature && clean.temperature.thermoclines && clean.temperature.thermoclines.length === 0) {
-		delete clean.temperature.thermoclines;
+	if (clean.temperature && clean.temperature.thermoclines) {
+		clean.temperature.thermoclines = clean.temperature.thermoclines.map(t => ({
+			temperature: t.temperature,
+			depth: t.depth
+		}));
 	}
 
 	return clean;

@@ -31,8 +31,8 @@ const logEntryBaseSchema = {
 		volume: Joi.number().positive(),
 		volumeUnit: Joi.string().only([ 'L', 'cf' ]),
 		material: Joi.string().only([ 'aluminum', 'steel' ]),
-		oxygen: Joi.number().positive(),
-		helium: Joi.number().min(0)
+		oxygen: Joi.number().positive().max(100),
+		helium: Joi.number().min(0).max(95)
 	}).and('volume', 'volumeUnit'),
 
 	decoStops: Joi.array().items(
@@ -40,12 +40,15 @@ const logEntryBaseSchema = {
 			depth: Joi.number().positive(),
 			duration: Joi.number().positive()
 		})
-	),
+	).max(15),
 
 	temperature: Joi.object().keys({
-		surface: Joi.number(),
-		water: Joi.number(),
-		thermoclines: Joi.array().items(Joi.number())
+		surface: Joi.number().min(-2).max(50),
+		water: Joi.number().min(-2).max(50),
+		thermoclines: Joi.array().items(Joi.object().keys({
+			temperature: Joi.number().required().min(-2).max(50),
+			depth: Joi.number().positive()
+		})).max(4)
 	}),
 
 	// Weighting
@@ -55,7 +58,7 @@ const logEntryBaseSchema = {
 		trim: Joi.string().only([ 'good', 'feet down', 'feet up' ])
 	}),
 
-	tags: Joi.array().items(Joi.string()),
+	tags: Joi.array().items(Joi.string().alphanum().max(25)).max(50),
 	comments: Joi.string().max(1000)
 };
 

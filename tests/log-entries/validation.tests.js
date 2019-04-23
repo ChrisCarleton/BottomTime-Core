@@ -247,6 +247,21 @@ describe('Log entry validation', () => {
 			validateCreate('string.base');
 		});
 
+		it('Tags cannot be more than 25 characters', () => {
+			logEntry.tags = [ 'long'.padEnd(26, '1') ];
+			validateCreate('string.max');
+		});
+
+		it('Tags must be alphanumeric', () => {
+			logEntry.tags = [ 'ok', 'not_ok' ];
+			validateCreate('string.alphanum');
+		});
+
+		it('Tags collection cannot have more than 50 tags', () => {
+			logEntry.tags = new Array(51).fill('lol');
+			validateCreate('array.max');
+		});
+
 		it('Comments is optional', () => {
 			delete logEntry.comments;
 			validateCreate();
@@ -255,6 +270,11 @@ describe('Log entry validation', () => {
 		it('Comments must be a string', () => {
 			logEntry.comments = 87;
 			validateCreate('string.base');
+		});
+
+		it('Comments cannot exceed 1000 characters', () => {
+			logEntry.comments = 'long'.padEnd(1001, '#');
+			validateCreate('string.max');
 		});
 	});
 
@@ -421,6 +441,11 @@ describe('Log entry validation', () => {
 			validateCreate('number.positive');
 		});
 
+		it('Oxygen content cannot exceed 100%', () => {
+			logEntry.air.oxygen = 100.6;
+			validateCreate('number.max');
+		});
+
 		it('Helium content is optional', () => {
 			delete logEntry.air.helium;
 			validateCreate();
@@ -439,6 +464,11 @@ describe('Log entry validation', () => {
 		it('Helium content cannot be negative', () => {
 			logEntry.air.helium = -0.5;
 			validateCreate('number.min');
+		});
+
+		it('Helium cannot exceed 95%', () => {
+			logEntry.air.helium = 95.3;
+			validateCreate('number.max');
 		});
 	});
 
@@ -509,6 +539,16 @@ describe('Log entry validation', () => {
 			validateCreate('number.base');
 		});
 
+		it('Surface temperatures cannot be less than -2', () => {
+			logEntry.temperature.surface = -2.5;
+			validateCreate('number.min');
+		});
+
+		it('Surface temperatures cannot be more than 50', () => {
+			logEntry.temperature.surface = 50.1;
+			validateCreate('number.max');
+		});
+
 		it('Water temp is optional', () => {
 			delete logEntry.temperature.water;
 			validateCreate();
@@ -519,6 +559,16 @@ describe('Log entry validation', () => {
 			validateCreate('number.base');
 		});
 
+		it('Water temperatures cannot be less than -2', () => {
+			logEntry.temperature.water = -2.5;
+			validateCreate('number.min');
+		});
+
+		it('Water temperatures cannot be more than 50', () => {
+			logEntry.temperature.water = 50.1;
+			validateCreate('number.max');
+		});
+
 		it('Thermoclines must be an array', () => {
 			logEntry.temperature.thermoclines = 9;
 			validateCreate('array.base');
@@ -526,12 +576,54 @@ describe('Log entry validation', () => {
 
 		it('Thermocline array cannot be sparse', () => {
 			logEntry.temperature.thermoclines = [ null ];
+			validateCreate('object.base');
+		});
+
+		it('Thermocline values must be objects', () => {
+			logEntry.temperature.thermoclines = [ 'cold' ];
+			validateCreate('object.base');
+		});
+
+		it('Thermocline temperatures are required', () => {
+			logEntry.temperature.thermoclines = [ { depth: 12 } ];
+			validateCreate('any.required');
+		});
+
+		it('Thermocline temperatures must be a number', () => {
+			logEntry.temperature.thermoclines = [ { temperature: 'cold' } ];
 			validateCreate('number.base');
 		});
 
-		it('Thermocline values must be numbers', () => {
-			logEntry.temperature.thermoclines = [ 'cold' ];
+		it('Thermocline temperatures cannot be less than -2', () => {
+			logEntry.temperature.thermoclines = [ { temperature: -2.5 } ];
+			validateCreate('number.min');
+		});
+
+		it('Thermocline temperatures cannot be more than 50', () => {
+			logEntry.temperature.thermoclines = [ { temperature: 50.1 } ];
+			validateCreate('number.max');
+		});
+
+		it('Depth must be a number', () => {
+			logEntry.temperature.thermoclines = [ { temperature: 12, depth: 'not deep' } ];
 			validateCreate('number.base');
+		});
+
+		it('Depth must be positive', () => {
+			logEntry.temperature.thermoclines = [ { temperature: 12, depth: 0 } ];
+			validateCreate('number.positive');
+		});
+
+		it('Thermoclines array cannot contain more than 4 entries', () => {
+			logEntry.temperature.thermoclines = new Array(5);
+			for (let i = 0; i < logEntry.temperature.thermoclines.length; i++) {
+				logEntry.temperature.thermoclines[i] = {
+					depth: i * 4 + 5,
+					temperature: 20 - (i * 3)
+				};
+			}
+
+			validateCreate('array.max');
 		});
 	});
 
@@ -572,6 +664,18 @@ describe('Log entry validation', () => {
 		it('Deco stops depth must be positive', () => {
 			logEntry.decoStops[0].depth = 0;
 			validateCreate('number.positive');
+		});
+
+		it('Deco stops cannot contain more than 15 entries', () => {
+			logEntry.decoStops = new Array(16);
+			for (let i = 0; i < logEntry.decoStops.length; i++) {
+				logEntry.decoStops[i] = {
+					depth: 50 - (i * 3 + 3),
+					duration: 5
+				};
+			}
+
+			validateCreate('array.max');
 		});
 	});
 });
