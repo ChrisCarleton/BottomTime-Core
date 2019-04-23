@@ -28,7 +28,7 @@ export async function SearchUsers(req, res) {
 
 		res.json(results.map(r => ({
 			username: r.username,
-			email: isUsername ? null : r.email,
+			email: isUsername ? undefined : r.email, // eslint-disable-line no-undefined
 			memberSince: moment(r.createdAt).utc().toISOString()
 		})));
 	} catch (err) {

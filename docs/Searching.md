@@ -20,6 +20,7 @@ the query.
 
 ## Routes
 ### GET /search/users
+Searches for a user based on their username or e-mail address.
 
 #### Query Parameters
 * **query** - The username or e-mail to search for.
