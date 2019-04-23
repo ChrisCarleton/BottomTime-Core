@@ -8,7 +8,7 @@ import Friend from '../data/friend';
 import Joi from 'joi';
 import mailer from '../mail/mailer';
 import templates from '../mail/templates';
-import { badRequest, forbidden, notFound, serverError } from '../utils/error-response';
+import { badRequest, conflict, forbidden, notFound, serverError } from '../utils/error-response';
 import User from '../data/user';
 
 export async function ListFriends(req, res) {
@@ -78,10 +78,11 @@ export async function CreateFriendRequest(req, res, next) {
 				friendRequest.approved = null;
 				friendRequest.evaluatedOn = null;
 			} else {
-				return badRequest(
-					'Could not create friend request.',
-					'Friend relation already exists between the requested users.',
-					res);
+				return conflict(
+					res,
+					'friend',
+					'Friend request could not be created because it already exists.'
+				);
 			}
 		}
 
