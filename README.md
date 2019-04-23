@@ -9,6 +9,7 @@ Production Build | [![CircleCI](https://circleci.com/gh/ChrisCarleton/BottomTime
 Test Coverage | [![Coverage Status](https://coveralls.io/repos/github/ChrisCarleton/BottomTime-Core/badge.svg?branch=master)](https://coveralls.io/github/ChrisCarleton/BottomTime-Core?branch=master)
 Dependencies | [![Dependencies](https://david-dm.org/ChrisCarleton/BottomTime-Core.svg)](https://david-dm.org/ChrisCarleton/BottomTime-Core)
 Dev Dependencies | [![devDependencies Status](https://david-dm.org/ChrisCarleton/BottomTime-Core/dev-status.svg)](https://david-dm.org/ChrisCarleton/BottomTime-Core?type=dev)
+Security Vulnerabilities | [![Known Vulnerabilities](https://snyk.io/test/github/ChrisCarleton/BottomTime-Core/badge.svg?targetFile=package.json)](https://snyk.io/test/github/ChrisCarleton/BottomTime-Core?targetFile=package.json)
 
 ## Environment Variables
 The application is configured through the use of environment variables. Any of these can be set to change
