@@ -107,6 +107,7 @@ userSchema.methods.getAccountJSON = function () {
 				'isLockedOut',
 				'weightUnit',
 				'distanceUnit',
+				'pressureUnit',
 				'temperatureUnit'
 			]),
 		isAnonymous: false,
