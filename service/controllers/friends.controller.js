@@ -19,6 +19,18 @@ function getFriendDataJSON(data) {
 	return json;
 }
 
+async function getFriendData(collection) {
+	const friendData = await User
+		.find({ username: { $in: Object.keys(collection) } })
+		.select('username firstName lastName createdAt logsVisibility')
+		.exec();
+	friendData.forEach(fd => {
+		collection[fd.username].friendData = getFriendDataJSON(fd);
+	});
+
+	return Object.values(collection);
+}
+
 async function getFriends(user) {
 	const collection = {};
 	const friends = await Friend
@@ -30,15 +42,7 @@ async function getFriends(user) {
 		collection[f.friend] = f.toCleanJSON();
 	});
 
-	const friendData = await User
-		.find({ username: { $in: Object.keys(collection) } })
-		.select('username firstName lastName createdAt logsVisibility')
-		.exec();
-	friendData.forEach(fd => {
-		collection[fd.username].friendData = getFriendDataJSON(fd);
-	});
-
-	return Object.values(collection);
+	return getFriendData(collection);
 }
 
 async function getIncomingRequests(user) {
@@ -52,15 +56,7 @@ async function getIncomingRequests(user) {
 		collection[f.user] = f.toCleanJSON();
 	});
 
-	const friendData = await User
-		.find({ username: { $in: Object.keys(collection) } })
-		.select('username firstName lastName createdAt logsVisibility')
-		.exec();
-	friendData.forEach(fd => {
-		collection[fd.username].friendData = getFriendDataJSON(fd);
-	});
-
-	return Object.values(collection);
+	return getFriendData(collection);
 }
 
 async function getOutgoingRequests(user) {
@@ -74,15 +70,7 @@ async function getOutgoingRequests(user) {
 		collection[f.friend] = f.toCleanJSON();
 	});
 
-	const friendData = await User
-		.find({ username: { $in: Object.keys(collection) } })
-		.select('username firstName lastName createdAt logsVisibility')
-		.exec();
-	friendData.forEach(fd => {
-		collection[fd.username].friendData = getFriendDataJSON(fd);
-	});
-
-	return Object.values(collection);
+	return getFriendData(collection);
 }
 
 const QueryFunctions = {
