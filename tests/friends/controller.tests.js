@@ -365,6 +365,27 @@ describe('Friends controller', () => {
 			expect(templateSpy.called).to.be.false;
 		});
 
+		it('Will return a 409 if a reciprocal friend request already exists', async () => {
+			const friendRequest = new Friend({
+				friend: user.user.username,
+				user: friends[0].username,
+				requestedOn: new Date()
+			});
+
+			await friendRequest.save();
+
+			templateSpy = sinon.spy(templates, 'NewFriendRequestEmail');
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+
+			await request(App)
+				.put(`/users/${ user.user.username }/friends/${ friends[0].username }`)
+				.set(...user.authHeader)
+				.expect(409);
+
+			expect(mailerSpy.called).to.be.false;
+			expect(templateSpy.called).to.be.false;
+		});
+
 		it('Will simply replace a previously-rejected request', async () => {
 			templateSpy = sinon.spy(templates, 'NewFriendRequestEmail');
 			mailerSpy = sinon.spy(mailer, 'sendMail');
@@ -503,6 +524,28 @@ describe('Friends controller', () => {
 			expect(mailOptions.from).to.not.exist;
 			expect(mailOptions.subject).to.equal('Dive Buddy Request Accepted');
 			expect(mailOptions.html).to.exist;
+		});
+
+		it('Will also create a reciprocal friendship', async () => {
+			const friendRequest = new Friend({
+				user: user.user.username,
+				friend: friends[0].username,
+				requestedOn: new Date()
+			});
+			await friendRequest.save();
+
+			await request(App)
+				.post(`/users/${ user.user.username }/friends/${ friends[0].username }/approve`)
+				.set(...friendAuthHeader)
+				.expect(204);
+
+			const result = await Friend.findOne({
+				friend: user.user.username,
+				user: friends[0].username
+			});
+			expect(result).to.exist;
+			expect(result.approved).to.be.true;
+			expect(result.evaluatedOn).to.exist;
 		});
 
 		it('Will return 400 if the request has already been approved', async () => {

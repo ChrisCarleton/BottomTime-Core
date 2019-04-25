@@ -137,10 +137,26 @@ export async function CreateFriendRequest(req, res, next) {
 			return badRequest('Users cannot be friends with themselves', null, res);
 		}
 
-		let friendRequest = await Friend.findOne({
-			user: req.account.username,
-			friend: req.friend.username
-		});
+		let friendRequest = null;
+		let incomingRequest = null;
+		[ friendRequest, incomingRequest ] = await Promise.all([
+			Friend.findOne({
+				user: req.account.username,
+				friend: req.friend.username
+			}),
+			Friend.findOne({
+				user: req.friend.username,
+				friend: req.account.username
+			})
+		]);
+
+		if (incomingRequest) {
+			return conflict(
+				res,
+				'friend',
+				'A reciprocal friend-request already exists.'
+			);
+		}
 
 		if (friendRequest) {
 			if (friendRequest.approved === false) {
@@ -254,7 +270,19 @@ export async function ApproveFriendRequest(req, res) {
 		req.friendRequest.approved = true;
 		req.friendRequest.evaluatedOn = new Date();
 		req.friendRequest.reason = req.body.reason;
-		await req.friendRequest.save();
+
+		const reciprocal = new Friend({
+			user: req.friendRequest.friend,
+			friend: req.friendRequest.user,
+			requestedOn: req.friendRequest.requestedOn,
+			evaluatedOn: req.friendRequest.evaluatedOn,
+			approved: true
+		});
+
+		await Promise.all([
+			req.friendRequest.save(),
+			reciprocal.save()
+		]);
 	} catch (err) {
 		const logId = req.logError(
 			`Failed to approve friend request from ${ req.params.username } to ${ req.params.friendName }.`,
