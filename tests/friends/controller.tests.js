@@ -9,6 +9,7 @@ import fakeUser from '../util/fake-user';
 import Friend from '../../service/data/friend';
 import generateAuthHeader from '../util/generate-auth-header';
 import mailer from '../../service/mail/mailer';
+import moment from 'moment';
 import mongoose from 'mongoose';
 import request from 'supertest';
 import Session from '../../service/data/session';
@@ -28,6 +29,7 @@ describe('Friends controller', () => {
 		],
 		u => u.username
 	);
+	const friendData = {};
 	let user = null;
 	let admin = null;
 	let stub = null;
@@ -38,6 +40,20 @@ describe('Friends controller', () => {
 		user = await createFakeAccount();
 		admin = await createFakeAccount('admin');
 		await User.insertMany(friends);
+
+		friends.forEach(f => {
+			const data = _.pick(
+				f,
+				[
+					'username',
+					'firstName',
+					'lastName',
+					'logsVisibility'
+				]
+			);
+			data.memberSince = moment(f.createdAt).toISOString();
+			friendData[f.username] = data;
+		});
 	});
 
 	afterEach(async () => {
@@ -126,8 +142,14 @@ describe('Friends controller', () => {
 
 			const results = response.body;
 			expect(results).to.have.length(2);
-			expect(results).to.deep.include(friendAssociations[0].toCleanJSON());
-			expect(results).to.deep.include(friendAssociations[1].toCleanJSON());
+			expect(results).to.deep.include({
+				...friendAssociations[0].toCleanJSON(),
+				friendData: friendData[friendAssociations[0].friend]
+			});
+			expect(results).to.deep.include({
+				...friendAssociations[1].toCleanJSON(),
+				friendData: friendData[friendAssociations[1].friend]
+			});
 		});
 
 		it('Will list a user\'s friends if requested', async () => {
@@ -140,8 +162,14 @@ describe('Friends controller', () => {
 
 			const results = response.body;
 			expect(results).to.have.length(2);
-			expect(results).to.deep.include(friendAssociations[0].toCleanJSON());
-			expect(results).to.deep.include(friendAssociations[1].toCleanJSON());
+			expect(results).to.deep.include({
+				...friendAssociations[0].toCleanJSON(),
+				friendData: friendData[friendAssociations[0].friend]
+			});
+			expect(results).to.deep.include({
+				...friendAssociations[1].toCleanJSON(),
+				friendData: friendData[friendAssociations[1].friend]
+			});
 		});
 
 		it('Will list a user\'s incoming friend requests if requested', async () => {
@@ -154,7 +182,10 @@ describe('Friends controller', () => {
 
 			const results = response.body;
 			expect(results).to.have.length(1);
-			expect(results).to.deep.include(friendAssociations[5].toCleanJSON());
+			expect(results).to.deep.include({
+				...friendAssociations[5].toCleanJSON(),
+				friendData: friendData[friendAssociations[5].user]
+			});
 		});
 
 		it('Will list a user\'s outgoing friend requests if requested', async () => {
@@ -167,8 +198,14 @@ describe('Friends controller', () => {
 
 			const results = response.body;
 			expect(results).to.have.length(2);
-			expect(results).to.deep.include(friendAssociations[3].toCleanJSON());
-			expect(results).to.deep.include(friendAssociations[4].toCleanJSON());
+			expect(results).to.deep.include({
+				...friendAssociations[3].toCleanJSON(),
+				friendData: friendData[friendAssociations[3].friend]
+			});
+			expect(results).to.deep.include({
+				...friendAssociations[4].toCleanJSON(),
+				friendData: friendData[friendAssociations[4].friend]
+			});
 		});
 
 		it('Will return an empty array if user has no friends', async () => {
@@ -196,8 +233,9 @@ describe('Friends controller', () => {
 		});
 
 		it('Will return 500 if a server error occurs', async () => {
-			stub = sinon.stub(Friend, 'getFriendsForUser');
-			stub.rejects('nope');
+			await createFriendAssociations();
+			stub = sinon.stub(Friend.prototype, 'toCleanJSON');
+			stub.throws(new Error('lol'));
 
 			const response = await request(App)
 				.get(`/users/${ user.user.username }/friends`)
