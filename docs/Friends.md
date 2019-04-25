@@ -14,13 +14,23 @@ Describes a relation between a user and a friend.
 	"approved": "Boolean: Indicates whether or not the friend request has been approved or rejected.",
 	"requestedOn": "String: The date at which the initial friend request was made. (ISO 8601 format.)",
 	"evaluatedOn": "String: The date at which the friend request was approved/rejected. (ISO 8601 format.)",
-	"reason": "String: Reason given for approving/rejecting the friend request."
+	"reason": "String: Reason given for approving/rejecting the friend request.",
+	"friendData": {
+		"username": "...",
+		"firstName": "...",
+		"lastName": "...",
+		"memberSince": "...",
+		"logsVisibility": "..."
+	}
 }
 ```
 
 **Notes:** The `approved` property indicates the state of the friend relationship. If `true` the
 friendship request has been approved. `False` means it was rejected. If `null`, then this record
 represents an open friend request.
+
+The `friendData` object contains additional details on the friend. It will contain a snippet of fields
+found in the friend's profile data.
 
 ### Handle Friend Request Object
 Can be passed in as part of a request to approve or reject a friend request.
@@ -76,7 +86,7 @@ HTTP Status Code | Details
 **409 Conflict** | The request was rejected because the friend request already exists.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
-### POST /users/:username/:friends/[approve|reject]
+### POST /users/:username/friends/:friendName/[approve|reject]
 These routes can approve or reject a friend request, respectively. If the request is approved, then both
 users will become "friends" with each other. (That is, a reciprocal friendship will be created under the
 new friend's account.) The route must actually be called by the "friend" and not the user, which is a

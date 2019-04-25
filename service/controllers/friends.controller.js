@@ -11,15 +11,85 @@ import templates from '../mail/templates';
 import { badRequest, conflict, forbidden, notFound, serverError } from '../utils/error-response';
 import User from '../data/user';
 
+function getFriendDataJSON(data) {
+	const json = { ...data.toJSON() };
+	json.memberSince = data.createdAt;
+	delete json._id;
+	delete json.createdAt;
+	return json;
+}
+
+async function getFriendData(collection) {
+	const friendData = await User
+		.find({ username: { $in: Object.keys(collection) } })
+		.select('username firstName lastName createdAt logsVisibility')
+		.exec();
+	friendData.forEach(fd => {
+		collection[fd.username].friendData = getFriendDataJSON(fd);
+	});
+
+	return Object.values(collection);
+}
+
+async function getFriends(user) {
+	const collection = {};
+	const friends = await Friend
+		.find({
+			user,
+			approved: true
+		});
+	friends.forEach(f => {
+		collection[f.friend] = f.toCleanJSON();
+	});
+
+	return getFriendData(collection);
+}
+
+async function getIncomingRequests(user) {
+	const collection = {};
+	const friends = await Friend
+		.find({
+			friend: user,
+			approved: null
+		});
+	friends.forEach(f => {
+		collection[f.user] = f.toCleanJSON();
+	});
+
+	return getFriendData(collection);
+}
+
+async function getOutgoingRequests(user) {
+	const collection = {};
+	const friends = await Friend
+		.find({
+			user,
+			approved: { $ne: true }
+		});
+	friends.forEach(f => {
+		collection[f.friend] = f.toCleanJSON();
+	});
+
+	return getFriendData(collection);
+}
+
+const QueryFunctions = {
+	'friends': getFriends,
+	'requests-incoming': getIncomingRequests,
+	'requests-outgoing': getOutgoingRequests
+};
+
 export async function ListFriends(req, res) {
 	const isValid = Joi.validate(req.query, ListFriendsSchema);
 	if (isValid.error) {
 		return badRequest('Query string was invalid', isValid.error, res);
 	}
 
+	req.query.type = req.query.type || 'friends';
+
 	try {
-		const friends = await Friend.getFriendsForUser(req.account.username, req.query.type);
-		res.json(friends.map(f => f.toCleanJSON()));
+		const friends = await QueryFunctions[req.query.type](req.account.username);
+		res.json(friends);
 	} catch (err) {
 		const logId = req.logError(
 			`Unable to list friends for user ${ req.account.username }.`,
