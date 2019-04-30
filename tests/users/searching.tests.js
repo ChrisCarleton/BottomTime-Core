@@ -227,7 +227,7 @@ describe('User searching', () => {
 			expect(result).to.exist;
 			expect(result.username).to.equal(users[0].username);
 			expect(result.email).to.not.exist;
-			expect(result.memberSince).to.equal(moment(users[0].createdAt).toISOString());
+			expect(result.createdAt).to.equal(moment(users[0].createdAt).toISOString());
 		});
 
 		it('Returns a result if e-mail address matches', async () => {
@@ -241,7 +241,7 @@ describe('User searching', () => {
 			expect(result).to.exist;
 			expect(result.username).to.equal(users[0].username);
 			expect(result.email).to.equal(users[0].email);
-			expect(result.memberSince).to.equal(moment(users[0].createdAt).toISOString());
+			expect(result.createdAt).to.equal(moment(users[0].createdAt).toISOString());
 		});
 
 		it('Returns an empty array if nothing matches', async () => {

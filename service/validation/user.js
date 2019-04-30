@@ -45,4 +45,4 @@ export const AdminUserQuerySchema = Joi.object().keys({
 	sortBy: Joi.string().only([ 'username' ]),
 	sortOrder: Joi.string().only([ 'asc', 'desc' ]),
 	lastSeen: Joi.string()
-}).and([ 'sortBy', 'sortOrder' ]);
+});

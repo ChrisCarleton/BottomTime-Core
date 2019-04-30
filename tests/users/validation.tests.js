@@ -357,20 +357,4 @@ describe('Admin user search query', () => {
 		adminUserQuery.sortOrder = 50;
 		validateAdminUserSearch('string.base');
 	});
-
-	it('Sort by is required if sort order is present', () => {
-		delete adminUserQuery.sortBy;
-		validateAdminUserSearch('object.and');
-	});
-
-	it('Sort order is required if sort by is present', () => {
-		delete adminUserQuery.sortOrder;
-		validateAdminUserSearch('object.and');
-	});
-
-	it('Sort order and sort by can be omitted together', () => {
-		delete adminUserQuery.sortBy;
-		delete adminUserQuery.sortOrder;
-		validateAdminUserSearch();
-	});
 });

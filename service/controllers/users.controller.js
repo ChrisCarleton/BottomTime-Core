@@ -46,7 +46,7 @@ export async function GetUsers(req, res, next) {
 		res.json(results.map(r => ({
 			username: r.username,
 			email: isUsername ? undefined : r.email, // eslint-disable-line no-undefined
-			memberSince: moment(r.createdAt).utc().toISOString()
+			createdAt: moment(r.createdAt).utc().toISOString()
 		})));
 	} catch (err) {
 		const logId = req.logError('Failed to perform search for user', err);
