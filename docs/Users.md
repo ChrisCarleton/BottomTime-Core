@@ -19,6 +19,24 @@ to the front-end application to consume these properties and make the appropriat
 stick with **metric** ;)
 
 ## Classes
+### UserResult Object
+This object is returned when listing or searching for user accounts.
+
+```json
+{
+	"username": "String",
+	"email": "String",
+	"createdAt": "String (ISO Date)",
+	"role": "String: (user|admin)",
+	"isLockedOut": "Boolean",
+	"hasPassword": "Boolean",
+	"isAnonymous": false
+}
+```
+
+**NOTES:** Not all fields will be returned to all users. Administrators will see all fields, but regular
+users will only see `username`, `createdAt`, and, possibly, `email`.
+
 ### NewUserAccount Object
 This object gets passed in when creating new user accounts. (Sign up.)
 
@@ -96,6 +114,34 @@ setting.
 ```
 
 ## Routes
+### GET /users
+Used to list or search for users. This function is more robust for administrators, but regular users can
+use it to locate friends in the system for making friend requests.
+
+#### Query Parameters
+* **query** - A username or e-mail address to search for.
+* **count** - Maximum number of records to return. (The default is 500.)
+* **sortBy** - The field on which to sort the results. Currently the only value supported is `username`.
+* **sortOrder** - The order in which results are returned. Must be `asc` or `desc`. (The default is `asc`.)
+* **lastSeen** - Used for querying the next "page" of search results. This should be set to the last
+username returned in the previous query and the search will return a new set of results following that
+record in the desired sort order.
+
+**NOTES** For administrators, all query parameters are optional. For regular users only **query** is
+allowed - and it is *required*! That is, regular users can only use this route for finding exact matches
+on usernames or e-mail addresses. This is useful for generating friend requests.
+
+For privacy reasons, if regular users query a username rather than an e-mail addresses, the e-mail address
+will not be returned in the results if there is a match.
+
+#### Responses
+HTTP Status Code | Details
+---- | ----
+**200 OK** | The call succeeded and the response body will contain an array of [UserResult](#userresult-object) Objects. See the notes for which fields will be available to administrators vs. regular users.
+**400 Bad Request** | The call failed because the query string was malformed, contained unexpected fields, or, in the case of regular users, was missing the **query** field.
+**401 Not Authorized** | The call failed because the current user is unauthenticated. Only authenticated users may call this route.
+**500 Server Error** | An internal error occurred while attempting to retrieve the profile information from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
+
 ### PUT /users/:username
 Creates a new user account. Certain actions are not permitted, however. These
 requests will fail with a `403 Forbidden` HTTP error.

@@ -59,7 +59,7 @@ const logEntryBaseSchema = {
 	}),
 
 	tags: Joi.array().items(Joi.string().alphanum().max(25)).max(50),
-	comments: Joi.string().max(1000)
+	comments: Joi.string().allow([ '', null ]).max(1000)
 };
 
 export const NewEntrySchema = Joi.object().keys({

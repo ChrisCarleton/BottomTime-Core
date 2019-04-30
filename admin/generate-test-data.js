@@ -17,34 +17,30 @@ import User from '../service/data/user';
 
 (async () => {
 	try {
-		const users = _.map(new Array(12), () => {
-			const fake = fakeUser('bottomtime');
-			return new User(fake);
-		});
+		const users = _.map(new Array(12), () => new User(fakeUser('bottomtime')));
 
-		await Promise.all(_.map(users, u => u.save()));
+		if (!await User.findByUsername('Chris')) {
+			const adminUser = new User(fakeUser('bottomtime'));
+			adminUser.role = 'admin';
+			adminUser.username = 'Chris';
+			adminUser.usernameLower = 'chris';
+			users.push(adminUser);
+		}
+
+		await User.insertMany(users);
 		log('Created users: ', _.map(users, u => u.username));
 
-		const promises = [];
 		let totalEntries = 0;
 
 		log('Creating a boat-load of log entries...');
-		_.forEach(users, u => {
-			let logEntries = new Array(faker.random.number({ min: 7, max: 90 }));
+		_.forEach(users, async u => {
+			let logEntries = new Array(faker.random.number({ min: 50, max: 300 }));
 			totalEntries += logEntries.length;
-			logEntries = _.map(logEntries, () => {
-				/* eslint-disable no-underscore-dangle */
-				const entry = new LogEntry(fakeLogEntry(u._id));
-				/* eslint-enable no-underscore-dangle */
-				return entry;
-			});
+			logEntries = _.map(logEntries, () => new LogEntry(fakeLogEntry(u._id)));
 
-			for (let i = 0; i < logEntries.length; i++) {
-				promises.push(logEntries[i].save());
-			}
+			await LogEntry.insertMany(logEntries);
 		});
 
-		await Promise.all(promises);
 		log(`Created ${ chalk.bold(totalEntries) } log entries.`);
 	} catch (err) {
 		log.error(chalk.red(err));

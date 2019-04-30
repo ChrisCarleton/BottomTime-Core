@@ -51,6 +51,7 @@ describe('Sign-In With Google', () => {
 			username: ExpectedProfile.emails[0].value.substr(0, ExpectedProfile.emails[0].value.indexOf('@')),
 			distanceUnit: 'm',
 			temperatureUnit: 'c',
+			pressureUnit: 'bar',
 			weightUnit: 'kg'
 		};
 		expect(account.getAccountJSON()).to.eql(expectedUser);
@@ -101,7 +102,8 @@ describe('Sign-In With Google', () => {
 			username: account.username,
 			temperatureUnit: 'c',
 			distanceUnit: 'm',
-			weightUnit: 'kg'
+			weightUnit: 'kg',
+			pressureUnit: 'bar'
 		};
 		expect(account.getAccountJSON()).to.eql(expectedUser);
 		expect(account.username).to.match(/^[a-f0-9]{24}$/i);

@@ -32,8 +32,8 @@ export default userId => {
 	const bottomTime = faker.random.number({ min: 10, max: 70 });
 	const totalTime = faker.random.number({ min: bottomTime, max: bottomTime + 8 });
 
-	const averageDepth = faker.random.number({ min: 15, max: 100 });
-	const maxDepth = faker.random.number({ min: averageDepth, max: averageDepth + 30 });
+	const averageDepth = faker.random.number({ min: 5, max: 36 });
+	const maxDepth = faker.random.number({ min: averageDepth, max: averageDepth + 5 });
 
 	return {
 		userId,

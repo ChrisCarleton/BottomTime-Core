@@ -10,6 +10,18 @@ export function RequireUser(req, res, next) {
 	next();
 }
 
+export function RequireAdminUser(req, res, next) {
+	if (!req.user) {
+		return unauthorized(res);
+	}
+
+	if (req.user.role !== 'admin') {
+		return forbidden(res, 'You do not have sufficient privileges to perform this action.');
+	}
+
+	return next();
+}
+
 export async function RetrieveUserAccount(req, res, next) {
 	try {
 		const user = await User.findByUsername(req.params.username);
