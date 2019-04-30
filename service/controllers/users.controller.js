@@ -74,7 +74,9 @@ export async function AdminGetUsers(req, res) {
 				{ usernameLower: req.query.query },
 				{ emailLower: req.query.query }
 			];
-		} else if (req.query.lastSeen) {
+		}
+
+		if (req.query.lastSeen) {
 			if (req.query.sortOrder === 'asc') {
 				query.username = { $gt: req.query.lastSeen };
 			} else {

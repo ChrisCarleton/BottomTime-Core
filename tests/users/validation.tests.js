@@ -285,6 +285,10 @@ describe('Admin user search query', () => {
 		};
 	});
 
+	it('Succeeds if query is valid', () => {
+		validateAdminUserSearch();
+	});
+
 	it('Query is optional', () => {
 		delete adminUserQuery.query;
 		validateAdminUserSearch();
@@ -293,10 +297,6 @@ describe('Admin user search query', () => {
 	it('Query must be a string', () => {
 		adminUserQuery.query = 50;
 		validateAdminUserSearch('string.base');
-	});
-
-	it('Succeeds if query is valid', () => {
-		validateAdminUserSearch();
 	});
 
 	it('Count must be a number', () => {

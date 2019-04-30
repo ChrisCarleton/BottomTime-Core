@@ -38,8 +38,8 @@ describe('User searching', () => {
 				'role',
 				'isLockedOut'
 			]);
-			json.hasPassword = typeof u.passwordHash === 'string';
 			json.createdAt = moment(u.createdAt).toISOString();
+			json.hasPassword = true;
 			json.isAnonymous = false;
 
 			return json;
@@ -95,7 +95,6 @@ describe('User searching', () => {
 				.set(...adminUser.authHeader)
 				.query({
 					count: 50,
-					sortBy: 'username',
 					sortOrder: 'desc'
 				})
 				.expect(200);
@@ -132,7 +131,6 @@ describe('User searching', () => {
 				.set(...adminUser.authHeader)
 				.query({
 					count: 50,
-					sortBy: 'username',
 					sortOrder: 'desc',
 					lastSeen: expectedUsers[expectedUsers.length - 50].username
 				})

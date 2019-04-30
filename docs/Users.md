@@ -20,7 +20,7 @@ stick with **metric** ;)
 
 ## Classes
 ### UserResult Object
-This object is returned when listing or searching for users accounts.
+This object is returned when listing or searching for user accounts.
 
 ```json
 {
@@ -35,7 +35,7 @@ This object is returned when listing or searching for users accounts.
 ```
 
 **NOTES:** Not all fields will be returned to all users. Administrators will see all fields, but regular
-users will only see `username`, `createdAt`, and possibly `email`.
+users will only see `username`, `createdAt`, and, possibly, `email`.
 
 ### NewUserAccount Object
 This object gets passed in when creating new user accounts. (Sign up.)
@@ -115,7 +115,7 @@ setting.
 
 ## Routes
 ### GET /users
-Used to list or search for users. This function is more robust for administrators but regular users can
+Used to list or search for users. This function is more robust for administrators, but regular users can
 use it to locate friends in the system for making friend requests.
 
 #### Query Parameters
@@ -127,10 +127,9 @@ use it to locate friends in the system for making friend requests.
 username returned in the previous query and the search will return a new set of results following that
 record in the desired sort order.
 
-**NOTES** Most of these query parameters are only available to administrators. For regular users,
-**query** is not only the only one permitted - it is *required*. That is, regular users can only use this
-route for finding exact matches on usernames or e-mail addresses. This is useful for generating friend
-requests.
+**NOTES** For administrators, all query parameters are optional. For regular users only **query** is
+allowed - and it is *required*! That is, regular users can only use this route for finding exact matches
+on usernames or e-mail addresses. This is useful for generating friend requests.
 
 For privacy reasons, if regular users query a username rather than an e-mail addresses, the e-mail address
 will not be returned in the results if there is a match.
