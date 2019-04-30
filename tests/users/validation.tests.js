@@ -2,15 +2,19 @@ import { expect } from 'chai';
 import faker from 'faker';
 import Joi from 'joi';
 import {
+	AdminUserQuerySchema,
 	ChangePasswordSchema,
 	ConfirmResetPasswordSchema,
 	UserAccountSchema,
-	UsernameSchema
+	UsernameSchema,
+	UserQuerySchema
 } from '../../service/validation/user';
 
 let account = null;
 let changePassword = null;
 let resetPassword = null;
+let adminUserQuery = null;
+let userQuery = null;
 
 function testExpectedError(err, expectedError) {
 	if (expectedError) {
@@ -38,6 +42,16 @@ function validateChangePassword(expectedError) {
 
 function validateConfirmPasswordReset(expectedError) {
 	const err = Joi.validate(resetPassword, ConfirmResetPasswordSchema);
+	testExpectedError(err, expectedError);
+}
+
+function validateUserSearch(expectedError) {
+	const err = Joi.validate(userQuery, UserQuerySchema);
+	testExpectedError(err, expectedError);
+}
+
+function validateAdminUserSearch(expectedError) {
+	const err = Joi.validate(adminUserQuery, AdminUserQuerySchema);
 	testExpectedError(err, expectedError);
 }
 
@@ -232,5 +246,131 @@ describe('Confirm Reset Password Validation', () => {
 	it('New password must contain a special character', () => {
 		resetPassword.newPassword = 'aCCssdf3838';
 		validateConfirmPasswordReset('string.regex.base');
+	});
+});
+
+describe('Search Users Validation', () => {
+	beforeEach(() => {
+		userQuery = 'mike.lamar';
+	});
+
+	it('Will accept a valid username', () => {
+		validateUserSearch();
+	});
+
+	it('Will accept a valid email address', () => {
+		userQuery = 'm_lamar27@hotmail.com';
+		validateUserSearch();
+	});
+
+	it('Will fail if query is missing', () => {
+		userQuery = null;
+		validateUserSearch('string.base');
+	});
+
+	it('Will fail if query is invalid', () => {
+		userQuery = 'Totally not valid!!';
+		validateUserSearch('string.regex.base');
+	});
+});
+
+describe('Admin user search query', () => {
+	beforeEach(() => {
+		adminUserQuery = {
+			query: 'ji',
+			count: 500,
+			sortBy: 'username',
+			sortOrder: 'asc',
+			lastSeen: 'Jimmy64'
+		};
+	});
+
+	it('Query is optional', () => {
+		delete adminUserQuery.query;
+		validateAdminUserSearch();
+	});
+
+	it('Query must be a string', () => {
+		adminUserQuery.query = 50;
+		validateAdminUserSearch('string.base');
+	});
+
+	it('Succeeds if query is valid', () => {
+		validateAdminUserSearch();
+	});
+
+	it('Count must be a number', () => {
+		adminUserQuery.count = 'fifty';
+		validateAdminUserSearch('number.base');
+	});
+
+	it('Count must be an integer', () => {
+		adminUserQuery.count = 500.5;
+		validateAdminUserSearch('number.integer');
+	});
+
+	it('Count cannot be less than 1', () => {
+		adminUserQuery.count = 0;
+		validateAdminUserSearch('number.min');
+	});
+
+	it('Count cannot be greater than 1000', () => {
+		adminUserQuery.count = 1001;
+		validateAdminUserSearch('number.max');
+	});
+
+	it('Count is optional', () => {
+		delete adminUserQuery.count;
+		validateAdminUserSearch();
+	});
+
+	[ 'username' ].forEach(f => {
+		it(`Sort by can be "${ f }"`, () => {
+			adminUserQuery.sortBy = f;
+			validateAdminUserSearch();
+		});
+	});
+
+	it('Sort by cannot be invalid', () => {
+		adminUserQuery.sortBy = 'not_valid';
+		validateAdminUserSearch('any.allowOnly');
+	});
+
+	it('Sort by must be a string', () => {
+		adminUserQuery.sortBy = 1;
+		validateAdminUserSearch('string.base');
+	});
+
+	[ 'asc', 'desc' ].forEach(o => {
+		it(`Sort order can be set to "${ o }"`, () => {
+			adminUserQuery.sortOrder = o;
+			validateAdminUserSearch();
+		});
+	});
+
+	it('Sort order cannot be invalid', () => {
+		adminUserQuery.sortOrder = 'lol';
+		validateAdminUserSearch('any.allowOnly');
+	});
+
+	it('Sort order must be a string', () => {
+		adminUserQuery.sortOrder = 50;
+		validateAdminUserSearch('string.base');
+	});
+
+	it('Sort by is required if sort order is present', () => {
+		delete adminUserQuery.sortBy;
+		validateAdminUserSearch('object.and');
+	});
+
+	it('Sort order is required if sort by is present', () => {
+		delete adminUserQuery.sortOrder;
+		validateAdminUserSearch('object.and');
+	});
+
+	it('Sort order and sort by can be omitted together', () => {
+		delete adminUserQuery.sortBy;
+		delete adminUserQuery.sortOrder;
+		validateAdminUserSearch();
 	});
 });

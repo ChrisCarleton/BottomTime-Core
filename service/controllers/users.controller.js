@@ -1,10 +1,13 @@
 import bcrypt from 'bcrypt';
 import { badRequest, conflict, forbidden, serverError } from '../utils/error-response';
 import {
+	AdminUserQuerySchema,
 	ConfirmResetPasswordSchema,
 	ChangePasswordSchema,
 	UserAccountSchema,
-	UsernameSchema
+	UsernameRegex,
+	UsernameSchema,
+	UserQuerySchema
 } from '../validation/user';
 import Joi from 'joi';
 import mailer from '../mail/mailer';
@@ -13,6 +16,93 @@ import sessionManager from '../utils/session-manager';
 import templates from '../mail/templates';
 import User, { cleanUpUser } from '../data/user';
 import uuid from 'uuid/v4';
+
+export async function GetUsers(req, res, next) {
+	if (req.user.role === 'admin') {
+		next();
+		return;
+	}
+
+	try {
+		const { error } = Joi.validate(req.query.query, UserQuerySchema);
+		if (error) {
+			badRequest(
+				'Search query was invalid. It should be a username or e-mail address',
+				error,
+				res);
+			return;
+		}
+
+		const isUsername = UsernameRegex.test(req.query.query);
+
+		const results = await User
+			.find({
+				$or: [
+					{ usernameLower: req.query.query.toLowerCase() },
+					{ emailLower: req.query.query.toLowerCase() }
+				]
+			});
+
+		res.json(results.map(r => ({
+			username: r.username,
+			email: isUsername ? undefined : r.email, // eslint-disable-line no-undefined
+			memberSince: moment(r.createdAt).utc().toISOString()
+		})));
+	} catch (err) {
+		const logId = req.logError('Failed to perform search for user', err);
+		serverError(res, logId);
+	}
+}
+
+export async function AdminGetUsers(req, res) {
+	const { error } = Joi.validate(req.query, AdminUserQuerySchema);
+	if (error) {
+		return badRequest(
+			'Could not complete query. Query string was invalid.',
+			error,
+			res);
+	}
+
+	try {
+		const query = {};
+		req.query.sortBy = req.query.sortBy || 'username';
+		req.query.sortOrder = req.query.sortOrder || 'asc';
+
+		if (req.query.query) {
+			req.query.query = req.query.query.toLowerCase();
+			query.$or = [
+				{ usernameLower: req.query.query },
+				{ emailLower: req.query.query }
+			];
+		} else if (req.query.lastSeen) {
+			if (req.query.sortOrder === 'asc') {
+				query.username = { $gt: req.query.lastSeen };
+			} else {
+				query.username = { $lt: req.query.lastSeen };
+			}
+		}
+
+		const results = await User
+			.find(query)
+			.sort(`${ req.query.sortOrder === 'asc' ? '' : '-' }${ req.query.sortBy }`)
+			.limit(req.query.count ? parseInt(req.query.count, 10) : 500)
+			.select([
+				'username',
+				'email',
+				'role',
+				'isLockedOut',
+				'passwordHash',
+				'createdAt'
+			])
+			.exec();
+
+		const json = results.map(u => u.getAccountJSON());
+		return res.json(json);
+	} catch (err) {
+		const logId = req.logError('Failed to search users.', err);
+		return serverError(res, logId);
+	}
+}
 
 export async function RequireAccountPermission(req, res, next) {
 	if (!req.user) {
