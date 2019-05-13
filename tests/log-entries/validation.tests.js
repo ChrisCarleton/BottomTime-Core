@@ -196,11 +196,13 @@ describe('Log entry validation', () => {
 		});
 
 		it('Max depth cannot be zero', () => {
+			delete logEntry.averageDepth;
 			logEntry.maxDepth = 0;
 			validateCreate('number.positive');
 		});
 
 		it('Max depth cannot be negative', () => {
+			delete logEntry.averageDepth;
 			logEntry.maxDepth = -22;
 			validateCreate('number.positive');
 		});

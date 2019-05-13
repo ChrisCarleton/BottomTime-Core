@@ -13,7 +13,7 @@ const logEntryBaseSchema = {
 	maxDepth: Joi.when(
 		'averageDepth',
 		{
-			is: Joi.number(),
+			is: Joi.exist(),
 			then: Joi.number().min(Joi.ref('averageDepth')).allow(null),
 			otherwise: Joi.number().positive()
 		}
@@ -29,7 +29,7 @@ const logEntryBaseSchema = {
 		out: Joi.when(
 			'in',
 			{
-				is: Joi.number(),
+				is: Joi.exist(),
 				then: Joi.number().positive().max(Joi.ref('in')),
 				otherwise: Joi.number().positive()
 			}
