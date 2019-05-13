@@ -1,12 +1,4 @@
 export default {
-	'10.0L': {
-		isCustom: false,
-		size: 10.0
-	},
-	'11.1L': {
-		isCustom: false,
-		size: 11.1
-	},
 	'AL40': {
 		isCustom: false,
 		size: 5.5,

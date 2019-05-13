@@ -11,25 +11,25 @@ const DefaultTanks = Object.keys(tankProperties).map(name => ({
 
 export async function GetTanks(req, res) {
 	try {
-		if (req.user) {
-			const userTanks = await Tank
-				.find({ userId: req.user.id })
-				.sort('name')
-				.exec();
-
-			let defaultTanks = { ...tankProperties };
-			userTanks.forEach(t => {
-				delete defaultTanks[t.name];
-			});
-			defaultTanks = Object.keys(defaultTanks).map(name => ({
-				name,
-				...tankProperties[name]
-			}));
-
-			res.json(userTanks.map(t => t.toCleanJSON()).concat(defaultTanks));
-		} else {
-			res.json(DefaultTanks);
+		if (!req.user) {
+			return res.json(DefaultTanks);
 		}
+
+		const userTanks = await Tank
+			.find({ userId: req.user.id })
+			.sort('name')
+			.exec();
+
+		let defaultTanks = { ...tankProperties };
+		userTanks.forEach(t => {
+			delete defaultTanks[t.name];
+		});
+		defaultTanks = Object.keys(defaultTanks).map(name => ({
+			name,
+			...tankProperties[name]
+		}));
+
+		res.json(userTanks.map(t => t.toCleanJSON()).concat(defaultTanks));
 	} catch (err) {
 		const logId = req.logError('Failed to retrieve custom tank profiles for user', err);
 		serverError(res, logId);
@@ -60,6 +60,7 @@ export async function CreateTank(req, res) {
 			return conflict(res, 'name', 'Tank name is already taken.');
 		}
 
+		delete req.body.isCustom;
 		const tank = new Tank({
 			...req.body,
 			userId: req.user.id

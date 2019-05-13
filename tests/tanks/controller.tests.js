@@ -3,8 +3,8 @@ import { App } from '../../service/server';
 import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
-import fakeTank from '../util/fake-tank';
 import fakeMongoId from '../util/fake-mongo-id';
+import fakeTank from '../util/fake-tank';
 import mongoose from 'mongoose';
 import request from 'supertest';
 import Session from '../../service/data/session';
@@ -145,7 +145,7 @@ describe('Tanks Controller', () => {
 			});
 		});
 
-		it('Will return 400 if the tank profile failed validation', async () => {
+		it('Will return 400 if the tank profile fails validation', async () => {
 			const newProfile = fakeTank();
 			newProfile.size = '12L';
 
@@ -206,6 +206,7 @@ describe('Tanks Controller', () => {
 				.expect(409);
 
 			expect(body).to.exist;
+			expect(body.fieldName).to.equal('name');
 			expect(body.errorId).to.equal(ErrorIds.conflict);
 			expect(body.status).to.equal(409);
 		});
@@ -311,6 +312,7 @@ describe('Tanks Controller', () => {
 				.expect(409);
 
 			expect(body).to.exist;
+			expect(body.fieldName).to.equal('name');
 			expect(body.errorId).to.equal(ErrorIds.conflict);
 			expect(body.status).to.equal(409);
 		});
