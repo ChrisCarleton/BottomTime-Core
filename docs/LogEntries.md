@@ -31,16 +31,19 @@ Describes a single log entry from a user's log book.
 	"surfaceInterval": "Number: Duration in minutes of the surface interval taken before this dive",
 	"averageDepth": "Number: Average depth in meters",
 	"maxDepth": "REQUIRED Number: Maximum depth in meters (must be >= 'averageDepth')",
-	"air": {
-		"in": "Number: The amount of air (in bar) in the cylinder(s) when entering the water.",
-		"out": "Number: The amount of air (in bar) in the cylinder(s) when exiting the water.",
-		"doubles": "Boolean: True if the dive was done with doubles (or sidemount.)",
-		"volume": "Number: Volume of the tank(s) in litres or cubic feet.",
-		"volumeUnit": "String: Unit used to measure the volume of the cylinder. (One of 'L' or 'cf'.)",
-		"material": "String: The material the tank(s) are made of. (One of 'aluminum' or 'steel'.)",
-		"oxygen": "Number: The % oxygen content of the breathing gas. (1-100%.)",
-		"helium": "Number: The % helium content of the breathing gas. (0-95%.)"
-	},
+	"air": [
+		{
+			"in": "Number: The amount of air (in bar) in the cylinder(s) when entering the water.",
+			"out": "Number: The amount of air (in bar) in the cylinder(s) when exiting the water.",
+			"count": "Number: Number of tanks worn (1 = single, 2 = doubles, etc.)",
+			"name": "String: Name description of the tank. (E.g. HP100)",
+			"size": "Number: Volume of the tank(s) in litres.",
+			"workingPressure": "Number: Rated working pressure of the tank(s) in bar.",
+			"material": "String: The material the tank(s) are made of. (One of 'al' or 'fe'.)",
+			"oxygen": "Number: The % oxygen content of the breathing gas. (1-100%.)",
+			"helium": "Number: The % helium content of the breathing gas. (0-95%.)"
+		}
+	],
 	"decoStops": [
 		{
 			"depth": "REQUIRED Number: The depth (in meters) that the stop was made at. (Must be positive.)",

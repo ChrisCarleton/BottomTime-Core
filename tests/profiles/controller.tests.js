@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { App } from '../../service/server';
 import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
@@ -84,8 +83,7 @@ describe('Profiles Controller', () => {
 		for (let i = 0; i < logEntries.length; i++) {
 			logEntries[i] = fakeLogEntry(publicUser.user.id);
 		}
-
-		await Promise.all(_.map(logEntries, e => new LogEntry(e).save()));
+		await LogEntry.insertMany(logEntries.map(e => new LogEntry(e)));
 	});
 
 	afterEach(() => {

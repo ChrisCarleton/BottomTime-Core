@@ -1,3 +1,4 @@
+import fakeLogEntryAir from './fake-log-entry-air';
 import faker from 'faker';
 
 let diveNumber = 1;
@@ -46,16 +47,7 @@ export default userId => {
 		site: faker.fake('{{address.cityPrefix}} {{name.lastName}}'),
 		averageDepth,
 		maxDepth,
-		air: {
-			in: faker.random.number({ min: 200, max: 215 }),
-			out: faker.random.number({ min: 32, max: 40 }),
-			doubles: faker.random.boolean(),
-			volume: faker.random.arrayElement([ 40, 80, 100, 120 ]),
-			volumeUnit: 'cf',
-			material: faker.random.arrayElement([ 'aluminum', 'steel' ]),
-			oxygen: faker.random.number({ min: 21, max: 40 }),
-			helium: 0
-		},
+		air: [ fakeLogEntryAir() ],
 		decoStops: [
 			{
 				depth: 3,
