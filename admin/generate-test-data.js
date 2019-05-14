@@ -19,27 +19,18 @@ import User from '../service/data/user';
 	try {
 		const users = _.map(new Array(12), () => new User(fakeUser('bottomtime')));
 
-		if (!await User.findByUsername('Chris')) {
-			const adminUser = new User(fakeUser('bottomtime'));
-			adminUser.role = 'admin';
-			adminUser.username = 'Chris';
-			adminUser.usernameLower = 'chris';
-			users.push(adminUser);
-		}
-
 		await User.insertMany(users);
 		log('Created users: ', _.map(users, u => u.username));
 
 		let totalEntries = 0;
 
 		log('Creating a boat-load of log entries...');
-		_.forEach(users, async u => {
+		for (let i = 0; i < users.length; i++) {
 			let logEntries = new Array(faker.random.number({ min: 50, max: 300 }));
 			totalEntries += logEntries.length;
-			logEntries = _.map(logEntries, () => new LogEntry(fakeLogEntry(u._id)));
-
+			logEntries = _.map(logEntries, () => new LogEntry(fakeLogEntry(users[i]._id)));
 			await LogEntry.insertMany(logEntries);
-		});
+		}
 
 		log(`Created ${ chalk.bold(totalEntries) } log entries.`);
 	} catch (err) {

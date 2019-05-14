@@ -4,13 +4,20 @@ const logEntryBaseSchema = {
 	// Basic info
 	entryTime: Joi.string().isoDate().required(),
 	bottomTime: Joi.number().positive().required(),
-	diveNumber: Joi.number().integer().positive(),
-	totalTime: Joi.number().positive().min(Joi.ref('bottomTime')),
-	surfaceInterval: Joi.number().positive(),
+	diveNumber: Joi.number().integer().positive().allow(null),
+	totalTime: Joi.number().positive().min(Joi.ref('bottomTime')).allow(null),
+	surfaceInterval: Joi.number().positive().allow(null),
 	location: Joi.string().max(200).required(),
 	site: Joi.string().max(200).required(),
-	averageDepth: Joi.number().positive(),
-	maxDepth: Joi.number().positive().required().min(Joi.ref('averageDepth')),
+	averageDepth: Joi.number().positive().allow(null),
+	maxDepth: Joi.when(
+		'averageDepth',
+		{
+			is: Joi.exist(),
+			then: Joi.number().min(Joi.ref('averageDepth')).allow(null),
+			otherwise: Joi.number().positive()
+		}
+	).required(),
 
 	gps: Joi.object().keys({
 		latitude: Joi.number().min(-90.0).max(90.0).required(),
@@ -18,7 +25,7 @@ const logEntryBaseSchema = {
 	}),
 
 	air: Joi.object().keys({
-		in: Joi.number().positive(),
+		in: Joi.number().positive().allow(null),
 		out: Joi.when(
 			'in',
 			{
@@ -26,40 +33,40 @@ const logEntryBaseSchema = {
 				then: Joi.number().positive().max(Joi.ref('in')),
 				otherwise: Joi.number().positive()
 			}
-		),
-		doubles: Joi.boolean(),
-		volume: Joi.number().positive(),
-		volumeUnit: Joi.string().only([ 'L', 'cf' ]),
-		material: Joi.string().only([ 'aluminum', 'steel' ]),
-		oxygen: Joi.number().positive().max(100),
-		helium: Joi.number().min(0).max(95)
+		).allow(null),
+		doubles: Joi.boolean().allow(null),
+		volume: Joi.number().positive().allow(null),
+		volumeUnit: Joi.string().only([ 'L', 'cf' ]).allow(null),
+		material: Joi.string().only([ 'aluminum', 'steel' ]).allow(null),
+		oxygen: Joi.number().positive().max(100).allow(null),
+		helium: Joi.number().min(0).max(95).allow(null)
 	}).and('volume', 'volumeUnit'),
 
 	decoStops: Joi.array().items(
 		Joi.object().keys({
-			depth: Joi.number().positive(),
-			duration: Joi.number().positive()
+			depth: Joi.number().positive().allow(null),
+			duration: Joi.number().positive().allow(null)
 		})
 	).max(15),
 
 	temperature: Joi.object().keys({
-		surface: Joi.number().min(-2).max(50),
-		water: Joi.number().min(-2).max(50),
+		surface: Joi.number().min(-2).max(50).allow(null),
+		water: Joi.number().min(-2).max(50).allow(null),
 		thermoclines: Joi.array().items(Joi.object().keys({
-			temperature: Joi.number().required().min(-2).max(50),
-			depth: Joi.number().positive()
+			temperature: Joi.number().min(-2).max(50).required(),
+			depth: Joi.number().positive().allow(null)
 		})).max(4)
 	}),
 
 	// Weighting
 	weight: Joi.object().keys({
-		amount: Joi.number().min(0),
-		correctness: Joi.string().only([ 'good', 'too little', 'too much' ]),
-		trim: Joi.string().only([ 'good', 'feet down', 'feet up' ])
+		amount: Joi.number().min(0).allow(null),
+		correctness: Joi.string().only([ 'good', 'too little', 'too much', null ]),
+		trim: Joi.string().only([ 'good', 'feet down', 'feet up', null ])
 	}),
 
 	tags: Joi.array().items(Joi.string().alphanum().max(25)).max(50),
-	comments: Joi.string().allow([ '', null ]).max(1000)
+	comments: Joi.string().max(1000).allow(null)
 };
 
 export const NewEntrySchema = Joi.object().keys({

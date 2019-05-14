@@ -7,3 +7,4 @@
 1. [Users and Profiles](Users.md)
 1. [Friends (Dive Buddies)](Friends.md)
 1. [Log Entries](LogEntries.md)
+1. [Tanks](Tanks.md)
