@@ -1,5 +1,10 @@
+locals {
+	media_bucket_name = "BottomTime-Media-${var.region}-${var.env}"
+}
+
+
 resource "aws_s3_bucket" "media_bucket" {
-	bucket = "BottomTime-Media-${var.region}-${var.env}"
+	bucket = "${local.media_bucket_name}"
 	acl = "private"
 	region = "${var.region}"
 	force_destroy = true

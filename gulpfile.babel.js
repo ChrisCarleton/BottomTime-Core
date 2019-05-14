@@ -40,6 +40,7 @@ function test() {
 }
 
 function watch(done) {
+	process.env.BT_S3_ENDPOINT = 'http://localhost:4569/';
 	devServer.start();
 	gulp.watch([ 'service/**/*.js' ], file => {
 		devServer.start.bind(devServer);
@@ -52,6 +53,7 @@ function watch(done) {
 }
 
 function serve(done) {
+	process.env.BT_S3_ENDPOINT = 'http://localhost:4569/';
 	devServer.start();
 	log('Dev server started.');
 	done();
