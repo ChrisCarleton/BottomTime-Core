@@ -403,6 +403,11 @@ describe('Log entry validation', () => {
 			validateCreate('number.positive');
 		});
 
+		it('Air count must be an integer', () => {
+			logEntry.air[0].count = 1.5;
+			validateCreate('number.integer');
+		});
+
 		it('Air count cannot be greater than 10', () => {
 			logEntry.air[0].count = 11;
 			validateCreate('number.max');

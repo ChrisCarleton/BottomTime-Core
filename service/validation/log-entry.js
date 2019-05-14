@@ -35,7 +35,7 @@ const logEntryBaseSchema = {
 					otherwise: Joi.number().positive()
 				}
 			).allow(null),
-			count: Joi.number().positive().max(10).allow(null),
+			count: Joi.number().integer().positive().max(10).allow(null),
 			name: Joi.string().max(200).allow(null),
 			size: Joi.number().positive().allow(null),
 			workingPressure: Joi.number().positive().allow(null),

@@ -36,7 +36,7 @@ Describes a single log entry from a user's log book.
 			"in": "Number: The amount of air (in bar) in the cylinder(s) when entering the water.",
 			"out": "Number: The amount of air (in bar) in the cylinder(s) when exiting the water.",
 			"count": "Number: Number of tanks worn (1 = single, 2 = doubles, etc.)",
-			"name": "String: Name description of the tank. (E.g. HP100)",
+			"name": "String: Name description of the tank. (E.g. HP100.) Max 200 characters.",
 			"size": "Number: Volume of the tank(s) in litres.",
 			"workingPressure": "Number: Rated working pressure of the tank(s) in bar.",
 			"material": "String: The material the tank(s) are made of. (One of 'al' or 'fe'.)",
@@ -77,10 +77,12 @@ Describes a single log entry from a user's log book.
 The `gps`, `air`, `decoStops`, `temperature`, `tags` and `weight` nested objects are all considered
 optional.
 
-The value of `air.out` cannot exceed that of `air.in`. Attempting this will cause a validation error.
+The `air` array can contain from 0 to 20 entries representing the different cylinders used on the dive. If
+joined cylinders are used (i.e. doubles/twins) where a single SPG shows the pressure for both tanks then
+they should be entered as a single air entry with the `count` property set appropriately. (E.g. 2 for
+doubles.)
 
-The `air.volume` and `air.volumeUnit` values must be supplied together. Both can be omitted but if one is
-missing and the other is present, it will cause a validation error.
+The value of `air.out` cannot exceed that of `air.in`. Attempting this will cause a validation error.
 
 The `decoStops` array can contain from 0 to 15 depth/duration tuples representing each of the
 decompression stops. The stops should be ordered chronologically (i.e. deepest to shallowest.)
