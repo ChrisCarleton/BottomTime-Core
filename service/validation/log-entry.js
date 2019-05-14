@@ -24,23 +24,26 @@ const logEntryBaseSchema = {
 		longitude: Joi.number().min(-180.0).max(180.0).required()
 	}),
 
-	air: Joi.object().keys({
-		in: Joi.number().positive().allow(null),
-		out: Joi.when(
-			'in',
-			{
-				is: Joi.exist(),
-				then: Joi.number().positive().max(Joi.ref('in')),
-				otherwise: Joi.number().positive()
-			}
-		).allow(null),
-		doubles: Joi.boolean().allow(null),
-		volume: Joi.number().positive().allow(null),
-		volumeUnit: Joi.string().only([ 'L', 'cf' ]).allow(null),
-		material: Joi.string().only([ 'aluminum', 'steel' ]).allow(null),
-		oxygen: Joi.number().positive().max(100).allow(null),
-		helium: Joi.number().min(0).max(95).allow(null)
-	}).and('volume', 'volumeUnit'),
+	air: Joi.array().items(
+		Joi.object().keys({
+			in: Joi.number().positive().allow(null),
+			out: Joi.when(
+				'in',
+				{
+					is: Joi.exist(),
+					then: Joi.number().positive().max(Joi.ref('in')),
+					otherwise: Joi.number().positive()
+				}
+			).allow(null),
+			count: Joi.number().integer().positive().max(10).allow(null),
+			name: Joi.string().max(200).allow(null),
+			size: Joi.number().positive().allow(null),
+			workingPressure: Joi.number().positive().allow(null),
+			material: Joi.string().only([ 'al', 'fe', null ]),
+			oxygen: Joi.number().positive().max(100).allow(null),
+			helium: Joi.number().min(0).max(95).allow(null)
+		})
+	).max(20).allow(null),
 
 	decoStops: Joi.array().items(
 		Joi.object().keys({

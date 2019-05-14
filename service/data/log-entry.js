@@ -24,16 +24,19 @@ const logEntrySchema = mongoose.Schema({
 	surfaceInterval: Number,
 	maxDepth: Number,
 	averageDepth: Number,
-	air: {
-		in: Number,
-		out: Number,
-		doubles: Boolean,
-		volume: Number,
-		volumeUnit: String,
-		material: String,
-		oxygen: Number,
-		helium: Number
-	},
+	air: [
+		{
+			in: Number,
+			out: Number,
+			count: Number,
+			name: String,
+			size: Number,
+			workingPressure: Number,
+			material: String,
+			oxygen: Number,
+			helium: Number
+		}
+	],
 	decoStops: [
 		{
 			depth: Number,
@@ -79,6 +82,20 @@ logEntrySchema.methods.toCleanJSON = function () {
 		clean.decoStops = clean.decoStops.map(ds => ({
 			depth: ds.depth,
 			duration: ds.duration
+		}));
+	}
+
+	if (clean.air) {
+		clean.air = clean.air.map(a => ({
+			in: a.in,
+			out: a.out,
+			count: a.count,
+			name: a.name,
+			size: a.size,
+			workingPressure: a.workingPressure,
+			material: a.material,
+			oxygen: a.oxygen,
+			helium: a.helium
 		}));
 	}
 

@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import fakeLogEntry from '../util/fake-log-entry';
+import fakeLogEntryAir from '../util/fake-log-entry-air';
 import fakeMongoId from '../util/fake-mongo-id';
 import faker from 'faker';
 import Joi from 'joi';
@@ -328,148 +329,214 @@ describe('Log entry validation', () => {
 	});
 
 	describe('Air', () => {
+		it('Air is optional', () => {
+			delete logEntry.air;
+			validateCreate();
+		});
+
+		it('Air array can be null', () => {
+			logEntry.air = null;
+			validateCreate();
+		});
+
+		it('Air array cannot have more than 20 entries', () => {
+			const airEntries = new Array(21);
+			for (let i = 0; i < airEntries.length; i++) {
+				airEntries[i] = fakeLogEntryAir();
+			}
+			logEntry.air = airEntries;
+			validateCreate('array.max');
+		});
+
+		it('Air array can be empty', () => {
+			logEntry.air = [];
+			validateCreate();
+		});
+
 		it('Air in is optional', () => {
-			delete logEntry.air.in;
+			delete logEntry.air[0].in;
 			validateCreate();
 		});
 
 		it('Air in must be a number', () => {
-			logEntry.air.in = 'seven';
+			logEntry.air[0].in = 'seven';
 			validateCreate('number.base');
 		});
 
 		it('Air in must be positive', () => {
-			logEntry.air.in = 0;
+			logEntry.air[0].in = 0;
 			validateCreate('number.positive');
 		});
 
 		it('Air out is optional', () => {
-			delete logEntry.air.out;
+			delete logEntry.air[0].out;
 			validateCreate();
 		});
 
 		it('Air out must be a number', () => {
-			logEntry.air.out = 'seven';
+			logEntry.air[0].out = 'seven';
 			validateCreate('number.base');
 		});
 
 		it('Air out must be positive', () => {
-			logEntry.air.out = 0;
+			logEntry.air[0].out = 0;
 			validateCreate('number.positive');
 		});
 
 		it('Air out must be less than air in', () => {
-			logEntry.air.out = logEntry.air.in + 5;
+			logEntry.air[0].out = logEntry.air[0].in + 5;
 			validateCreate('number.max');
 		});
 
-		it('Air doubles is optional', () => {
-			delete logEntry.air.doubles;
+		it('Air count is optional', () => {
+			delete logEntry.air[0].count;
 			validateCreate();
 		});
 
-		it('Air doubles must be a boolean', () => {
-			logEntry.air.doubles = 'yup';
-			validateCreate('boolean.base');
-		});
-
-		it('Air volume is optional', () => {
-			delete logEntry.air.volume;
-			delete logEntry.air.volumeUnit;
-			validateCreate();
-		});
-
-		it('Air volume must be a number', () => {
-			logEntry.air.volume = 'pony-bottle';
+		it('Air count must be a number', () => {
+			logEntry.air[0].count = 'doubles';
 			validateCreate('number.base');
 		});
 
-		it('Air volume must be positive', () => {
-			logEntry.air.volume = 0;
+		it('Air count must be positive', () => {
+			logEntry.air[0].count = 0;
 			validateCreate('number.positive');
 		});
 
-		it('Air volume unit is required if air volume is supplied', () => {
-			delete logEntry.air.volumeUnit;
-			validateCreate('object.and');
+		it('Air count must be an integer', () => {
+			logEntry.air[0].count = 1.5;
+			validateCreate('number.integer');
 		});
 
-		it('Air volume is required if air volume unit is supplied', () => {
-			delete logEntry.air.volume;
-			validateCreate('object.and');
+		it('Air count cannot be greater than 10', () => {
+			logEntry.air[0].count = 11;
+			validateCreate('number.max');
 		});
 
-		[ 'L', 'cf' ].forEach(u => {
-			it(`Air volume unit can be set to ${ u }`, () => {
-				logEntry.air.volumeUnit = u;
-				validateCreate();
-			});
-		});
-
-		it('Air volume unit cannot be an invalid value', () => {
-			logEntry.air.volumeUnit = 'm3';
-			validateCreate('any.allowOnly');
-		});
-
-		it('Air tank material is optional', () => {
-			delete logEntry.air.material;
+		it('Air name is optional', () => {
+			delete logEntry.air[0].name;
 			validateCreate();
 		});
 
-		[ 'aluminum', 'steel' ].forEach(m => {
-			it(`Air tank material can be set to ${ m }`, () => {
-				logEntry.air.material = m;
+		it('Air name must be a string', () => {
+			logEntry.air[0].name = 767;
+			validateCreate('string.base');
+		});
+
+		it('Air name cannot be empty', () => {
+			logEntry.air[0].name = '';
+			validateCreate('any.empty');
+		});
+
+		it('Air name can be null', () => {
+			logEntry.air[0].name = null;
+			validateCreate();
+		});
+
+		it('Air name cannot be longer than 200 characters', () => {
+			logEntry.air[0].name = faker.lorem.sentences(10).substr(0, 201);
+			validateCreate('string.max');
+		});
+
+		it('Air size is optional', () => {
+			delete logEntry.air[0].size;
+			validateCreate();
+		});
+
+		it('Air size can be null', () => {
+			logEntry.air[0].size = null;
+			validateCreate();
+		});
+
+		it('Air size must be a number', () => {
+			logEntry.air[0].size = '11.1L';
+			validateCreate('number.base');
+		});
+
+		it('Air size must be positive', () => {
+			logEntry.air[0].size = 0;
+			validateCreate('number.positive');
+		});
+
+		it('Air working pressure is optional', () => {
+			delete logEntry.air[0].workingPressure;
+			validateCreate();
+		});
+
+		it('Air working pressure can be null', () => {
+			logEntry.air[0].workingPressure = null;
+			validateCreate();
+		});
+
+		it('Air working pressure must be a number', () => {
+			logEntry.air[0].workingPressure = '3000psi';
+			validateCreate('number.base');
+		});
+
+		it('Air working pressure must be positive', () => {
+			logEntry.air[0].workingPressure = 0;
+			validateCreate('number.positive');
+		});
+
+		it('Air tank material is optional', () => {
+			delete logEntry.air[0].material;
+			validateCreate();
+		});
+
+		[ 'al', 'fe', null ].forEach(m => {
+			it(`Air tank material can be set to "${ m }"`, () => {
+				logEntry.air[0].material = m;
 				validateCreate();
 			});
 		});
 
 		it('Air tank material cannot be set to an invalid value', () => {
-			logEntry.air.material = 'adamantium';
+			logEntry.air[0].material = 'adamantium';
 			validateCreate('any.allowOnly');
 		});
 
 		it('Oxygen content is optional', () => {
-			delete logEntry.air.oxygen;
+			delete logEntry.air[0].oxygen;
 			validateCreate();
 		});
 
 		it('Oxygen content must be a number', () => {
-			logEntry.air.oxygen = 'hyperoxic';
+			logEntry.air[0].oxygen = 'hyperoxic';
 			validateCreate('number.base');
 		});
 
 		it('Oxygen content must be positive', () => {
-			logEntry.air.oxygen = 0;
+			logEntry.air[0].oxygen = 0;
 			validateCreate('number.positive');
 		});
 
 		it('Oxygen content cannot exceed 100%', () => {
-			logEntry.air.oxygen = 100.6;
+			logEntry.air[0].oxygen = 100.6;
 			validateCreate('number.max');
 		});
 
 		it('Helium content is optional', () => {
-			delete logEntry.air.helium;
+			delete logEntry.air[0].helium;
 			validateCreate();
 		});
 
 		it('Helium content must be a number', () => {
-			logEntry.air.helium = 'lots';
+			logEntry.air[0].helium = 'lots';
 			validateCreate('number.base');
 		});
 
 		it('Helium content can be zero', () => {
-			logEntry.air.helium = 0;
+			logEntry.air[0].helium = 0;
 			validateCreate();
 		});
 
 		it('Helium content cannot be negative', () => {
-			logEntry.air.helium = -0.5;
+			logEntry.air[0].helium = -0.5;
 			validateCreate('number.min');
 		});
 
 		it('Helium cannot exceed 95%', () => {
-			logEntry.air.helium = 95.3;
+			logEntry.air[0].helium = 95.3;
 			validateCreate('number.max');
 		});
 	});
