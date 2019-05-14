@@ -542,24 +542,31 @@ describe('Log entry validation', () => {
 	});
 
 	describe('Weight', () => {
-		it('Amount is optional', () => {
-			delete logEntry.weight.amount;
-			validateCreate();
-		});
+		[ 'belt', 'integrated', 'backplate', 'ankles', 'other' ].forEach(field => {
+			it(`${ field } weight is optional`, () => {
+				delete logEntry.weight[field];
+				validateCreate();
+			});
 
-		it('Amount must be a number', () => {
-			logEntry.weight.amount = 'not much';
-			validateCreate('number.base');
-		});
+			it(`${ field } weight can be null`, () => {
+				logEntry.weight[field] = null;
+				validateCreate();
+			});
 
-		it('Amount can be zero', () => {
-			logEntry.weight.amount = 0;
-			validateCreate();
-		});
+			it(`${ field } weight must be a number`, () => {
+				logEntry.weight[field] = '6kg';
+				validateCreate('number.base');
+			});
 
-		it('Amount cannot be negative', () => {
-			logEntry.weight.amount = -0.5;
-			validateCreate('number.min');
+			it(`${ field } weight can be zero`, () => {
+				logEntry.weight[field] = 0;
+				validateCreate();
+			});
+
+			it(`${ field } weight cannot be negative`, () => {
+				logEntry.weight[field] = -0.5;
+				validateCreate('number.min');
+			});
 		});
 
 		it('Correctness is optional', () => {
