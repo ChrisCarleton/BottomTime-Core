@@ -8,8 +8,11 @@ jobs:
           BT_MONGO_ENDPOINT: mongodb://mongo/dev
           BT_SMTP_HOST: smtp
           BT_SMTP_PORT: 25
+          BT_S3_ENDPOINT: http://s3:4569/
       - image: mongo:2.6.8
         name: mongo
+      - image: lphoward/fake-s3:latest
+        name: s3
       - image: tecnativa/smtp-sink:latest
         name: smtp
     steps:
