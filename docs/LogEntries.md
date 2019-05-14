@@ -61,7 +61,11 @@ Describes a single log entry from a user's log book.
 		]
 	},
 	"weight": {
-		"amount": "Number: Amount of weight worn in kilograms. (Must be zero or more.)",
+		"belt": "Number: Amount of weight worn on the weight belt (kilograms).",
+		"integrated": "Number: Amount of weight worn in the BCD's integrated pockets (kilograms).",
+		"backplate": "Number: Amount of weight worn in trim pockets or on the backplate (kilograms).",
+		"ankles": "Number: Amount of weight worn on the ankles (kilograms).",
+		"other": "Number: Amount of weight worn anywhere else - tank neck, clipped to BCD, etc. (kilograms).",
 		"correctness": "String: Indication of how good the weight was. (One of 'good', 'too much' or 'too little')",
 		"trim": "String: Indication of how good the trim was. (One of 'good', 'feet down' or 'feet up'.)"
 	},

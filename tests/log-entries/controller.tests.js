@@ -330,7 +330,7 @@ describe('Logs Controller', () => {
 			delete fakes[1].userId;
 			delete fakes[2].userId;
 
-			fakes[0].weight = { amount: 69.4 };
+			fakes[0].weight = { backplate: 12.5 };
 			fakes[1].maxDepth = 300;
 			fakes[2].site = 'Local swimming pool';
 
@@ -366,7 +366,7 @@ describe('Logs Controller', () => {
 			delete fakes[1].userId;
 			delete fakes[2].userId;
 
-			fakes[0].weight = { amount: 69.4 };
+			fakes[0].weight = { integrated: 6.2 };
 			fakes[1].maxDepth = 300;
 			fakes[2].site = 'Local swimming pool';
 
@@ -503,7 +503,7 @@ describe('Logs Controller', () => {
 			delete fakes[1].userId;
 			delete fakes[2].userId;
 
-			fakes[0].weight = { amount: 69.4 };
+			fakes[0].weight = { belt: 2.8 };
 			fakes[1].maxDepth = 300;
 			fakes[2].site = 'Local swimming pool';
 

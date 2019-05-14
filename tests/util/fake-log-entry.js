@@ -59,7 +59,10 @@ export default userId => {
 			longitude: faker.random.number({ min: -180.0, max: 180.0 })
 		},
 		weight: {
-			amount: faker.random.number({ min: 2, max: 19 }),
+			belt: faker.random.number({ min: 0, max: 27 }) / 10,
+			integrated: faker.random.number({ min: 0, max: 27 }) / 10,
+			backplate: faker.random.number({ min: 0, max: 45 }) / 10,
+			ankles: faker.random.number({ min: 0, max: 90 }) / 100,
 			correctness: faker.random.arrayElement([ 'good', 'too little', 'too much' ]),
 			trim: faker.random.arrayElement([ 'good', 'feet down', 'feet up' ])
 		},

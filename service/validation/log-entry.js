@@ -63,7 +63,11 @@ const logEntryBaseSchema = {
 
 	// Weighting
 	weight: Joi.object().keys({
-		amount: Joi.number().min(0).allow(null),
+		belt: Joi.number().min(0).allow(null),
+		integrated: Joi.number().min(0).allow(null),
+		backplate: Joi.number().min(0).allow(null),
+		ankles: Joi.number().min(0).allow(null),
+		other: Joi.number().min(0).allow(null),
 		correctness: Joi.string().only([ 'good', 'too little', 'too much', null ]),
 		trim: Joi.string().only([ 'good', 'feet down', 'feet up', null ])
 	}),

@@ -44,7 +44,11 @@ const logEntrySchema = mongoose.Schema({
 		}
 	],
 	weight: {
-		amount: Number,
+		belt: Number,
+		integrated: Number,
+		backplate: Number,
+		ankles: Number,
+		other: Number,
 		correctness: String,
 		trim: String
 	},
