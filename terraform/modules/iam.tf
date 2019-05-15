@@ -39,11 +39,30 @@ resource "aws_iam_role_policy" "execution" {
                 "logs:PutLogEvents",
                 "iam:PassRole",
                 "datapipeline:*"
-
-
             ],
             "Resource": "*"
-        }
+        },
+		{
+			"Effect": "Allow",
+			"Action": [
+				"s3:ListBucket"
+			],
+			"Resource": [
+				"${aws_s3_bucket.media_bucket.arn}"
+			]
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"s3:GetObject",
+				"s3:PutObject",
+				"s3:PutObjectAcl",
+				"s3:DeleteObject"
+			],
+			"Resource": [
+				"${aws_s3_bucket.media_bucket.arn}/*"
+			]
+		}
     ]
 }
 EOF
