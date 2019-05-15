@@ -10,7 +10,7 @@ resource "aws_s3_bucket" "media_bucket" {
 	force_destroy = true
 
 	tags {
-		Name = "BottomTime Media (${var.region})"
+		Name = "BottomTime Media ${var.region}"
 		Environment = "${var.env}"
 	}
 
