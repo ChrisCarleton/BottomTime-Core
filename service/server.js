@@ -2,6 +2,7 @@
 
 import applyAuth from './auth';
 import bodyParser from 'body-parser';
+import busboy from 'connect-busboy';
 import containerMetadata from './utils/container-metadata';
 import compression from 'compression';
 import config from './config';
@@ -41,6 +42,9 @@ process.on('uncaughtException', err => {
 // Express middleware
 const app = express();
 app.use(compression());
+app.use(busboy({
+	highWaterMark: 2 * 1024 * 1024
+}));
 app.use(useragent.express());
 app.use(modRewrite([ '^/api/(.*) /$1' ]));
 applyAuth(app);

@@ -20,10 +20,13 @@ the behaviour of the running application:
 rather than `stdout`.
 * **BT_LOG_LEVEL** Sets the level of verbosity of the log output. Valid values are `trace`, `debug`, `info`,
 `warn`, `error`, and `fatal`. The default is `debug`.
+* **BT_MEDIA_BUCKET** The name of the S3 bucket where dive media (videos and pictures) are stored for users.
 * **BT_MONGO_ENDPOINT** Sets the connection string for the MongoDB database. The default is
 `mongodb://localhost/dev`.
 * **BT_PORT** Can be set to override the default port the application listens for requests on. The default
 is 29201.
+* **BT_S3_ENDPOINT** Can be set to override the default endpoint used to reach the AWS S3 APIs. (E.g.
+`http://localhost:4569/`)
 * **BT_SESSION_SECRET** Sets the secret used to encrypt/decrypt session cookies. This doesn't really matter
 for testing but should definitely be set to a secure value in production to prevent session hijacking.
 * **BT_SITE_URL** Tells the application the base URL of the site. E.g. `https://www.bottomtime.ca/`. This

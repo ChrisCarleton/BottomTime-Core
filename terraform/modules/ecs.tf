@@ -18,6 +18,7 @@ data "template_file" "task_def" {
 		image = "${var.docker_image}"
 		log_level = "${var.log_level}"
 		logs_group = "${local.logs_group_name}"
+		media_bucket_name = "${local.media_bucket_name}"
 		mongodb = "${var.mongodb_endpoint}"
 		name = "${local.container_name}"
 		port = "${local.container_port}"

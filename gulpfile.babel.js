@@ -8,7 +8,12 @@ import mkdirp from 'mkdirp';
 import mocha from 'gulp-mocha';
 import path from 'path';
 
-const devServer = new GLS('service/index.js');
+const devServer = new GLS('service/index.js', {
+	env: {
+		NODE_ENV: 'development',
+		BT_S3_ENDPOINT: process.env.BT_S3_ENDPOINT || 'http://localhost:4569/'
+	}
+});
 
 function lint() {
 	return gulp.src(
@@ -26,9 +31,11 @@ function lint() {
 
 function test() {
 	mkdirp.sync(path.join(__dirname, 'logs/'));
+
 	process.env.BT_LOG_FILE = path.join(__dirname, 'logs/test.log');
-	process.env.ECS_CONTAINER_METADATA_FILE
-		= path.join(__dirname, 'tests/assets/container-metadata.json');
+	process.env.ECS_CONTAINER_METADATA_FILE = path.join(__dirname, 'tests/assets/container-metadata.json');
+	process.env.BT_S3_ENDPOINT = process.env.BT_S3_ENDPOINT || 'http://localhost:4569/';
+
 	return gulp
 		.src([ 'tests/**/*.tests.js' ])
 		.pipe(mocha({

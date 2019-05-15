@@ -31,6 +31,9 @@ const config = {
 		}
 	},
 
+	s3Endpoint: process.env.BT_S3_ENDPOINT,
+	mediaBucket: process.env.BT_MEDIA_BUCKET || 'BottomTime-Media',
+
 	/*
 		Do not set! This will be set automatically by the ECS agent hosting the application container.
 		(That's why the BT_ prefix is missing from the environment variable!)

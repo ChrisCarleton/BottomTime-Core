@@ -3,6 +3,7 @@ import database from '../../service/data/database';
 import { expect } from 'chai';
 import request from 'supertest';
 import sinon from 'sinon';
+import storage from '../../service/storage';
 
 const ExpectedAppVersion = '1.0.0';
 const ExpectedApiVersion = '1.0.0';
@@ -29,10 +30,10 @@ describe('Admin Controller', () => {
 		});
 
 		it('Returns healthy when everything is cool', async () => {
-			const res = await request(App).get('/health');
-			expect(res.status).to.equal(200);
-			expect(res.body.status).to.equal('healthy');
-			res.body.components.forEach(c => {
+			const { body } = await request(App).get('/health').expect(200);
+			expect(body.status).to.equal('healthy');
+			expect(body.components).to.be.an('array').and.have.lengthOf(2);
+			body.components.forEach(c => {
 				expect(c.health).to.equal('healthy');
 			});
 		});
@@ -41,12 +42,28 @@ describe('Admin Controller', () => {
 			stub = sinon.stub(database.connection.db, 'stats');
 			stub.rejects('nope!');
 
-			const res = await request(App).get('/health');
-			expect(res.status).to.equal(500);
-			expect(res.body.status).to.equal('unhealthy');
-			res.body.components.forEach(c => {
+			const { body } = await request(App).get('/health').expect(500);
+			expect(body.status).to.equal('unhealthy');
+			body.components.forEach(c => {
 				if (c.name === 'MongoDB') {
 					expect(c.health).to.equal('unhealthy');
+				} else {
+					expect(c.health).to.equal('healthy');
+				}
+			});
+		});
+
+		it('Returns warn when S3 is inaccessible', async () => {
+			stub = sinon.stub(storage, 'putObject');
+			stub.returns({
+				promise: () => Promise.reject(new Error('nope'))
+			});
+
+			const { body } = await request(App).get('/health').expect(200);
+			expect(body.status).to.equal('warn');
+			body.components.forEach(c => {
+				if (c.name === 'AWS S3') {
+					expect(c.health).to.equal('warn');
 				} else {
 					expect(c.health).to.equal('healthy');
 				}
