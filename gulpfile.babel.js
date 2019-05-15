@@ -11,7 +11,7 @@ import path from 'path';
 const devServer = new GLS('service/index.js', {
 	env: {
 		NODE_ENV: 'development',
-		BT_S3_ENDPOINT: 'http://localhost:4569/'
+		BT_S3_ENDPOINT: process.env.BT_S3_ENDPOINT || 'http://localhost:4569/'
 	}
 });
 
