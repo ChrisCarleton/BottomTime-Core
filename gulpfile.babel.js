@@ -8,7 +8,12 @@ import mkdirp from 'mkdirp';
 import mocha from 'gulp-mocha';
 import path from 'path';
 
-const devServer = new GLS('service/index.js');
+const devServer = new GLS('service/index.js', {
+	env: {
+		NODE_ENV: 'development',
+		BT_S3_ENDPOINT: 'http://localhost:4569/'
+	}
+});
 
 function lint() {
 	return gulp.src(
@@ -40,7 +45,6 @@ function test() {
 }
 
 function watch(done) {
-	process.env.BT_S3_ENDPOINT = 'http://localhost:4569/';
 	devServer.start();
 	gulp.watch([ 'service/**/*.js' ], file => {
 		devServer.start.bind(devServer);
@@ -53,7 +57,6 @@ function watch(done) {
 }
 
 function serve(done) {
-	process.env.BT_S3_ENDPOINT = 'http://localhost:4569/';
 	devServer.start();
 	log('Dev server started.');
 	done();

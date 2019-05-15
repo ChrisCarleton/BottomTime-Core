@@ -1,5 +1,6 @@
 import config from '../config';
 import database from '../data/database';
+import storage from '../storage';
 
 async function GetMongoDbHealth(req) {
 	const response = {
@@ -23,8 +24,42 @@ async function GetMongoDbHealth(req) {
 	}
 }
 
+async function GetS3Health(req) {
+	const response = {
+		name: 'AWS S3'
+	};
+
+	try {
+		const params = {
+			Bucket: config.mediaBucket,
+			Key: '__healthcheck',
+			Body: new Date().toISOString(),
+			StorageClass: 'ONEZONE_IA',
+			ServerSideEncryption: 'AES256'
+		};
+		await storage.putObject(params).promise();
+
+		return {
+			...response,
+			health: 'healthy',
+			details: 'Successfully wrote to S3 bucket.'
+		};
+	} catch (err) {
+		req.logError('S3 health check failure', err);
+		return {
+			...response,
+			health: 'warn',
+			details: 'There was a problem writing to S3.'
+		};
+	}
+}
+
 export async function GetHealth(req, res) {
-	const components = await Promise.all([ GetMongoDbHealth(req) ]);
+	const components = await Promise.all([
+		GetMongoDbHealth(req),
+		GetS3Health(req)
+	]);
+
 	let health = 'healthy';
 	let status = 200;
 
