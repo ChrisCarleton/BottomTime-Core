@@ -74,6 +74,7 @@ const logEntrySchema = mongoose.Schema({
 	visibility: Number,
 	wind: Number,
 	current: Number,
+	waterChoppiness: Number,
 	weather: String,
 	suit: String,
 	tags: [ String ],
@@ -149,6 +150,7 @@ logEntrySchema.methods.toCleanJSON = function () {
 			'visibility',
 			'wind',
 			'current',
+			'waterChoppiness',
 			'weather',
 			'suit',
 			'tags',
@@ -208,6 +210,7 @@ logEntrySchema.methods.assign = function (entity) {
 	this.visibility = entity.visibility;
 	this.wind = entity.wind;
 	this.current = entity.current;
+	this.waterChoppiness = entity.waterChoppiness;
 	this.weather = entity.weather;
 	this.suit = entity.suit;
 };

@@ -71,7 +71,13 @@ const logEntryBaseSchema = {
 		correctness: Joi.string().only([ 'good', 'too little', 'too much', null ]),
 		trim: Joi.string().only([ 'good', 'feet down', 'feet up', null ])
 	}),
-
+	rating: Joi.number().min(1).max(5).allow(null),
+	visibility: Joi.number().min(1).max(5).allow(null),
+	wind: Joi.number().min(1).max(5).allow(null),
+	current: Joi.number().min(1).max(5).allow(null),
+	waterChoppiness: Joi.number().min(1).max(5).allow(null),
+	weather: Joi.string().max(100).allow(null),
+	suit: Joi.string().max(100).allow(null),
 	tags: Joi.array().items(Joi.string().alphanum().max(25)).max(50),
 	comments: Joi.string().max(1000).allow(null)
 };

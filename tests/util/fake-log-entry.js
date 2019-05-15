@@ -76,6 +76,27 @@ export default userId => {
 				}
 			]
 		},
+		rating: faker.random.number({ min: 1, max: 5 }),
+		visibility: faker.random.number({ min: 1, max: 5 }),
+		wind: faker.random.number({ min: 1, max: 5 }),
+		current: faker.random.number({ min: 1, max: 5 }),
+		waterChoppiness: faker.random.number({ min: 1, max: 5 }),
+		weather: faker.random.arrayElement([
+			'Sunny',
+			'Cloudy',
+			'Partly-Cloudy',
+			'Raining',
+			'Stormy',
+			'Windy'
+		]),
+		suit: faker.random.arrayElement([
+			'Rash guard',
+			'Shorty',
+			'3mm wetsuit',
+			'5mm wetsuit',
+			'7mm wetsuit',
+			'Drysuit'
+		]),
 		tags: generateTags(),
 		comments: faker.lorem.sentences(4)
 	};
