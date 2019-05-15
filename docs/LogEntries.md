@@ -70,7 +70,14 @@ Describes a single log entry from a user's log book.
 		"trim": "String: Indication of how good the trim was. (One of 'good', 'feet down' or 'feet up'.)"
 	},
 	"tags": [],
-	"comments": "String: Free-form comments about the dive. 1000 characters or less."
+	"rating": "Number: Dive rating 1-5. 1 = Terrible, 5 = Epic!",
+	"visibility": "Number: Dive visibility 1-5. 1 = Can't see your own hand, 5 = See for 100+ meters!",
+	"wind": "Number: Wind conditions 1-5. 1 = No wind, 5 = Gale force wind.",
+	"current": "Number: Current strength 1-5. 1 = No current, 5 = Extreme current.",
+	"waterChoppiness": "Number: Water choppiness 1-5. 1 = Smooth as glass, 5 = Monstrous swells.",
+	"weather": "String: Description of the weather. (E.g. 'sunny', 'cloudy', 'rainy', etc.) Max 100 characters.",
+	"suit": "String: Description of exposure suit. (E.g. '5mm wetsuit', 'drysuit', etc.) Max 100 characters.",
+	"comments": "String: Free-form comments about the dive. Max 1000 characters."
 }
 ```
 **Notes:**

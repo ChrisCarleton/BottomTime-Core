@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import moment from 'moment';
 import mongoose from './database';
 
@@ -65,8 +66,62 @@ const logEntrySchema = mongoose.Schema({
 			}
 		]
 	},
+	rating: {
+		type: Number,
+		index: true,
+		sparse: true
+	},
+	visibility: Number,
+	wind: Number,
+	current: Number,
+	waterChoppiness: Number,
+	weather: String,
+	suit: String,
 	tags: [ String ],
-	comments: String
+	comments: String,
+	signatures: [
+		{
+			user: {
+				type: String,
+				required: true
+			},
+			role: {
+				type: String,
+				required: true
+			},
+			agency: String,
+			certNumber: String
+		}
+	],
+	images: [
+		{
+			key: {
+				type: String,
+				required: true
+			},
+			name: {
+				type: String,
+				required: true,
+				index: true
+			},
+			uploaded: Boolean
+		}
+	],
+	videos: [
+		{
+			key: {
+				type: String,
+				required: true
+			},
+			name: {
+				type: String,
+				required: true,
+				index: true
+			},
+			uploaded: Boolean
+		}
+	]
+	// facility: {}
 });
 
 logEntrySchema.statics.searchByUser = function (userId, options, done) {
@@ -74,13 +129,34 @@ logEntrySchema.statics.searchByUser = function (userId, options, done) {
 };
 
 logEntrySchema.methods.toCleanJSON = function () {
-	const clean = { entryId: this.id, ...this.toJSON() };
-	/* eslint-disable no-underscore-dangle */
-	delete clean._id;
-	delete clean.__v;
-	/* eslint-enable no-underscore-dangle */
-	delete clean.userId;
-	clean.entryTime = moment(this.entryTime).utc().toISOString();
+	const clean = {
+		entryId: this.id,
+		entryTime: moment(this.entryTime).utc().toISOString(),
+		..._.pick(this.toJSON(), [
+			'diveNumber',
+			'location',
+			'site',
+			'gps',
+			'bottomTime',
+			'totalTime',
+			'surfaceInterval',
+			'maxDepth',
+			'averageDepth',
+			'air',
+			'decoStops',
+			'weight',
+			'temperature',
+			'rating',
+			'visibility',
+			'wind',
+			'current',
+			'waterChoppiness',
+			'weather',
+			'suit',
+			'tags',
+			'comments'
+		])
+	};
 
 	if (clean.decoStops) {
 		clean.decoStops = clean.decoStops.map(ds => ({
@@ -113,23 +189,30 @@ logEntrySchema.methods.toCleanJSON = function () {
 	return clean;
 };
 
-export default mongoose.model('LogEntry', logEntrySchema);
+logEntrySchema.methods.assign = function (entity) {
+	this.entryTime = moment(entity.entryTime).utc().toDate();
+	this.diveNumber = entity.diveNumber;
+	this.bottomTime = entity.bottomTime;
+	this.totalTime = entity.totalTime;
+	this.location = entity.location;
+	this.site = entity.site;
+	this.surfaceInterval = entity.surfaceInterval;
+	this.averageDepth = entity.averageDepth;
+	this.maxDepth = entity.maxDepth;
+	this.gps = entity.gps;
+	this.weight = entity.weight;
+	this.air = entity.air;
+	this.temperature = entity.temperature;
+	this.tags = entity.tags;
+	this.comments = entity.comments;
+	this.decoStops = entity.decoStops;
+	this.rating = entity.rating;
+	this.visibility = entity.visibility;
+	this.wind = entity.wind;
+	this.current = entity.current;
+	this.waterChoppiness = entity.waterChoppiness;
+	this.weather = entity.weather;
+	this.suit = entity.suit;
+};
 
-export function assignLogEntry(entity, newLogEntry) {
-	entity.entryTime = moment(newLogEntry.entryTime).utc().toDate();
-	entity.diveNumber = newLogEntry.diveNumber;
-	entity.bottomTime = newLogEntry.bottomTime;
-	entity.totalTime = newLogEntry.totalTime;
-	entity.location = newLogEntry.location;
-	entity.site = newLogEntry.site;
-	entity.surfaceInterval = newLogEntry.surfaceInterval;
-	entity.averageDepth = newLogEntry.averageDepth;
-	entity.maxDepth = newLogEntry.maxDepth;
-	entity.gps = newLogEntry.gps;
-	entity.weight = newLogEntry.weight;
-	entity.air = newLogEntry.air;
-	entity.temperature = newLogEntry.temperature;
-	entity.tags = newLogEntry.tags;
-	entity.comments = newLogEntry.comments;
-	entity.decoStops = newLogEntry.decoStops;
-}
+export default mongoose.model('LogEntry', logEntrySchema);

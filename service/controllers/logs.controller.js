@@ -7,7 +7,7 @@ import {
 	UpdateEntrySchema
 } from '../validation/log-entry';
 import Joi from 'joi';
-import LogEntry, { assignLogEntry } from '../data/log-entry';
+import LogEntry from '../data/log-entry';
 
 function getWhereClauseForSearch(query) {
 	const whereClause = {};
@@ -129,7 +129,7 @@ export async function UpdateLogs(req, res) {
 		});
 
 		for (let i = 0; i < foundEntries.length; i++) {
-			assignLogEntry(foundEntries[i], entries[foundEntries[i].id]);
+			foundEntries[i].assign(entries[foundEntries[i].id]);
 		}
 
 		const result = await Promise.all(_.map(foundEntries, e => e.save()));
@@ -152,8 +152,7 @@ export async function UpdateLog(req, res) {
 				res);
 		}
 
-		assignLogEntry(req.logEntry, req.body);
-
+		req.logEntry.assign(req.body);
 		await req.logEntry.save();
 		res.sendStatus(200);
 	} catch (err) {
