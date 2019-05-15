@@ -1,5 +1,5 @@
 locals {
-	media_bucket_name = "BottomTime-Media-${var.region}-${var.env}"
+	media_bucket_name = "bottomtime-media-${var.region}-${var.env}"
 }
 
 
