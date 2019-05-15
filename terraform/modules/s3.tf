@@ -19,7 +19,7 @@ resource "aws_s3_bucket" "media_bucket" {
 		enabled = true
 
 		transition {
-			days = 60
+			days = 30
 			storage_class = "STANDARD_IA"
 		}
 	}
