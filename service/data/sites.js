@@ -14,7 +14,6 @@ const siteSchema = mongoose.Schema({
 	},
 	location: {
 		type: String,
-		required: true,
 		index: true
 	},
 	country: {
