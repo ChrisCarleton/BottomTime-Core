@@ -18,6 +18,12 @@ variable "env" {
 	default = "dev"
 }
 
+# ElasticSearch endpoint
+variable "es_endpoint" {
+	type= "string"
+	default = ""
+}
+
 # cron or rate expression (https://docs.aws.amazon.com/lambda/latest/dg/tutorial-scheduled-events-schedule-expressions.html)
 variable "database_maintenance_frequency" {
 	type = "string"
