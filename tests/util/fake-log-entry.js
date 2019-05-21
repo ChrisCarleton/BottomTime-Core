@@ -1,5 +1,6 @@
 import fakeLogEntryAir from './fake-log-entry-air';
 import faker from 'faker';
+import LogEntry from '../../service/data/log-entry';
 
 let diveNumber = 1;
 
@@ -101,3 +102,14 @@ export default userId => {
 		comments: faker.lorem.sentences(4)
 	};
 };
+
+export function toLogEntry(fake) {
+	const entry = new LogEntry(fake);
+	if (fake.gps) {
+		entry.gps = [
+			fake.gps.longitude,
+			fake.gps.latitude
+		];
+	}
+	return entry;
+}
