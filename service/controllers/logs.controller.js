@@ -93,13 +93,19 @@ export async function CreateLogs(req, res) {
 				res);
 		}
 
-		const logEntries = _.map(req.body, e => {
+		const logEntries = req.body.map(e => {
 			e.userId = req.account.id;
-			return new LogEntry(e).save();
+			if (e.gps) {
+				e.gps = [
+					e.gps.longitude,
+					e.gps.latitude
+				];
+			}
+			return new LogEntry(e);
 		});
 
-		const entries = await Promise.all(logEntries);
-		res.status(201).json(_.map(entries, e => e.toCleanJSON()));
+		await LogEntry.insertMany(logEntries);
+		res.status(201).json(logEntries.map(e => e.toCleanJSON()));
 	} catch (err) {
 		const logId = req.logError(
 			'Failed to create database records',

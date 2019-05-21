@@ -4,7 +4,7 @@ import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import faker from 'faker';
-import fakeLogEntry from '../util/fake-log-entry';
+import fakeLogEntry, { toLogEntry } from '../util/fake-log-entry';
 import Friend from '../../service/data/friend';
 import LogEntry from '../../service/data/log-entry';
 import mongoose from '../../service/data/database';
@@ -37,14 +37,14 @@ describe('Log Entry Searching', () => {
 		adminUser = await createFakeAccount('admin');
 
 		await LogEntry.insertMany(
-			_.map(new Array(500), () => new LogEntry(fakeLogEntry(friendsOnlyUser.user.id)))
+			_.map(new Array(500), () => toLogEntry(fakeLogEntry(friendsOnlyUser.user.id)))
 		);
 		await LogEntry.insertMany(
-			_.map(new Array(20), () => new LogEntry(fakeLogEntry(publicUser.user.id)))
+			_.map(new Array(20), () => toLogEntry(fakeLogEntry(publicUser.user.id)))
 		);
 		await LogEntry.insertMany(
 			_.map(new Array(100), () => {
-				const newEntry = new LogEntry(fakeLogEntry(privateUser.user.id));
+				const newEntry = toLogEntry(fakeLogEntry(privateUser.user.id));
 				newEntry.entryTime = faker.random.arrayElement(SameyEntryTimes);
 				newEntry.maxDepth = faker.random.arrayElement(SameyMaxDepths);
 				newEntry.bottomTime = faker.random.arrayElement(SameyBottomTimes);
