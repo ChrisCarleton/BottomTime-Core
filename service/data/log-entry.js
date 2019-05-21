@@ -17,8 +17,8 @@ const logEntrySchema = mongoose.Schema({
 	location: String,
 	site: String,
 	gps: {
-		latitude: Number,
-		longitude: Number
+		type: [ Number ],
+		index: '2dsphere'
 	},
 	bottomTime: Number,
 	totalTime: Number,
@@ -186,6 +186,13 @@ logEntrySchema.methods.toCleanJSON = function () {
 		}));
 	}
 
+	if (clean.gps) {
+		clean.gps = {
+			longitude: clean.gps[0],
+			latitude: clean.gps[1]
+		};
+	}
+
 	return clean;
 };
 
@@ -199,7 +206,6 @@ logEntrySchema.methods.assign = function (entity) {
 	this.surfaceInterval = entity.surfaceInterval;
 	this.averageDepth = entity.averageDepth;
 	this.maxDepth = entity.maxDepth;
-	this.gps = entity.gps;
 	this.weight = entity.weight;
 	this.air = entity.air;
 	this.temperature = entity.temperature;
@@ -213,6 +219,15 @@ logEntrySchema.methods.assign = function (entity) {
 	this.waterChoppiness = entity.waterChoppiness;
 	this.weather = entity.weather;
 	this.suit = entity.suit;
+
+	if (entity.gps) {
+		this.gps = [
+			entity.gps.longitude,
+			entity.gps.latitude
+		];
+	} else {
+		this.gps = null;
+	}
 };
 
 export default mongoose.model('LogEntry', logEntrySchema);

@@ -10,7 +10,7 @@ import chalk from 'chalk';
 import database from '../service/data/database';
 import faker from 'faker';
 import fakeDiveSite from '../tests/util/fake-dive-site';
-import fakeLogEntry from '../tests/util/fake-log-entry';
+import fakeLogEntry, { toLogEntry } from '../tests/util/fake-log-entry';
 import fakeUser from '../tests/util/fake-user';
 import log from 'fancy-log';
 import LogEntry from '../service/data/log-entry';
@@ -53,9 +53,9 @@ import User from '../service/data/user';
 
 		log('Creating a boat-load of log entries...');
 		for (let i = 0; i < users.length; i++) {
-			let logEntries = new Array(faker.random.number({ min: 50, max: 300 }));
+			let logEntries = new Array(faker.random.number({ min: 50, max: 500 }));
 			totalEntries += logEntries.length;
-			logEntries = _.map(logEntries, () => new LogEntry(fakeLogEntry(users[i]._id)));
+			logEntries = _.map(logEntries, () => toLogEntry(fakeLogEntry(users[i]._id)));
 			await LogEntry.insertMany(logEntries);
 		}
 
