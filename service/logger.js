@@ -22,6 +22,12 @@ const logger = bunyan.createLogger({
 	streams: [ stream ]
 });
 
+export const esLogger = bunyan.createLogger({
+	name: 'bt_log_elasticsearch',
+	level: config.logLevel,
+	streams: [ stream ]
+});
+
 export const requestLogger = expressLogger({
 	name: 'bt_log_request',
 	level: config.logLevel,
