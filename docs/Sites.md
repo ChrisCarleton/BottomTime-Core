@@ -8,8 +8,8 @@ Describes a dive site.
 
 ```json
 {
-	"siteId": "IGNORED String: A unique ID identifying the dive site in the database.",
-	"owner": "IGNORED String: ",
+	"siteId": "String: A unique ID identifying the dive site in the database.",
+	"owner": "String: Username of the user who created the dive site record.",
 	"name": "REQUIRED String: The name of the site. (Max 200 characters.)",
 	"location": "String: The location, town, city, etc. where the dive site is located. (Max 100 characters.)",
 	"country": "REQUIRED String: The name of the country in which the dive site is located. (Max 100 characters.)",
@@ -33,27 +33,103 @@ All dive sites are publicly visible. They are meant to be shared among users.
 This route is for listing or searching for dive sites in the database.
 
 #### Query Parameters
-* **search** - A search term to search for in the database.
-* **count** - Number of records to return.
-
+* **query** - A search term to search for in the database. This will perform a full-text search over the
+`name`, `location`, `description`, and `tags` fields.
+* **closeTo** - A geographical location around which dive sites should be searched. Should be specified
+in the format: `[longitude,latitude]`. E.g. `[-86.94527777777778,20.5030556]` (Cozumel, Mexico.)
+* **distance** - Can be used with **closeTo** to indicate how far away from the indicated location dive
+sites should be searched. **distance** must be a number representing how many kilometers from the location
+will be considered in the search. The default is `50`; the maximum is `1000`.
+* **count** - Number of records to return. The default is `250`; the maximum is `1000`.
+* **sortOrder** - The order in which results are returned. Must be `asc` or `desc`. (The default is `asc`.)
+* **sortBy** - The field on which to sort the results. Currently, the only value supported is `name`.
+* **lastSeen** - Used for querying the next "page" of search results. This should be set to the last
+dive site ID returned in the previous query and the search will return a new set of results following that
+record in the desired sort order.
 
 #### Responses
 HTTP Status Code | Details
 ----- | -----
 **200 Ok** | The call succeeded and the response body will contain an array of [DiveSite](#divesite-object) objects.
-**400 Bad Request** | The request failed because the user has reached the friend limit. An exception will be made if the friend request exists but has already been rejected. In this case it is simply re-opened.
-**401 Unauthorized** | The request was rejected because the current request could not be authenticated. (Bearer token was missing or invalid.)
-**403 Forbidden** | The request was rejected because the current user does not have permission to modify the indicated user's friends or the current user tried to create a friend request to themselves.
-**404 Not Found** | The request failed because the user specified in the **username** route parameter does not exist or the user specified in **friendName** route parameter does not exist.
-**409 Conflict** | The request was rejected because the friend request already exists.
+**400 Bad Request** | The request was rejected because the query string was invalid.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### GET /diveSites/:siteId
+Returns information on a specific dive site.
+
+#### Route Parameters
+* **siteId** - The unique ID of the dive site for which information will be retrieved.
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**200 Ok** | The call succeeded and the response body will contain a [DiveSite](#divesite-object) object.
+**404 Not Found** | The requested site ID could not be found in the database.
+**500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### POST /diveSites
+Saves new dive sites to the database and indexes them for searching.
+
+#### Message Body
+The message body must be an array of [DiveSite](#divesite-object) objects. The `siteId` and `owner`
+properties must be omitted from the objects as these properties are considered read-only.
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**200 Ok** | The call succeeded and the response body will contain the original array of [DiveSite](#divesite-object) objects with the `siteId` fields filled in.
+**400 Bad Request** | The request was rejected because the message body was invalid. Check the details of the error message to see, specifically, what was wrong.
+**401 Not Authorized** | The request was rejected because the current user is not authenticated.
+**500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### PUT /diveSites/:siteId
+Updates an existing dive site record. Only admins and the user who owns the record are allowed to to
+do this.
+
+#### Route Parameters
+* **siteId** - The ID of dive site to be updated.
+
+#### Message Body
+The request body must contain a [DiveSite](#divesite-object) object. The `siteId` and `owner`
+properties must be omitted from the object as these properties are considered read-only.
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**204 No Content** | The call succeeded and the indicated dive site was updated.
+**400 Bad Request** | The request was rejected because the message body was invalid. Check the details of the error message to see, specifically, what was wrong.
+**401 Not Authorized** | The request was rejected because the current user is not authenticated.
+**403 Forbidden** | The request was rejected because the current user does not own the indicated dive site record and is not an administrator.
+**404 Not Found** | The request was rejected because the indicated siteId could not be found in the database.
+**500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### DELETE /diveSites
+Deletes multiple dive site records. Only admins and the user who owns the records are allowed to do this.
+
+#### Message Body
+The request body must contain an array of dive site IDs indicating which sites should be deleted.
 
 ### DELETE /diveSites/:siteId
+Deletes an existing dive site record. Only admins and the user who owns the record are allowed to to
+do this.
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**204 No Content** | The call succeeded and the indicated dive sites were deleted. The call will still return a 204 response if one or more of the indicated dive site IDs could not be found.
+**400 Bad Request** | The request was rejected because the request body was malformed.
+**401 Not Authorized** | The request was rejected because the current user is not authenticated.
+**403 Forbidden** | The request was rejected because the current user does not own the indicated dive site record and is not an administrator.
+**500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
+
+#### Route Parameters
+* **siteId** - The ID of dive site to be deleted.
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**204 No Content** | The call succeeded and the indicated dive site was deleted.
+**401 Not Authorized** | The request was rejected because the current user is not authenticated.
+**403 Forbidden** | The request was rejected because the current user does not own the indicated dive site record and is not an administrator.
+**404 Not Found** | The request was rejected because the indicated siteId could not be found in the database.
+**500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
