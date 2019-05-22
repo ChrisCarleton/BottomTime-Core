@@ -35,6 +35,7 @@ const config = {
 	mediaBucket: process.env.BT_MEDIA_BUCKET || 'BottomTime-Media',
 
 	elasticSearchEndpoint: process.env.BT_ES_ENDPOINT || 'http://localhost:9200',
+	elasticSearchIndex: process.env.BT_ES_INDEX || 'bottomtime_dev',
 
 	/*
 		Do not set! This will be set automatically by the ECS agent hosting the application container.

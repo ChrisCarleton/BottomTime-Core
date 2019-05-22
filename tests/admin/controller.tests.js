@@ -2,7 +2,7 @@ import { App } from '../../service/server';
 import database from '../../service/data/database';
 import { expect } from 'chai';
 import request from 'supertest';
-import search from '../../service/search/search';
+import search from '../../service/search';
 import sinon from 'sinon';
 import storage from '../../service/storage';
 

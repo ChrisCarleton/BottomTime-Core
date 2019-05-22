@@ -1,5 +1,5 @@
 import database from '../service/data/database';
-import search from '../service/search/search';
+import search from '../service/search';
 import { Server } from '../service/server';
 
 // Make sure the MongoDB connection is open before running any tests.

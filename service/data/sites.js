@@ -1,11 +1,17 @@
+/* eslint camelcase: 0 */
+
 import _ from 'lodash';
+import config from '../config';
 import mongoose from './database';
+import mesxp from 'mongoose-elasticsearch-xp';
+import search from '../search';
 
 const siteSchema = mongoose.Schema({
 	name: {
 		type: String,
 		required: true,
-		index: true
+		index: true,
+		es_indexed: true
 	},
 	owner: {
 		type: String,
@@ -14,19 +20,32 @@ const siteSchema = mongoose.Schema({
 	},
 	location: {
 		type: String,
-		index: true
+		es_indexed: true
 	},
 	country: {
 		type: String,
 		required: true,
-		index: true
+		es_indexed: true
 	},
-	description: String,
-	tags: [ String ],
+	description: {
+		type: String,
+		es_indexed: true
+	},
+	tags: {
+		type: [ String ],
+		es_indexed: true
+	},
 	gps: {
 		type: [ Number ],
-		index: '2dsphere'
+		index: '2dsphere',
+		es_indexed: true,
+		es_type: 'geo-point'
 	}
+});
+
+siteSchema.plugin(mesxp, {
+	index: config.elasticSearchIndex,
+	client: search
 });
 
 siteSchema.methods.toCleanJSON = function () {

@@ -1,6 +1,6 @@
 import { Client } from 'elasticsearch';
-import config from '../config';
-import { esLogger as log } from '../logger';
+import config from './config';
+import { esLogger as log } from './logger';
 
 class ESLogger {
 	constructor() {
