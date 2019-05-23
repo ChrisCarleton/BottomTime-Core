@@ -85,7 +85,123 @@ describe('Dive sites controller', () => {
 	});
 
 	describe('PUT /diveSites/:siteId', () => {
+		let fake = null;
+		let diveSite = null;
 
+		beforeEach(async () => {
+			fake = fakeDiveSite(userAccount.user.username);
+			diveSite = toDiveSite(fake);
+			await diveSite.save();
+			delete fake.owner;
+		});
+
+		afterEach(async () => {
+			await DiveSite.deleteMany({});
+		});
+
+		it('Will successfully update a dive site', async () => {
+			fake = fakeDiveSite();
+			delete fake.owner;
+
+			await request(App)
+				.put(`/diveSites/${ diveSite.id }`)
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(204);
+
+			const result = await DiveSite.findById(diveSite.id);
+			expect(result).to.exist;
+			expect(result.toCleanJSON()).to.eql({
+				...fake,
+				owner: userAccount.user.username,
+				siteId: diveSite.id
+			});
+		});
+
+		it('Will return 400 if validation fails', async () => {
+			fake = fakeDiveSite();
+			fake.name = null;
+			fake.description = 77;
+
+			const { body } = await request(App)
+				.put(`/diveSites/${ diveSite.id }`)
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(400);
+
+			expect(body.status).to.equal(400);
+			expect(body.errorId).to.equal(ErrorIds.badRequest);
+		});
+
+		it('Will return 401 if user is not authenticated', async () => {
+			const { body } = await request(App)
+				.put(`/diveSites/${ diveSite.id }`)
+				.send(fake)
+				.expect(401);
+
+			expect(body.status).to.equal(401);
+			expect(body.errorId).to.equal(ErrorIds.notAuthorized);
+		});
+
+		it('Will return 403 if user attempts to update another user\'s site entry', async () => {
+			const otherFake = fakeDiveSite();
+			const otherDiveSite = toDiveSite(otherFake);
+			await otherDiveSite.save();
+
+			const { body } = await request(App)
+				.put(`/diveSites/${ otherDiveSite.id }`)
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(403);
+
+			expect(body.status).to.equal(403);
+			expect(body.errorId).to.equal(ErrorIds.forbidden);
+		});
+
+		it('Will allow administrators to update other user\'s site info', async () => {
+			fake = fakeDiveSite();
+			delete fake.owner;
+
+			await request(App)
+				.put(`/diveSites/${ diveSite.id }`)
+				.set(...adminAccount.authHeader)
+				.send(fake)
+				.expect(204);
+
+			const result = await DiveSite.findById(diveSite.id);
+			expect(result).to.exist;
+			expect(result.toCleanJSON()).to.eql({
+				...fake,
+				owner: userAccount.user.username,
+				siteId: diveSite.id
+			});
+		});
+
+		it('Will return 404 if site entry does not exist', async () => {
+			const { body } = await request(App)
+				.put(`/diveSites/${ fakeMongoId() }`)
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(404);
+
+			expect(body.status).to.equal(404);
+			expect(body.errorId).to.equal(ErrorIds.notFound);
+		});
+
+		it('Will return 500 if a server error occurs', async () => {
+			stub = sinon.stub(DiveSite.prototype, 'save');
+			stub.rejects('nope');
+
+			const { body } = await request(App)
+				.put(`/diveSites/${ diveSite.id }`)
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(500);
+
+			expect(body.status).to.equal(500);
+			expect(body.errorId).to.equal(ErrorIds.serverError);
+			expect(body.logId).to.exist;
+		});
 	});
 
 	describe('DELETE /diveSites/:siteId', () => {

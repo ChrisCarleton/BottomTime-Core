@@ -1,5 +1,7 @@
-import { forbidden, notFound, serverError } from '../utils/error-response';
+import { badRequest, forbidden, notFound, serverError } from '../utils/error-response';
 import DiveSite from '../data/sites';
+import { DiveSiteSchema } from '../validation/site';
+import Joi from 'joi';
 
 export function listSites(req, res) {
 	res.sendStatus(501);
@@ -13,8 +15,24 @@ export function createOrUpdateSites(req, res) {
 	res.sendStatus(501);
 }
 
-export function updateSite(req, res) {
-	res.sendStatus(501);
+export async function updateSite(req, res) {
+	const { error } = Joi.validate(req.body, DiveSiteSchema);
+	if (error) {
+		return badRequest(
+			'Could not update site. There was a problem with the data submitted.',
+			error,
+			res
+		);
+	}
+
+	try {
+		req.diveSite.assign(req.body);
+		await req.diveSite.save();
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError('Failed to update dive site info', err);
+		serverError(res, logId);
+	}
 }
 
 export async function deleteSite(req, res) {

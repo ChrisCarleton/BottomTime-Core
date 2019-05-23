@@ -15,6 +15,6 @@ module.exports = app => {
 		.post(createOrUpdateSites);
 	app.route('/diveSites/:siteId([a-f0-9]{24})')
 		.get(loadDiveSite, getSite)
-		.put(updateSite)
+		.put(RequireUser, loadDiveSite, assertWriteAccess, updateSite)
 		.delete(RequireUser, loadDiveSite, assertWriteAccess, deleteSite);
 };
