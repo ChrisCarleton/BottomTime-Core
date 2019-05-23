@@ -12,7 +12,7 @@ Describes a dive site.
 	"owner": "String: Username of the user who created the dive site record.",
 	"name": "REQUIRED String: The name of the site. (Max 200 characters.)",
 	"location": "String: The location, town, city, etc. where the dive site is located. (Max 100 characters.)",
-	"country": "REQUIRED String: The name of the country in which the dive site is located. (Max 100 characters.)",
+	"country": "String: The name of the country in which the dive site is located. (Max 100 characters.)",
 	"description": "String: A free-form description of the site. (Max 1000 characters.)",
 	"tags": [
 		"String: An array of tags to help in searching for dive sites. (E.g. deep, drift, good vis, etc.)"
@@ -109,10 +109,6 @@ Deletes multiple dive site records. Only admins and the user who owns the record
 #### Message Body
 The request body must contain an array of dive site IDs indicating which sites should be deleted.
 
-### DELETE /diveSites/:siteId
-Deletes an existing dive site record. Only admins and the user who owns the record are allowed to to
-do this.
-
 #### Responses
 HTTP Status Code | Details
 ----- | -----
@@ -121,6 +117,10 @@ HTTP Status Code | Details
 **401 Not Authorized** | The request was rejected because the current user is not authenticated.
 **403 Forbidden** | The request was rejected because the current user does not own the indicated dive site record and is not an administrator.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
+
+### DELETE /diveSites/:siteId
+Deletes an existing dive site record. Only admins and the user who owns the record are allowed to to
+do this.
 
 #### Route Parameters
 * **siteId** - The ID of dive site to be deleted.

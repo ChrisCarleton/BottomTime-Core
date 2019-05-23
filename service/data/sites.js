@@ -60,10 +60,10 @@ siteSchema.methods.toCleanJSON = function () {
 		])
 	};
 
-	if (this.gps && this.gps.coordinates) {
+	if (this.gps) {
 		clean.gps = {
-			longitude: this.gps.coordinates[0],
-			latitude: this.gps.coordinates[1]
+			longitude: this.gps[0],
+			latitude: this.gps[1]
 		};
 	}
 
@@ -78,18 +78,15 @@ siteSchema.methods.assign = function (entity) {
 
 	if (entity.gps && entity.gps.latitude && entity.gps.longitude) {
 		if (this.gps) {
-			this.gps.coordinates = [
+			this.gps = [
 				entity.gps.longitude,
 				entity.gps.latitude
 			];
 		} else {
-			this.gps = {
-				type: 'Point',
-				coordinates: [
-					entity.gps.longitude,
-					entity.gps.latitude
-				]
-			};
+			this.gps = [
+				entity.gps.longitude,
+				entity.gps.latitude
+			];
 		}
 	}
 };

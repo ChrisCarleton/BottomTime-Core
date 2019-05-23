@@ -9,7 +9,7 @@ const storage = new AWS.S3({
 });
 
 (async () => {
-	log('Createing local S3 Buckets...');
+	log('Creating local S3 Buckets...');
 	try {
 		await storage.createBucket({
 			Bucket: 'BottomTime-Media'

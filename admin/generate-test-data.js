@@ -9,11 +9,12 @@ import _ from 'lodash';
 import chalk from 'chalk';
 import database from '../service/data/database';
 import faker from 'faker';
-import fakeDiveSite from '../tests/util/fake-dive-site';
+import fakeDiveSite, { toDiveSite } from '../tests/util/fake-dive-site';
 import fakeLogEntry, { toLogEntry } from '../tests/util/fake-log-entry';
 import fakeUser from '../tests/util/fake-user';
 import log from 'fancy-log';
 import LogEntry from '../service/data/log-entry';
+import search from '../service/search';
 import Site from '../service/data/sites';
 import User from '../service/data/user';
 
@@ -42,7 +43,7 @@ import User from '../service/data/user';
 		log('Creating dive sites...');
 		const diveSites = new Array(faker.random.number({ min: 1000, max: 3500 }));
 		for (let i = 0; i < diveSites.length; i++) {
-			diveSites[i] = new Site(fakeDiveSite(
+			diveSites[i] = toDiveSite(fakeDiveSite(
 				faker.random.arrayElement([ null, ...userNames ])
 			));
 		}
@@ -65,5 +66,6 @@ import User from '../service/data/user';
 		process.exitCode = 1;
 	}
 
+	search.close();
 	await database.connection.close();
 })();
