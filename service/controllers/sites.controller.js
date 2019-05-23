@@ -3,6 +3,12 @@ import DiveSite from '../data/sites';
 import { DiveSiteSchema } from '../validation/site';
 import Joi from 'joi';
 
+const DiveSiteCollectionSchema = Joi
+	.array()
+	.items(DiveSiteSchema)
+	.min(1)
+	.max(250);
+
 export function listSites(req, res) {
 	res.sendStatus(501);
 }
@@ -11,8 +17,30 @@ export function getSite(req, res) {
 	res.json(req.diveSite.toCleanJSON());
 }
 
-export function createOrUpdateSites(req, res) {
-	res.sendStatus(501);
+export async function createSites(req, res) {
+	const { error } = Joi.validate(req.body, DiveSiteCollectionSchema);
+	if (error) {
+		return badRequest(
+			'Unable to create dive sites. There was a problem validating the request body. See details.',
+			error,
+			res
+		);
+	}
+
+	try {
+		const diveSites = req.body.map(s => {
+			const site = new DiveSite();
+			site.assign(s);
+			site.owner = req.user.username;
+			return site;
+		});
+
+		await DiveSite.insertMany(diveSites);
+		res.json(diveSites.map(s => s.toCleanJSON()));
+	} catch (err) {
+		const logId = req.logError('Failed to create dive sites', err);
+		serverError(res, logId);
+	}
 }
 
 export async function updateSite(req, res) {

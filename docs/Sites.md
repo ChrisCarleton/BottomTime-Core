@@ -72,13 +72,14 @@ Saves new dive sites to the database and indexes them for searching.
 
 #### Message Body
 The message body must be an array of [DiveSite](#divesite-object) objects. The `siteId` and `owner`
-properties must be omitted from the objects as these properties are considered read-only.
+properties must be omitted from the objects as these properties are considered read-only. Up to 250
+dive sites can be posted in a single request.
 
 #### Responses
 HTTP Status Code | Details
 ----- | -----
 **200 Ok** | The call succeeded and the response body will contain the original array of [DiveSite](#divesite-object) objects with the `siteId` fields filled in.
-**400 Bad Request** | The request was rejected because the message body was invalid. Check the details of the error message to see, specifically, what was wrong.
+**400 Bad Request** | The request was rejected because the message body was invalid or the limit of 250 sites was exceeded. Check the details of the error message to see, specifically, what was wrong.
 **401 Not Authorized** | The request was rejected because the current user is not authenticated.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 

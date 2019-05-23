@@ -1,6 +1,6 @@
 import {
 	assertWriteAccess,
-	createOrUpdateSites,
+	createSites,
 	deleteSite,
 	getSite,
 	listSites,
@@ -12,7 +12,7 @@ import { RequireUser } from '../controllers/security.controller';
 module.exports = app => {
 	app.route('/diveSites')
 		.get(listSites)
-		.post(createOrUpdateSites);
+		.post(RequireUser, createSites);
 	app.route('/diveSites/:siteId([a-f0-9]{24})')
 		.get(loadDiveSite, getSite)
 		.put(RequireUser, loadDiveSite, assertWriteAccess, updateSite)
