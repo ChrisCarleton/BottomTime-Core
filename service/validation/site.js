@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import { MongoIdSchema } from './common';
 
 export const DiveSiteSchema = Joi.object().keys({
 	name: Joi.string().required().max(200),
@@ -22,5 +23,6 @@ export const DiveSiteSearchSchema = Joi.object().keys({
 	count: Joi.number().integer().positive().max(1000),
 	sortBy: Joi.string().only([ 'relevance', 'name' ]),
 	sortOrder: Joi.string().only([ 'asc', 'desc' ]),
-	lastSeen: Joi.string()
+	lastSeen: Joi.string(),
+	seenIds: Joi.array().items(MongoIdSchema).min(1).single()
 });

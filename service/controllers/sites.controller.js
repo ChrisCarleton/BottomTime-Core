@@ -1,6 +1,6 @@
 import { badRequest, forbidden, notFound, serverError } from '../utils/error-response';
 import DiveSite from '../data/sites';
-import { DiveSiteSchema } from '../validation/site';
+import { DiveSiteSchema, DiveSiteSearchSchema } from '../validation/site';
 import Joi from 'joi';
 
 const DiveSiteCollectionSchema = Joi
@@ -9,8 +9,66 @@ const DiveSiteCollectionSchema = Joi
 	.min(1)
 	.max(250);
 
-export function listSites(req, res) {
-	res.sendStatus(501);
+function buildMongoQuery(query) {
+	const {
+		lastSeen,
+		seenIds,
+		sortOrder,
+		count
+	} = query;
+	const parameters = {};
+
+	if (lastSeen) {
+		parameters.name = sortOrder === 'desc'
+			? { $lte: lastSeen }
+			: { $gte: lastSeen };
+	}
+
+	if (seenIds) {
+		parameters._id = { $nin: typeof seenIds === 'string' ? [ seenIds ] : seenIds };
+	}
+
+	return DiveSite
+		.find(parameters)
+		.sort(`${ sortOrder === 'desc' ? '-' : '' }name`)
+		.limit(count ? parseInt(count, 10) : 500);
+}
+
+// Skip ElasticSearch and go straight to MongoDB...
+export async function listSites(req, res, next) {
+	const {
+		query,
+		closeTo,
+		distance,
+		sortBy
+	} = req.query;
+	const { error } = Joi.validate(req.query, DiveSiteSearchSchema);
+
+	if (error) {
+		return badRequest(
+			'Unable to process request. There was a problem with the query string. See details.',
+			error,
+			res
+		);
+	}
+
+	// For complex searches defer to ElasticSearch
+	if (query || closeTo || distance || sortBy === 'relevance') {
+		return next();
+	}
+
+	try {
+		const results = await buildMongoQuery(req.query).exec();
+		res.json(results.map(r => r.toCleanJSON()));
+	} catch (err) {
+		const logId = req.logError('Failed to query database.', err);
+		serverError(res, logId);
+	}
+}
+
+// Query ElasticSearch for more robust searching...
+export function searchSites(req, res) {
+	res.sendStatus(200);
 }
 
 export function getSite(req, res) {

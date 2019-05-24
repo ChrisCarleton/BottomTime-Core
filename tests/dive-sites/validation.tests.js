@@ -1,6 +1,7 @@
 import { DiveSiteSchema, DiveSiteSearchSchema } from '../../service/validation/site';
 import { expect } from 'chai';
 import fakeDiveSite from '../util/fake-dive-site';
+import fakeMongoId from '../util/fake-mongo-id';
 import faker from 'faker';
 import Joi from 'joi';
 
@@ -235,7 +236,9 @@ describe('Dive Site Validation', () => {
 				distance: 70,
 				count: 500,
 				sortBy: 'name',
-				sortOrder: 'asc'
+				sortOrder: 'asc',
+				lastSeen: 'Mary\'s Place',
+				seenIds: [ fakeMongoId(), fakeMongoId() ]
 			};
 		});
 
@@ -365,6 +368,41 @@ describe('Dive Site Validation', () => {
 		it('Sort order cannot be any other value', () => {
 			siteSearch.sortOrder = 'not_allowed';
 			validateSiteSearch('any.allowOnly');
+		});
+
+		it('Last seen is optional', () => {
+			delete siteSearch.lastSeen;
+			validateSiteSearch();
+		});
+
+		it('Last seen must be a string', () => {
+			siteSearch.lastSeen = [];
+			validateSiteSearch('string.base');
+		});
+
+		it('Seen IDs is not required', () => {
+			delete siteSearch.seenIds;
+			validateSiteSearch();
+		});
+
+		it('Seen IDs can be a single string value', () => {
+			siteSearch.seenIds = fakeMongoId();
+			validateSiteSearch();
+		});
+
+		it('Seen IDs must contain valid Mongo IDs.', () => {
+			siteSearch.seenIds[1] = 'not_valid';
+			validateSiteSearch('string.hex');
+		});
+
+		it('Seen IDs cannot be empty', () => {
+			siteSearch.seenIds = [];
+			validateSiteSearch('array.min');
+		});
+
+		it('Seen IDs cannot be sparse', () => {
+			siteSearch.seenIds = [ fakeMongoId(), null, fakeMongoId() ];
+			validateSiteSearch('string.base');
 		});
 	});
 });

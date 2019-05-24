@@ -5,6 +5,7 @@ import { expect } from 'chai';
 import fakeDiveSite, { toDiveSite } from '../util/fake-dive-site';
 import fakeMongoId from '../util/fake-mongo-id';
 import DiveSite from '../../service/data/sites';
+import mongoose from 'mongoose';
 import request from 'supertest';
 import Session from '../../service/data/session';
 import sinon from 'sinon';
@@ -36,7 +37,150 @@ describe('Dive sites controller', () => {
 	});
 
 	describe('GET /diveSites', () => {
+		const fakes = new Array(300);
+		const diveSites = new Array(fakes.length);
 
+		before(async () => {
+			for (let i = 0; i < fakes.length; i++) {
+				fakes[i] = fakeDiveSite();
+				diveSites[i] = toDiveSite(fakes[i]);
+			}
+
+			await DiveSite.deleteMany({});
+			await DiveSite.insertMany(diveSites);
+		});
+
+		after(async () => {
+			await DiveSite.deleteMany({});
+		});
+
+		it('Will return records', async () => {
+			const { body } = await request(App)
+				.get('/diveSites')
+				.expect(200);
+
+			expect(body).to.be.an('array').with.lengthOf(fakes.length);
+			expect(body).to.be.ascendingBy('name');
+		});
+
+		it('Will return records in descending order', async () => {
+			const { body } = await request(App)
+				.get('/diveSites')
+				.query({ sortOrder: 'desc' })
+				.expect(200);
+
+			expect(body).to.be.an('array').with.lengthOf(fakes.length);
+			expect(body).to.be.descendingBy('name');
+		});
+
+		it('Will respect count parameter', async () => {
+			const count = 20;
+			const { body } = await request(App)
+				.get('/diveSites')
+				.query({ count })
+				.expect(200);
+
+			expect(body).to.be.an('array').with.lengthOf(count);
+			expect(body).to.be.ascendingBy('name');
+		});
+
+		it('Will return a second page of results', async () => {
+			const count = 200;
+			let response = await request(App)
+				.get('/diveSites')
+				.query({ count })
+				.expect(200);
+
+			const firstSet = response.body;
+			expect(firstSet).to.be.an('array').with.lengthOf(count);
+
+			const lastSeen = firstSet[count - 1].name;
+			const seenIds = [];
+			for (let i = count - 1; i >= 0; i--) {
+				if (firstSet[i].name === lastSeen) {
+					seenIds.push(firstSet[i].siteId);
+				} else {
+					break;
+				}
+			}
+
+			response = await request(App)
+				.get('/diveSites')
+				.query({
+					count,
+					lastSeen,
+					seenIds
+				})
+				.expect(200);
+
+			const secondSet = response.body;
+			expect(secondSet).to.be.an('array').with.lengthOf(fakes.length - count);
+			expect([ ...firstSet, ...secondSet ]).to.be.ascendingBy('name');
+		});
+
+		it('Will return a second page of results in descending order', async () => {
+			const count = 200;
+			const sortOrder = 'desc';
+			let response = await request(App)
+				.get('/diveSites')
+				.query({
+					count,
+					sortOrder
+				})
+				.expect(200);
+
+			const firstSet = response.body;
+			expect(firstSet).to.be.an('array').with.lengthOf(count);
+
+			const lastSeen = firstSet[count - 1].name;
+			const seenIds = [];
+			for (let i = count - 1; i >= 0; i--) {
+				if (firstSet[i].name === lastSeen) {
+					seenIds.push(firstSet[i].siteId);
+				} else {
+					break;
+				}
+			}
+
+			response = await request(App)
+				.get('/diveSites')
+				.query({
+					sortOrder,
+					count,
+					lastSeen,
+					seenIds
+				})
+				.expect(200);
+
+			const secondSet = response.body;
+			expect(secondSet).to.be.an('array').with.lengthOf(fakes.length - count);
+			expect([ ...firstSet, ...secondSet ]).to.be.descendingBy('name');
+		});
+
+		it('Will return 400 if the query parameters are invalid', async () => {
+			const { body } = await request(App)
+				.get('/diveSites')
+				.query({
+					sortBy: 'elevation'
+				})
+				.expect(400);
+
+			expect(body.status).to.equal(400);
+			expect(body.errorId).to.equal(ErrorIds.badRequest);
+		});
+
+		it('Will return 500 if a server error occurs', async () => {
+			stub = sinon.stub(mongoose.Query.prototype, 'exec');
+			stub.rejects('nope');
+
+			const { body } = await request(App)
+				.get('/diveSites')
+				.expect(500);
+
+			expect(body.status).to.equal(500);
+			expect(body.errorId).to.equal(ErrorIds.serverError);
+			expect(body.logId).to.exist;
+		});
 	});
 
 	describe('POST /diveSites', () => {
