@@ -39,8 +39,7 @@ export async function listSites(req, res, next) {
 	const {
 		query,
 		closeTo,
-		distance,
-		sortBy
+		distance
 	} = req.query;
 	const { error } = Joi.validate(req.query, DiveSiteSearchSchema);
 
@@ -53,7 +52,7 @@ export async function listSites(req, res, next) {
 	}
 
 	// For complex searches defer to ElasticSearch
-	if (query || closeTo || distance || sortBy === 'relevance') {
+	if (query || closeTo || distance) {
 		return next();
 	}
 
@@ -67,9 +66,60 @@ export async function listSites(req, res, next) {
 }
 
 // Query ElasticSearch for more robust searching...
-export function searchSites(req, res) {
-	res.sendStatus(200);
+/* eslint-disable camelcase */
+export async function searchSites(req, res) {
+	const esQuery = {
+		query: {
+			bool: {
+				must: {}
+			}
+		},
+		size: req.query.count ? parseInt(req.query.count, 10) : 500
+	};
+
+	if (req.query.query) {
+		esQuery.query.bool.must.multi_match = {
+			query: req.query.query,
+			fields: [
+				'name^3',
+				'location',
+				'country',
+				'description^1',
+				'tags^5'
+			],
+			fuzziness: 'AUTO'
+		};
+	} else {
+		esQuery.query.bool.must.match_all = {};
+	}
+
+	if (req.query.closeTo) {
+		const [ lon, lat ] = req.query.closeTo;
+		esQuery.query.bool.filter = {
+			geo_distance: {
+				distance: `${ req.query.distance || '50' }km`,
+				gps: {
+					lat,
+					lon
+				}
+			}
+		};
+	}
+
+	try {
+		const results = await DiveSite.searchAsync(esQuery);
+
+		res.json(results.hits.hits.map(r => ({
+			siteId: r._id,
+			score: r._score,
+			...r._source
+		})));
+	} catch (err) {
+		const logId = req.logError('Failed to search dive sites', err);
+		serverError(res, logId);
+	}
 }
+/* eslint-enable camelcase */
 
 export function getSite(req, res) {
 	res.json(req.diveSite.toCleanJSON());

@@ -18,8 +18,8 @@ Describes a dive site.
 		"String: An array of tags to help in searching for dive sites. (E.g. deep, drift, good vis, etc.)"
 	],
 	"gps": {
-		"longitude": "Number: Degrees in longitude. Must be between -180.0 and 180.0.",
-		"latitude": "Number: Degrees in latitude. Must be between -90.0 and 90.0."
+		"lon": "Number: Longitude of the dive site. Must be between -180.0 and 180.0.",
+		"lat": "Number: Latitude of the dive site. Must be between -90.0 and 90.0."
 	}
 }
 ```
@@ -46,6 +46,9 @@ will be considered in the search. The default is `50`; the maximum is `1000`.
 * **lastSeen** - Used for querying the next "page" of search results. This should be set to the last
 dive site ID returned in the previous query and the search will return a new set of results following that
 record in the desired sort order.
+
+**Notes:** If `distance` is supplied then `closeTo` is required. Supplying `distance` without `closeTo`
+will result in a 400 Bad Request error.
 
 #### Responses
 HTTP Status Code | Details

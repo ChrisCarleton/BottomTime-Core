@@ -257,7 +257,7 @@ describe('Log entry validation', () => {
 
 		it('Tags must be alphanumeric', () => {
 			logEntry.tags = [ 'ok', 'not_ok' ];
-			validateCreate('string.alphanum');
+			validateCreate('string.regex.base');
 		});
 
 		it('Tags collection cannot have more than 50 tags', () => {

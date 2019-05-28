@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import { MongoIdSchema, TagsArraySchema } from './common';
 
 const logEntryBaseSchema = {
 	// Basic info
@@ -78,7 +79,7 @@ const logEntryBaseSchema = {
 	waterChoppiness: Joi.number().min(1).max(5).allow(null),
 	weather: Joi.string().max(100).allow(null),
 	suit: Joi.string().max(100).allow(null),
-	tags: Joi.array().items(Joi.string().alphanum().max(25)).max(50),
+	tags: TagsArraySchema,
 	comments: Joi.string().max(1000).allow(null)
 };
 
@@ -89,7 +90,7 @@ export const NewEntrySchema = Joi.object().keys({
 export const EntryId = Joi.string().hex().length(24).required();
 
 export const UpdateEntrySchema = Joi.object().keys({
-	entryId: Joi.string().hex().length(24).required(),
+	entryId: MongoIdSchema.required(),
 	...logEntryBaseSchema
 });
 

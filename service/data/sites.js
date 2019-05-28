@@ -2,8 +2,9 @@
 
 import _ from 'lodash';
 import config from '../config';
+import log from '../logger';
 import mongoose from './database';
-import mesxp from 'mongoose-elasticsearch-xp';
+import mongoosastic from 'mongoosastic';
 import search from '../search';
 
 const siteSchema = mongoose.Schema({
@@ -11,6 +12,7 @@ const siteSchema = mongoose.Schema({
 		type: String,
 		required: true,
 		index: true,
+		es_type: 'text',
 		es_indexed: true
 	},
 	owner: {
@@ -20,30 +22,38 @@ const siteSchema = mongoose.Schema({
 	},
 	location: {
 		type: String,
-		es_indexed: true
+		es_indexed: true,
+		es_type: 'text'
 	},
 	country: {
 		type: String,
 		required: true,
-		es_indexed: true
+		es_indexed: true,
+		es_type: 'text'
 	},
 	description: {
 		type: String,
-		es_indexed: true
+		es_indexed: true,
+		es_type: 'text'
 	},
 	tags: {
 		type: [ String ],
+		es_type: 'text',
 		es_indexed: true
 	},
 	gps: {
-		type: [ Number ],
-		index: '2dsphere',
-		es_indexed: true,
-		es_type: 'geo-point'
+		geo_point: {
+			type: String,
+			es_type: 'geo_point',
+			// es_lat_lon: true,
+			es_indexed: true
+		},
+		lat: Number,
+		lon: Number
 	}
 });
 
-siteSchema.plugin(mesxp, {
+siteSchema.plugin(mongoosastic, {
 	index: config.elasticSearchIndex,
 	client: search
 });
@@ -56,14 +66,15 @@ siteSchema.methods.toCleanJSON = function () {
 			'owner',
 			'location',
 			'country',
-			'description'
+			'description',
+			'tags'
 		])
 	};
 
 	if (this.gps) {
 		clean.gps = {
-			longitude: this.gps[0],
-			latitude: this.gps[1]
+			lon: this.gps.lon,
+			lat: this.gps.lat
 		};
 	}
 
@@ -75,20 +86,30 @@ siteSchema.methods.assign = function (entity) {
 	this.location = entity.location;
 	this.country = entity.country;
 	this.description = entity.description;
-
-	if (entity.gps && entity.gps.latitude && entity.gps.longitude) {
-		if (this.gps) {
-			this.gps = [
-				entity.gps.longitude,
-				entity.gps.latitude
-			];
-		} else {
-			this.gps = [
-				entity.gps.longitude,
-				entity.gps.latitude
-			];
-		}
-	}
+	this.tags = entity.tags;
+	this.gps = entity.gps;
 };
 
-export default mongoose.model('Site', siteSchema);
+siteSchema.statics.searchAsync = function (query) {
+	return new Promise((resolve, reject) => {
+		this.esSearch(query, { hydrate: false }, (err, result) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(result);
+			}
+		});
+	});
+};
+
+const model = mongoose.model('Site', siteSchema);
+model.createMapping((err, mapping) => {
+	const message = 'Mapping dive sites data to ElasticSearch:';
+	if (err) {
+		log.warn(message, err);
+	} else {
+		log.debug(message, mapping);
+	}
+});
+
+export default model;

@@ -165,9 +165,9 @@ describe('Dive Site Validation', () => {
 			validateDiveSite('string.max');
 		});
 
-		it('Tags must be alphanumeric', () => {
-			diveSite.tags = [ 'ok', 'not_ok' ];
-			validateDiveSite('string.alphanum');
+		it('Tags must be alphanumeric with spaces allowed', () => {
+			diveSite.tags = [ 'ok', 'also ok', 'not_ok!!' ];
+			validateDiveSite('string.regex.base');
 		});
 
 		it('Tags collection cannot have more than 50 tags', () => {
@@ -181,42 +181,42 @@ describe('Dive Site Validation', () => {
 		});
 
 		it('Latitude is required', () => {
-			delete diveSite.gps.latitude;
+			delete diveSite.gps.lat;
 			validateDiveSite('any.required');
 		});
 
 		it('Latitude must be a number', () => {
-			diveSite.gps.latitude = 'north';
+			diveSite.gps.lat = 'north';
 			validateDiveSite('number.base');
 		});
 
 		it('Latitude cannot be less than -90', () => {
-			diveSite.gps.latitude = -90.1;
+			diveSite.gps.lat = -90.1;
 			validateDiveSite('number.min');
 		});
 
 		it('Latitude cannot be more than 90', () => {
-			diveSite.gps.latitude = 90.1;
+			diveSite.gps.lat = 90.1;
 			validateDiveSite('number.max');
 		});
 
 		it('Longitude is required', () => {
-			delete diveSite.gps.longitude;
+			delete diveSite.gps.lon;
 			validateDiveSite('any.required');
 		});
 
 		it('Longitude must be a number', () => {
-			diveSite.gps.longitude = 'west';
+			diveSite.gps.lon = 'west';
 			validateDiveSite('number.base');
 		});
 
 		it('Longitude cannot be less than -180', () => {
-			diveSite.gps.longitude = -180.1;
+			diveSite.gps.lon = -180.1;
 			validateDiveSite('number.min');
 		});
 
 		it('Longitude cannot be more than 180', () => {
-			diveSite.gps.longitude = 180.1;
+			diveSite.gps.lon = 180.1;
 			validateDiveSite('number.max');
 		});
 	});
@@ -274,6 +274,17 @@ describe('Dive Site Validation', () => {
 			validateSiteSearch('number.base');
 			siteSearch.closeTo = [ 0, 'b' ];
 			validateSiteSearch('number.base');
+		});
+
+		it('closeTo is required if distance is supplied', () => {
+			delete siteSearch.closeTo;
+			validateSiteSearch('object.with');
+		});
+
+		it('closeTo is optional if distance is not supplied', () => {
+			delete siteSearch.closeTo;
+			delete siteSearch.distance;
+			validateSiteSearch();
 		});
 
 		it('longitude cannot be less than -180', () => {

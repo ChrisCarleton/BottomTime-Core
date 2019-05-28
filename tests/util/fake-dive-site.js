@@ -1,6 +1,34 @@
 import faker from 'faker';
 import Site from '../../service/data/sites';
 
+const KnownTags = [
+	'shore dive',
+	'deep',
+	'reef',
+	'wreck',
+	'cave',
+	'cavern',
+	'drift',
+	'good vis',
+	'bad vis',
+	'training',
+	'ice',
+	'altitude',
+	'fresh water',
+	'salt water',
+	'danger'
+];
+
+function generateTags() {
+	const tagsCount = faker.random.number({ min: 1, max: 6 });
+	const tags = new Array(tagsCount);
+	for (let i = 0; i < tags.length; i++) {
+		tags[i] = faker.random.arrayElement(KnownTags);
+	}
+
+	return tags;
+}
+
 export default userName => {
 	let suffix = faker.address.citySuffix();
 	suffix = suffix[0].toUpperCase() + suffix.slice(1);
@@ -15,9 +43,10 @@ export default userName => {
 		location: faker.address.city(),
 		country: faker.address.country(),
 		description: faker.lorem.sentences(3),
+		tags: generateTags(),
 		gps: {
-			longitude: faker.random.number({ min: -1800000, max: 1800000 }) / 10000,
-			latitude: faker.random.number({ min: -900000, max: 900000 }) / 10000
+			lon: faker.random.number({ min: -1800000, max: 1800000 }) / 10000,
+			lat: faker.random.number({ min: -900000, max: 900000 }) / 10000
 		}
 	};
 
@@ -25,12 +54,5 @@ export default userName => {
 };
 
 export function toDiveSite(fake) {
-	const site = new Site(fake);
-	if (fake.gps) {
-		site.gps = [
-			fake.gps.longitude,
-			fake.gps.latitude
-		];
-	}
-	return site;
+	return new Site(fake);
 }
