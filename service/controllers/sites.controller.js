@@ -74,6 +74,7 @@ export async function searchSites(req, res) {
 				must: {}
 			}
 		},
+		from: req.query.skip ? parseInt(req.query.skip, 10) : 0,
 		size: req.query.count ? parseInt(req.query.count, 10) : 500
 	};
 

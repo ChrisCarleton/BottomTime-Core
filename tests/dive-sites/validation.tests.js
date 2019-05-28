@@ -234,6 +234,7 @@ describe('Dive Site Validation', () => {
 				query: 'warm water drift',
 				closeTo: [ -86.94527777777778, 20.5030556 ],
 				distance: 70,
+				skip: 1500,
 				count: 500,
 				sortBy: 'name',
 				sortOrder: 'asc',
@@ -347,12 +348,37 @@ describe('Dive Site Validation', () => {
 			validateSiteSearch('number.max');
 		});
 
+		it('Skip is not required', () => {
+			delete siteSearch.skip;
+			validateSiteSearch();
+		});
+
+		it('Skip can be zero', () => {
+			siteSearch.skip = 0;
+			validateSiteSearch();
+		});
+
+		it('Skip must be a number', () => {
+			siteSearch.skip = 'three';
+			validateSiteSearch('number.base');
+		});
+
+		it('Skip must be an integer', () => {
+			siteSearch.skip = 10.5;
+			validateSiteSearch('number.integer');
+		});
+
+		it('Skip must be greater than zero', () => {
+			siteSearch.skip = -1;
+			validateSiteSearch('number.min');
+		});
+
 		it('Sort by is not required', () => {
 			delete siteSearch.sortBy;
 			validateSiteSearch();
 		});
 
-		[ 'relevance', 'name' ].forEach(value => {
+		[ 'name' ].forEach(value => {
 			it(`Sort by can be ${ value }`, () => {
 				siteSearch.sortBy = value;
 				validateSiteSearch();

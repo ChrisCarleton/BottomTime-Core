@@ -21,7 +21,8 @@ export const DiveSiteSearchSchema = Joi.object().keys({
 	).length(2),
 	distance: Joi.number().positive().max(1000),
 	count: Joi.number().integer().positive().max(1000),
-	sortBy: Joi.string().only([ 'relevance', 'name' ]),
+	skip: Joi.number().integer().min(0),
+	sortBy: Joi.string().only([ 'name' ]),
 	sortOrder: Joi.string().only([ 'asc', 'desc' ]),
 	lastSeen: Joi.string(),
 	seenIds: Joi.array().items(MongoIdSchema).min(1).single()

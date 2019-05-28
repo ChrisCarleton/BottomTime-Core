@@ -123,7 +123,28 @@ describe('Searching Dive Sites', () => {
 			.expect(200);
 
 		expect(body).to.be.an('array').and.not.be.empty;
-		validateDistances(body, 25);
+		validateDistances(body, 70);
+	});
+
+	it('Another page of results can be returned', async () => {
+		const query = 'drift';
+		let response = await request(App)
+			.get('/diveSites')
+			.query({ query, count: 20 })
+			.expect(200);
+		const first = response.body;
+
+		expect(first).to.be.an('array').and.not.be.empty;
+		expect(first).to.be.descendingBy('score');
+
+		response = await request(App)
+			.get('/diveSites')
+			.query({ query, count: 20, skip: 20 })
+			.expect(200);
+		const second = response.body;
+
+		expect(second).to.be.an('array').and.not.be.empty;
+		expect([ ...first, ...second ]).to.be.descendingBy('score');
 	});
 
 	it('Returns 500 when a server error occurs', async () => {
