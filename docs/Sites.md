@@ -41,11 +41,10 @@ in the format: `[longitude,latitude]`. E.g. `[-86.94527777777778,20.5030556]` (C
 sites should be searched. **distance** must be a number representing how many kilometers from the location
 will be considered in the search. The default is `50`; the maximum is `1000`.
 * **count** - Number of records to return. The default is `250`; the maximum is `1000`.
+* **skip** - Number of records to skip over before returning results. (Useful for pagination.) Default is
+`0`.
 * **sortOrder** - The order in which results are returned. Must be `asc` or `desc`. (The default is `asc`.)
 * **sortBy** - The field on which to sort the results. Currently, the only value supported is `name`.
-* **lastSeen** - Used for querying the next "page" of search results. This should be set to the last
-dive site ID returned in the previous query and the search will return a new set of results following that
-record in the desired sort order.
 
 **Notes:** If `distance` is supplied then `closeTo` is required. Supplying `distance` without `closeTo`
 will result in a 400 Bad Request error.

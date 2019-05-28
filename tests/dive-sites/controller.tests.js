@@ -94,22 +94,11 @@ describe('Dive sites controller', () => {
 			const firstSet = response.body;
 			expect(firstSet).to.be.an('array').with.lengthOf(count);
 
-			const lastSeen = firstSet[count - 1].name;
-			const seenIds = [];
-			for (let i = count - 1; i >= 0; i--) {
-				if (firstSet[i].name === lastSeen) {
-					seenIds.push(firstSet[i].siteId);
-				} else {
-					break;
-				}
-			}
-
 			response = await request(App)
 				.get('/diveSites')
 				.query({
 					count,
-					lastSeen,
-					seenIds
+					skip: firstSet.length
 				})
 				.expect(200);
 
@@ -132,23 +121,12 @@ describe('Dive sites controller', () => {
 			const firstSet = response.body;
 			expect(firstSet).to.be.an('array').with.lengthOf(count);
 
-			const lastSeen = firstSet[count - 1].name;
-			const seenIds = [];
-			for (let i = count - 1; i >= 0; i--) {
-				if (firstSet[i].name === lastSeen) {
-					seenIds.push(firstSet[i].siteId);
-				} else {
-					break;
-				}
-			}
-
 			response = await request(App)
 				.get('/diveSites')
 				.query({
 					sortOrder,
 					count,
-					lastSeen,
-					seenIds
+					skip: firstSet.length
 				})
 				.expect(200);
 

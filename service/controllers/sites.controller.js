@@ -11,26 +11,16 @@ const DiveSiteCollectionSchema = Joi
 
 function buildMongoQuery(query) {
 	const {
-		lastSeen,
-		seenIds,
+		skip,
 		sortOrder,
 		count
 	} = query;
 	const parameters = {};
 
-	if (lastSeen) {
-		parameters.name = sortOrder === 'desc'
-			? { $lte: lastSeen }
-			: { $gte: lastSeen };
-	}
-
-	if (seenIds) {
-		parameters._id = { $nin: typeof seenIds === 'string' ? [ seenIds ] : seenIds };
-	}
-
 	return DiveSite
 		.find(parameters)
 		.sort(`${ sortOrder === 'desc' ? '-' : '' }name`)
+		.skip(skip ? parseInt(skip, 10) : 0)
 		.limit(count ? parseInt(count, 10) : 500);
 }
 
