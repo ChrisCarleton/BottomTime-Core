@@ -106,6 +106,9 @@ export async function searchSites(req, res) {
 			...r._source
 		})));
 	} catch (err) {
+		/* eslint-disable no-console */
+		console.error('This ES client sucks:', err);
+		/* eslint-enable no-console */
 		const logId = req.logError('Failed to search dive sites', err);
 		serverError(res, logId);
 	}
