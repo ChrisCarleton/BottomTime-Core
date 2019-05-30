@@ -99,8 +99,7 @@ export async function searchSites(req, res) {
 
 	try {
 		const results = await DiveSite.searchAsync(esQuery);
-
-		res.json(results.hits.hits.map(r => ({
+		res.json(results.body.hits.hits.map(r => ({
 			siteId: r._id,
 			score: r._score,
 			...r._source
