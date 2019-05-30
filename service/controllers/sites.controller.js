@@ -99,16 +99,12 @@ export async function searchSites(req, res) {
 
 	try {
 		const results = await DiveSite.searchAsync(esQuery);
-
-		res.json(results.hits.hits.map(r => ({
+		res.json(results.body.hits.hits.map(r => ({
 			siteId: r._id,
 			score: r._score,
 			...r._source
 		})));
 	} catch (err) {
-		/* eslint-disable no-console */
-		console.error('This ES client sucks:', err);
-		/* eslint-enable no-console */
 		const logId = req.logError('Failed to search dive sites', err);
 		serverError(res, logId);
 	}

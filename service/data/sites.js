@@ -55,7 +55,7 @@ const siteSchema = mongoose.Schema({
 
 siteSchema.plugin(mongoosastic, {
 	index: config.elasticSearchIndex,
-	client: search
+	esClient: search
 });
 
 siteSchema.methods.toCleanJSON = function () {
