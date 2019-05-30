@@ -1,4 +1,4 @@
-/* eslint no-process-exit: 0 */
+/* eslint no-process-exit: 0, no-process-env: 0 */
 
 import AWS from 'aws-sdk';
 import chalk from 'chalk';
@@ -11,7 +11,7 @@ import request from 'supertest';
 const storage = new AWS.S3({
 	apiVersion: '2006-03-01',
 	signatureVersion: 'v4',
-	endpoint: new AWS.Endpoint('http://localhost:4569/')
+	endpoint: new AWS.Endpoint(process.env.BT_S3_ENDPOINT || 'http://localhost:4569/')
 });
 
 let esClient = null;
