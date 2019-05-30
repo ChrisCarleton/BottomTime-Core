@@ -41,6 +41,7 @@ jobs:
             npm install
             gulp lint
             npm run init-local
+            npm run generate-test-data
             nyc gulp test
             npm run coverage
           environment:
