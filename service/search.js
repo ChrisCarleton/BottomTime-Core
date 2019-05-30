@@ -1,6 +1,6 @@
 import { Client } from '@elastic/elasticsearch';
 import config from './config';
-import { esLogger as log } from './logger';
+import logger, { esLogger as log } from './logger';
 
 class ESLogger {
 	constructor() {
@@ -23,6 +23,17 @@ const client = new Client({
 	connectionClass: 'http',
 	log: ESLogger
 });
+
+// Wait for connection pool.
+(async () => {
+	logger.debug('Attempting to connect to ElasticSearch...');
+	try {
+		await client.ping();
+		await client.cluster.health();
+	} catch (err) {
+		logger.warn('Failed to establish connection to ElasticSearch', err);
+	}
+})();
 
 module.exports = client;
 export default client;
