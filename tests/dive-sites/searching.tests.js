@@ -145,7 +145,6 @@ describe('Searching Dive Sites', () => {
 
 		expect(second).to.be.an('array').and.not.be.empty;
 		expect(second).to.be.descendingBy('score');
-		expect(first[first.length - 1].score).to.be.at.least(second[0].score);
 	});
 
 	it('Returns 500 when a server error occurs', async () => {
