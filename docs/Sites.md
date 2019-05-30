@@ -10,6 +10,7 @@ Describes a dive site.
 {
 	"siteId": "String: A unique ID identifying the dive site in the database.",
 	"owner": "String: Username of the user who created the dive site record.",
+	"score": "Number: Returned when performing searches. Indicates how well the document scored as a result candidate."
 	"name": "REQUIRED String: The name of the site. (Max 200 characters.)",
 	"location": "String: The location, town, city, etc. where the dive site is located. (Max 100 characters.)",
 	"country": "String: The name of the country in which the dive site is located. (Max 100 characters.)",
@@ -18,13 +19,14 @@ Describes a dive site.
 		"String: An array of tags to help in searching for dive sites. (E.g. deep, drift, good vis, etc.)"
 	],
 	"gps": {
-		"lon": "Number: Longitude of the dive site. Must be between -180.0 and 180.0.",
-		"lat": "Number: Latitude of the dive site. Must be between -90.0 and 90.0."
+		"lon": "REQUIRED Number: Longitude of the dive site. Must be between -180.0 and 180.0.",
+		"lat": "REQUIRED Number: Latitude of the dive site. Must be between -90.0 and 90.0."
 	}
 }
 ```
-**Notes:** The `siteId` and `owner` properties are ignored when creating and updating dive sites. On
-creation, the site ID will be generated and the owner will be set to the user who created the site.
+**Notes:** The `siteId`, `score`, and `owner` properties are ignored when creating and updating dive
+sites. On creation, the site ID will be generated and the owner will be set to the user who created the
+site.
 
 All dive sites are publicly visible. They are meant to be shared among users.
 

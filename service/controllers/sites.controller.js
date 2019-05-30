@@ -1,13 +1,7 @@
 import { badRequest, forbidden, notFound, serverError } from '../utils/error-response';
 import DiveSite from '../data/sites';
-import { DiveSiteSchema, DiveSiteSearchSchema } from '../validation/site';
+import { DiveSiteSchema, DiveSiteCollectionSchema, DiveSiteSearchSchema } from '../validation/site';
 import Joi from 'joi';
-
-const DiveSiteCollectionSchema = Joi
-	.array()
-	.items(DiveSiteSchema)
-	.min(1)
-	.max(250);
 
 function buildMongoQuery(query) {
 	const {
@@ -15,10 +9,9 @@ function buildMongoQuery(query) {
 		sortOrder,
 		count
 	} = query;
-	const parameters = {};
 
 	return DiveSite
-		.find(parameters)
+		.find({})
 		.sort(`${ sortOrder === 'desc' ? '-' : '' }name`)
 		.skip(skip ? parseInt(skip, 10) : 0)
 		.limit(count ? parseInt(count, 10) : 500);
@@ -99,11 +92,7 @@ export async function searchSites(req, res) {
 
 	try {
 		const results = await DiveSite.searchAsync(esQuery);
-		res.json(results.body.hits.hits.map(r => ({
-			siteId: r._id,
-			score: r._score,
-			...r._source
-		})));
+		res.json(results);
 	} catch (err) {
 		const logId = req.logError('Failed to search dive sites', err);
 		serverError(res, logId);
@@ -173,12 +162,11 @@ export async function deleteSite(req, res) {
 
 export async function loadDiveSite(req, res, next) {
 	try {
-		const site = await DiveSite.findById(req.params.siteId);
-		if (!site) {
+		req.diveSite = await DiveSite.findById(req.params.siteId);
+		if (!req.diveSite) {
 			return notFound(req, res);
 		}
 
-		req.diveSite = site;
 		return next();
 	} catch (err) {
 		const logId = req.logError('Failed to retrieve dive site info', err);

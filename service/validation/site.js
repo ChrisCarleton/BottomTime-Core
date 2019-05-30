@@ -13,6 +13,12 @@ export const DiveSiteSchema = Joi.object().keys({
 	})
 });
 
+export const DiveSiteCollectionSchema = Joi
+	.array()
+	.items(DiveSiteSchema)
+	.min(1)
+	.max(250);
+
 export const DiveSiteSearchSchema = Joi.object().keys({
 	query: Joi.string().allow(''),
 	closeTo: Joi.array().ordered(

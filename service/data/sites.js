@@ -45,7 +45,6 @@ const siteSchema = mongoose.Schema({
 		geo_point: {
 			type: String,
 			es_type: 'geo_point',
-			// es_lat_lon: true,
 			es_indexed: true
 		},
 		lat: Number,
@@ -92,11 +91,15 @@ siteSchema.methods.assign = function (entity) {
 
 siteSchema.statics.searchAsync = function (query) {
 	return new Promise((resolve, reject) => {
-		this.esSearch(query, { hydrate: false }, (err, result) => {
+		this.esSearch(query, { hydrate: false }, (err, results) => {
 			if (err) {
 				reject(err);
 			} else {
-				resolve(result);
+				resolve(results.body.hits.hits.map(r => ({
+					siteId: r._id,
+					score: r._score,
+					...r._source
+				})));
 			}
 		});
 	});

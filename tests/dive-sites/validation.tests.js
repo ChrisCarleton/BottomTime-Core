@@ -335,6 +335,11 @@ describe('Dive Site Validation', () => {
 			validateSiteSearch('number.base');
 		});
 
+		it('Count must be an integer', () => {
+			siteSearch.count = 50.7;
+			validateSiteSearch('number.integer');
+		});
+
 		it('Count must be positive', () => {
 			siteSearch.count = 0;
 			validateSiteSearch('number.positive');
