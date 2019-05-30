@@ -1,4 +1,4 @@
-import { Client } from 'elasticsearch';
+import { Client } from '@elastic/elasticsearch';
 import config from './config';
 import { esLogger as log } from './logger';
 
@@ -17,11 +17,12 @@ class ESLogger {
 }
 
 const client = new Client({
-	host: config.elasticSearchEndpoint,
+	node: config.elasticSearchEndpoint,
 	sniffOnStart: true,
 	sniffInterval: 300000,
 	connectionClass: 'http',
 	log: ESLogger
 });
 
+module.exports = client;
 export default client;

@@ -5,9 +5,6 @@ import { Server } from '../service/server';
 
 chai.use(require('chai-sorted'));
 
-// Force initialization of ElasticSearch indices.
-require('../service/data/sites');
-
 // Make sure the MongoDB connection is open before running any tests.
 before(done => {
 	database.connection.once('open', async err => {
