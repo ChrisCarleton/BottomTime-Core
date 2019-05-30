@@ -1,6 +1,6 @@
 import config from '../config';
 import database from '../data/database';
-import search from '../search/search';
+import search from '../search';
 import storage from '../storage';
 
 async function GetMongoDbHealth(req) {

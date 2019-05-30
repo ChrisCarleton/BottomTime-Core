@@ -1,6 +1,7 @@
-import { Client } from 'elasticsearch';
-import config from '../config';
-import { esLogger as log } from '../logger';
+import { Agent } from 'http';
+import { Client } from '@elastic/elasticsearch';
+import config from './config';
+import { esLogger as log } from './logger';
 
 class ESLogger {
 	constructor() {
@@ -17,11 +18,14 @@ class ESLogger {
 }
 
 const client = new Client({
-	host: config.elasticSearchEndpoint,
+	node: config.elasticSearchEndpoint,
 	sniffOnStart: true,
-	sniffInterval: 300000,
 	connectionClass: 'http',
-	log: ESLogger
+	log: ESLogger,
+	agent: () => new Agent({
+		keepAlive: true
+	})
 });
 
+module.exports = client;
 export default client;

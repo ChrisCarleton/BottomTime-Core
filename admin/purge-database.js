@@ -12,6 +12,7 @@ import log from 'fancy-log';
 import LogEntry from '../service/data/log-entry';
 import readline from 'readline-sync';
 import Session from '../service/data/session';
+import Site from '../service/data/sites';
 import Tank from '../service/data/tanks';
 import User from '../service/data/user';
 
@@ -31,6 +32,7 @@ import User from '../service/data/user';
 			Friend.deleteMany({}),
 			Session.deleteMany({}),
 			LogEntry.deleteMany({}),
+			Site.deleteMany({}),
 			User.deleteMany({})
 		]);
 		log('Done.');

@@ -40,6 +40,7 @@ jobs:
             npm install -g gulp-cli nyc
             npm install
             gulp lint
+            npm run init-local
             nyc gulp test
             npm run coverage
           environment:
