@@ -102,6 +102,70 @@ describe('Dive Site Validation', () => {
 			validateDiveSite('string.max');
 		});
 
+		it('Water must be a string', () => {
+			diveSite.water = 8;
+			validateDiveSite('string.base');
+		});
+
+		[ 'salt', 'fresh', null ].forEach(value => {
+			it(`Water can be ${ value }`, () => {
+				diveSite.water = value;
+				validateDiveSite();
+			});
+		});
+
+		it('Water cannot be invalid', () => {
+			diveSite.water = 'wet';
+			validateDiveSite('any.allowOnly');
+		});
+
+		it('Accessibility must be a string', () => {
+			diveSite.accessibility = true;
+			validateDiveSite('string.base');
+		});
+
+		[ 'shore', 'boat', null ].forEach(value => {
+			it(`Accesibility can be ${ value }`, () => {
+				diveSite.accessibility = value;
+				validateDiveSite();
+			});
+		});
+
+		it('Accessibility cannot be invalid', () => {
+			diveSite.accessibility = 'long drive';
+			validateDiveSite('any.allowOnly');
+		});
+
+		it('Entry fee can be null', () => {
+			diveSite.entryFee = null;
+			validateDiveSite();
+		});
+
+		it('Entry fee must be a Boolean value', () => {
+			diveSite.entryFee = '$6.00';
+			validateDiveSite('boolean.base');
+		});
+
+		it('Difficulty can be null', () => {
+			diveSite.difficulty = null;
+			validateDiveSite();
+		});
+
+		it('Difficulty must be a number', () => {
+			diveSite.difficulty = 'pretty easy';
+			validateDiveSite('number.base');
+		});
+
+		it('Difficulty cannot be less than 1', () => {
+			diveSite.difficulty = 0.9;
+			validateDiveSite('number.min');
+		});
+
+		it('Difficulty cannot be more than 5', () => {
+			diveSite.difficulty = 5.1;
+			validateDiveSite('number.max');
+		});
+
 		it('Description is not required', () => {
 			delete diveSite.description;
 			validateDiveSite();

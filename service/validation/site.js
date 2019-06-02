@@ -5,6 +5,10 @@ export const DiveSiteSchema = Joi.object().keys({
 	name: Joi.string().required().max(200),
 	location: Joi.string().max(100).allow(null),
 	country: Joi.string().max(100).allow(null),
+	water: Joi.string().only([ 'salt', 'fresh', null ]),
+	accessibility: Joi.string().only([ 'shore', 'boat', null ]),
+	entryFee: Joi.boolean().allow(null),
+	difficulty: Joi.number().min(1.0).max(5.0).allow(null),
 	description: Joi.string().max(1000).allow(null),
 	tags: TagsArraySchema,
 	gps: Joi.object().keys({

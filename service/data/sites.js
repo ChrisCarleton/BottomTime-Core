@@ -18,7 +18,9 @@ const siteSchema = mongoose.Schema({
 	owner: {
 		type: String,
 		required: true,
-		index: true
+		index: true,
+		es_type: 'keyword',
+		es_indexed: true
 	},
 	location: {
 		type: String,
@@ -27,9 +29,32 @@ const siteSchema = mongoose.Schema({
 	},
 	country: {
 		type: String,
-		required: true,
 		es_indexed: true,
 		es_type: 'text'
+	},
+
+	// salt or fresh
+	water: {
+		type: String,
+		es_indexed: true,
+		es_type: 'keyword'
+	},
+
+	// shore or boat
+	accessibility: {
+		type: String,
+		es_indexed: true,
+		es_type: 'keyword'
+	},
+	entryFee: {
+		type: Boolean,
+		es_indexed: true,
+		es_type: 'boolean'
+	},
+	difficulty: {
+		type: Number,
+		es_indexed: true,
+		es_type: 'number'
 	},
 	description: {
 		type: String,
@@ -65,6 +90,10 @@ siteSchema.methods.toCleanJSON = function () {
 			'owner',
 			'location',
 			'country',
+			'water',
+			'accessibility',
+			'entryFee',
+			'difficulty',
 			'description',
 			'tags'
 		])
@@ -84,6 +113,10 @@ siteSchema.methods.assign = function (entity) {
 	this.name = entity.name;
 	this.location = entity.location;
 	this.country = entity.country;
+	this.water = entity.water;
+	this.accessibility = entity.accessibility;
+	this.entryFee = entity.entryFee;
+	this.difficulty = entity.difficulty;
 	this.description = entity.description;
 	this.tags = entity.tags;
 	this.gps = entity.gps;
