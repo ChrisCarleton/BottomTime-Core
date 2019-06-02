@@ -43,11 +43,8 @@ function sleep(duration) {
 
 		log('Creating ElasticSearch index...');
 		esClient = new Client({
-			node: config.elasticSearchEndpoint,
-			sniffOnStart: true,
-			sniffOnConnectionFault: true,
-			connectionClass: 'http',
-			log: 'debug'
+			log: 'debug',
+			node: config.elasticSearchEndpoint
 		});
 
 		await esClient.indices.create({
@@ -55,20 +52,7 @@ function sleep(duration) {
 		});
 
 		log('Creating Dive Sites type...');
-		await esClient.indices.putMapping({
-			index: config.elasticSearchIndex,
-			type: 'site',
-			body: {
-				properties: {
-					name: { type: 'text' },
-					location: { type: 'text' },
-					country: { type: 'text' },
-					description: { type: 'text' },
-					tags: { type: 'text' },
-					gps: { type: 'geo_point' }
-				}
-			}
-		});
+		require('../service/data/sites');
 		log('ElasticSearch has been initialized.');
 
 	} catch (err) {
