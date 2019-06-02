@@ -54,7 +54,7 @@ const siteSchema = mongoose.Schema({
 	difficulty: {
 		type: Number,
 		es_indexed: true,
-		es_type: 'number'
+		es_type: 'float'
 	},
 	description: {
 		type: String,
@@ -142,7 +142,7 @@ const model = mongoose.model('Site', siteSchema);
 model.createMapping((err, mapping) => {
 	const message = 'Mapping dive sites data to ElasticSearch:';
 	if (err) {
-		log.warn(message, err);
+		log.warn(message, JSON.stringify(err, null, '  '));
 	} else {
 		log.debug(message, mapping);
 	}

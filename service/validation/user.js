@@ -1,22 +1,10 @@
 import Joi from 'joi';
-
-const PasswordStrengthRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*.]).*$/;
-
-export const PasswordValidation = Joi.string().regex(PasswordStrengthRegex).min(7).max(50).required();
+import { PasswordValidation, UsernameSchema } from './common';
 
 export const LoginSchema = Joi.object().keys({
 	username: Joi.string().max(50).required(),
 	password: Joi.string().max(50).required()
 }).required();
-
-export const UsernameRegex = /^[a-z0-9_.-]+$/i;
-
-export const UsernameSchema = Joi
-	.string()
-	.regex(UsernameRegex)
-	.min(5)
-	.max(50)
-	.required();
 
 export const UserAccountSchema = Joi.object().keys({
 	email: Joi.string().email().required(),
@@ -35,7 +23,7 @@ export const ConfirmResetPasswordSchema = Joi.object().keys({
 }).required();
 
 export const UserQuerySchema = Joi.alternatives().try([
-	UsernameSchema,
+	UsernameSchema.required(),
 	Joi.string().email()
 ]).required();
 
