@@ -1,5 +1,4 @@
 import { App } from '../../service/server';
-import config from '../../service/config';
 import DiveSite from '../../service/data/sites';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
@@ -7,7 +6,6 @@ import fakeDiveSite, { toDiveSite } from '../util/fake-dive-site';
 import faker from 'faker';
 import { getDistance } from 'geolib';
 import request from 'supertest';
-import search from '../../service/search';
 import sinon from 'sinon';
 
 let stub = null;
@@ -60,15 +58,6 @@ describe('Searching Dive Sites', () => {
 			diveSites[i] = toDiveSite(fakes[i]);
 		}
 
-		await search.deleteByQuery({
-			index: config.elasticSearchIndex,
-			type: 'Site',
-			body: {
-				query: {
-					'match_all': {}
-				}
-			}
-		});
 		await DiveSite.deleteMany({});
 		await DiveSite.insertMany(diveSites);
 		await DiveSite.esSynchronize();

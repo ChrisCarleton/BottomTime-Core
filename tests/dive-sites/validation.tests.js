@@ -138,6 +138,11 @@ describe('Dive Site Validation', () => {
 			validateDiveSite('any.allowOnly');
 		});
 
+		it('Entry fee is optional', () => {
+			delete diveSite.entryFee;
+			validateDiveSite();
+		});
+
 		it('Entry fee can be null', () => {
 			diveSite.entryFee = null;
 			validateDiveSite();
