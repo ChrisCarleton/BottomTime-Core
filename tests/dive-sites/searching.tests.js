@@ -9,7 +9,6 @@ import { getDistance } from 'geolib';
 import request from 'supertest';
 import search from '../../service/search';
 import sinon from 'sinon';
-import { sleep } from '../util/test-methods';
 
 let stub = null;
 
@@ -72,7 +71,7 @@ describe('Searching Dive Sites', () => {
 		});
 		await DiveSite.deleteMany({});
 		await DiveSite.insertMany(diveSites);
-		await sleep(1000);
+		await DiveSite.esSynchronize();
 	});
 
 	afterEach(() => {
@@ -249,7 +248,7 @@ describe('Searching Dive Sites', () => {
 	});
 
 	it('Returns 500 when a server error occurs', async () => {
-		stub = sinon.stub(DiveSite, 'searchAsync');
+		stub = sinon.stub(DiveSite, 'esSearch');
 		stub.rejects('nope');
 
 		const { body } = await request(App)

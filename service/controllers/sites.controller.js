@@ -135,8 +135,23 @@ export async function searchSites(req, res) {
 
 		addSorting(esQuery, req.query.sortBy, req.query.sortOrder);
 
-		const results = await DiveSite.searchAsync(esQuery);
-		res.json(results);
+		const results = await DiveSite.esSearch(esQuery);
+		res.json(results.body.hits.hits.map(hit => {
+			const site = {
+				siteId: hit._id,
+				...hit._source,
+				score: hit._score
+			};
+
+			if (site.gps) {
+				site.gps = {
+					lon: site.gps[0],
+					lat: site.gps[1]
+				};
+			}
+
+			return site;
+		}));
 	} catch (err) {
 		const logId = req.logError('Failed to search dive sites', err);
 		serverError(res, logId);

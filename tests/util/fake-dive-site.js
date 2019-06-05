@@ -58,5 +58,8 @@ export default userName => {
 };
 
 export function toDiveSite(fake) {
-	return new Site(fake);
+	const site = new Site();
+	site.assign(fake);
+	site.owner = fake.owner;
+	return site;
 }
