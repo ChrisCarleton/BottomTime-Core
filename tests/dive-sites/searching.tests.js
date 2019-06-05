@@ -71,7 +71,6 @@ describe('Searching Dive Sites', () => {
 		});
 		await DiveSite.deleteMany({});
 		await DiveSite.insertMany(diveSites);
-		// await sleep(1000);
 		await DiveSite.esSynchronize();
 	});
 
