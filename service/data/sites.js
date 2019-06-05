@@ -7,6 +7,35 @@ import mongoose from './database';
 import { v6 as mexp } from 'mongoose-elasticsearch-xp';
 import search from '../search';
 
+const siteRatingSchema = mongoose.Schema({
+	user: {
+		type: String,
+		required: true,
+		index: true,
+		es_type: 'keyword',
+		es_indexed: true
+	},
+	date: {
+		type: Date,
+		required: true,
+		index: true,
+		es_type: 'date',
+		es_indexed: true
+	},
+	rating: {
+		type: Number,
+		required: true,
+		index: true,
+		es_type: 'float',
+		es_indexed: true
+	},
+	comments: {
+		type: String,
+		es_type: 'text',
+		es_indexed: true
+	}
+});
+
 const siteSchema = mongoose.Schema({
 	name: {
 		type: String,
@@ -69,6 +98,10 @@ const siteSchema = mongoose.Schema({
 	gps: {
 		type: [ Number ],
 		es_type: 'geo_point',
+		es_indexed: true
+	},
+	ratings: {
+		type: [ siteRatingSchema ],
 		es_indexed: true
 	}
 });

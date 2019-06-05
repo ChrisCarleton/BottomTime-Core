@@ -1,20 +1,37 @@
 import {
+	addSiteRating,
 	assertWriteAccess,
 	createSites,
 	deleteSite,
+	deleteSiteRating,
 	getSite,
+	getSiteRating,
+	listSiteRatings,
 	loadDiveSite,
 	searchSites,
-	updateSite
+	updateSite,
+	updateSiteRating
 } from '../controllers/sites.controller';
 import { RequireUser } from '../controllers/security.controller';
 
+const SitesRoute = '/diveSites';
+const SiteRoute = `${ SitesRoute }/:siteId([a-f0-9]{24})`;
+const RatingsRoute = `${ SiteRoute }/ratings`;
+const RatingRoute = `${ RatingsRoute }/:ratingId([a-f0-9]{24})`;
+
 module.exports = app => {
-	app.route('/diveSites')
+	app.route(SitesRoute)
 		.get(searchSites)
 		.post(RequireUser, createSites);
-	app.route('/diveSites/:siteId([a-f0-9]{24})')
+	app.route(SiteRoute)
 		.get(loadDiveSite, getSite)
 		.put(RequireUser, loadDiveSite, assertWriteAccess, updateSite)
 		.delete(RequireUser, loadDiveSite, assertWriteAccess, deleteSite);
+	app.route(RatingsRoute)
+		.get(listSiteRatings)
+		.post(addSiteRating);
+	app.route(RatingRoute)
+		.get(getSiteRating)
+		.put(updateSiteRating)
+		.delete(deleteSiteRating);
 };

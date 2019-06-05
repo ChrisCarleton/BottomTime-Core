@@ -219,6 +219,26 @@ export async function deleteSite(req, res) {
 	}
 }
 
+export function listSiteRatings(req, res) {
+	res.sendStatus(501);
+}
+
+export function getSiteRating(req, res) {
+	res.sendStatus(501);
+}
+
+export function addSiteRating(req, res) {
+	res.sendStatus(501);
+}
+
+export function updateSiteRating(req, res) {
+	res.sendStatus(501);
+}
+
+export function deleteSiteRating(req, res) {
+	res.sendStatus(501);
+}
+
 export async function loadDiveSite(req, res, next) {
 	try {
 		req.diveSite = await DiveSite.findById(req.params.siteId);
