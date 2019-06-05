@@ -3,7 +3,6 @@ import {
 	createSites,
 	deleteSite,
 	getSite,
-	listSites,
 	loadDiveSite,
 	searchSites,
 	updateSite
@@ -12,7 +11,7 @@ import { RequireUser } from '../controllers/security.controller';
 
 module.exports = app => {
 	app.route('/diveSites')
-		.get(listSites, searchSites)
+		.get(searchSites)
 		.post(RequireUser, createSites);
 	app.route('/diveSites/:siteId([a-f0-9]{24})')
 		.get(loadDiveSite, getSite)

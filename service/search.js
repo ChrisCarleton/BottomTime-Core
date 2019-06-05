@@ -1,4 +1,3 @@
-import { Agent } from 'http';
 import { Client } from '@elastic/elasticsearch';
 import config from './config';
 import { esLogger as log } from './logger';
@@ -18,14 +17,17 @@ class ESLogger {
 }
 
 const client = new Client({
-	node: config.elasticSearchEndpoint,
-	sniffOnStart: true,
-	connectionClass: 'http',
 	log: ESLogger,
-	agent: () => new Agent({
-		keepAlive: true
-	})
+	node: config.elasticSearchEndpoint
 });
+
+(async () => {
+	try {
+		await client.ping();
+	} catch (err) {
+		log.warn(`Failed to ping ElasticSearch node ${ config.elasticSearchEndpoint }`, err);
+	}
+})();
 
 module.exports = client;
 export default client;

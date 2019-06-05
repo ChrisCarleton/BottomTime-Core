@@ -1,3 +1,5 @@
+/* eslint max-statements: 0 */
+
 import { DiveSiteSchema, DiveSiteSearchSchema } from '../../service/validation/site';
 import { expect } from 'chai';
 import fakeDiveSite from '../util/fake-dive-site';
@@ -100,6 +102,75 @@ describe('Dive Site Validation', () => {
 		it('Country can be no longer than 100 characters', () => {
 			diveSite.country = LongString100;
 			validateDiveSite('string.max');
+		});
+
+		it('Water must be a string', () => {
+			diveSite.water = 8;
+			validateDiveSite('string.base');
+		});
+
+		[ 'salt', 'fresh', null ].forEach(value => {
+			it(`Water can be ${ value }`, () => {
+				diveSite.water = value;
+				validateDiveSite();
+			});
+		});
+
+		it('Water cannot be invalid', () => {
+			diveSite.water = 'wet';
+			validateDiveSite('any.allowOnly');
+		});
+
+		it('Accessibility must be a string', () => {
+			diveSite.accessibility = true;
+			validateDiveSite('string.base');
+		});
+
+		[ 'shore', 'boat', null ].forEach(value => {
+			it(`Accesibility can be ${ value }`, () => {
+				diveSite.accessibility = value;
+				validateDiveSite();
+			});
+		});
+
+		it('Accessibility cannot be invalid', () => {
+			diveSite.accessibility = 'long drive';
+			validateDiveSite('any.allowOnly');
+		});
+
+		it('Entry fee is optional', () => {
+			delete diveSite.entryFee;
+			validateDiveSite();
+		});
+
+		it('Entry fee can be null', () => {
+			diveSite.entryFee = null;
+			validateDiveSite();
+		});
+
+		it('Entry fee must be a Boolean value', () => {
+			diveSite.entryFee = '$6.00';
+			validateDiveSite('boolean.base');
+		});
+
+		it('Difficulty can be null', () => {
+			diveSite.difficulty = null;
+			validateDiveSite();
+		});
+
+		it('Difficulty must be a number', () => {
+			diveSite.difficulty = 'pretty easy';
+			validateDiveSite('number.base');
+		});
+
+		it('Difficulty cannot be less than 1', () => {
+			diveSite.difficulty = 0.9;
+			validateDiveSite('number.min');
+		});
+
+		it('Difficulty cannot be more than 5', () => {
+			diveSite.difficulty = 5.1;
+			validateDiveSite('number.max');
 		});
 
 		it('Description is not required', () => {
@@ -235,8 +306,14 @@ describe('Dive Site Validation', () => {
 				distance: 70,
 				skip: 1500,
 				count: 500,
-				sortBy: 'name',
-				sortOrder: 'asc'
+				water: 'salt',
+				accessibility: 'boat',
+				avoidEntryFee: true,
+				maxDifficulty: 4.0,
+				minRating: 3.5,
+				owner: 'Jason.Bourne33',
+				sortBy: 'difficulty',
+				sortOrder: 'desc'
 			};
 		});
 
@@ -253,6 +330,90 @@ describe('Dive Site Validation', () => {
 		it('Search term can be empty', () => {
 			siteSearch.query = '';
 			validateSiteSearch();
+		});
+
+		it('Water type is optional', () => {
+			delete siteSearch.water;
+			validateSiteSearch();
+		});
+
+		[ 'salt', 'fresh' ].forEach(value => {
+			it(`Water type can be "${ value }"`, () => {
+				siteSearch.water = value;
+				validateSiteSearch();
+			});
+		});
+
+		it('Water type cannot be invalid', () => {
+			siteSearch.water = 'muddy';
+			validateSiteSearch('any.allowOnly');
+		});
+
+		it('Accessibility is optional', () => {
+			delete siteSearch.accessibility;
+			validateSiteSearch();
+		});
+
+		[ 'shore', 'boat' ].forEach(value => {
+			it(`Accessibility can be "${ value }"`, () => {
+				siteSearch.accessibility = value;
+				validateSiteSearch();
+			});
+		});
+
+		it('Accessibility cannot be invalid', () => {
+			siteSearch.water = 'long hike';
+			validateSiteSearch('any.allowOnly');
+		});
+
+		it('Avoid entry fee is optional', () => {
+			delete siteSearch.avoidEntryFee;
+			validateSiteSearch();
+		});
+
+		it('Avoid entry fee must be a Boolean value', () => {
+			siteSearch.avoidEntryFee = 'yes, please';
+			validateSiteSearch('boolean.base');
+		});
+
+		it('Max difficulty is optional', () => {
+			delete siteSearch.maxDifficulty;
+			validateSiteSearch();
+		});
+
+		it('Max difficulty must be a number', () => {
+			siteSearch.maxDifficulty = 'intermediate';
+			validateSiteSearch('number.base');
+		});
+
+		it('Max difficulty cannot be less than 1', () => {
+			siteSearch.maxDifficulty = 0.9;
+			validateSiteSearch('number.min');
+		});
+
+		it('Max difficulty cannot be more than 5', () => {
+			siteSearch.maxDifficulty = 5.1;
+			validateSiteSearch('number.max');
+		});
+
+		it('Min rating is optional', () => {
+			delete siteSearch.minRating;
+			validateSiteSearch();
+		});
+
+		it('Min rating must be a number', () => {
+			siteSearch.minRating = 'pretty good';
+			validateSiteSearch('number.base');
+		});
+
+		it('Min rating cannot be less than 1', () => {
+			siteSearch.minRating = 0.9;
+			validateSiteSearch('number.min');
+		});
+
+		it('Min rating cannot be more than 5', () => {
+			siteSearch.minRating = 5.1;
+			validateSiteSearch('number.max');
 		});
 
 		it('closeTo must be an array', () => {
@@ -380,7 +541,7 @@ describe('Dive Site Validation', () => {
 			validateSiteSearch();
 		});
 
-		[ 'name' ].forEach(value => {
+		[ 'relevance', 'difficulty', 'rating' ].forEach(value => {
 			it(`Sort by can be ${ value }`, () => {
 				siteSearch.sortBy = value;
 				validateSiteSearch();

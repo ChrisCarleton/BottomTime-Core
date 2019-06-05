@@ -10,10 +10,14 @@ Describes a dive site.
 {
 	"siteId": "String: A unique ID identifying the dive site in the database.",
 	"owner": "String: Username of the user who created the dive site record.",
-	"score": "Number: Returned when performing searches. Indicates how well the document scored as a result candidate."
+	"score": "Number: Returned when performing searches. Indicates how well the document scored as a result candidate.",
 	"name": "REQUIRED String: The name of the site. (Max 200 characters.)",
 	"location": "String: The location, town, city, etc. where the dive site is located. (Max 100 characters.)",
 	"country": "String: The name of the country in which the dive site is located. (Max 100 characters.)",
+	"water": "String: One of 'fresh' or 'salt'.",
+	"accessibility": "String: One of 'shore' or 'boat'.",
+	"entryFee": "Boolean: True if the site is a private location where you have to pay to dive there.",
+	"difficulty": "Number: Difficulty rating 1-5. 1 = Suitable for beginners, 5 = Expert/technical divers only.",
 	"description": "String: A free-form description of the site. (Max 1000 characters.)",
 	"tags": [
 		"String: An array of tags to help in searching for dive sites. (E.g. deep, drift, good vis, etc.)"

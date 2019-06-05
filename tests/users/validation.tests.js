@@ -6,9 +6,9 @@ import {
 	ChangePasswordSchema,
 	ConfirmResetPasswordSchema,
 	UserAccountSchema,
-	UsernameSchema,
 	UserQuerySchema
 } from '../../service/validation/user';
+import { UsernameSchema } from '../../service/validation/common';
 
 let account = null;
 let changePassword = null;

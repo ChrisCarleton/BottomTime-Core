@@ -1,69 +1,14 @@
+/* eslint camelcase: 0 */
+
 import { badRequest, forbidden, notFound, serverError } from '../utils/error-response';
 import DiveSite from '../data/sites';
 import { DiveSiteSchema, DiveSiteCollectionSchema, DiveSiteSearchSchema } from '../validation/site';
 import Joi from 'joi';
 
-function buildMongoQuery(query) {
-	const {
-		skip,
-		sortOrder,
-		count
-	} = query;
-
-	return DiveSite
-		.find({})
-		.sort(`${ sortOrder === 'desc' ? '-' : '' }name`)
-		.skip(skip ? parseInt(skip, 10) : 0)
-		.limit(count ? parseInt(count, 10) : 500);
-}
-
-// Skip ElasticSearch and go straight to MongoDB...
-export async function listSites(req, res, next) {
-	const {
-		query,
-		closeTo,
-		distance
-	} = req.query;
-	const { error } = Joi.validate(req.query, DiveSiteSearchSchema);
-
-	if (error) {
-		return badRequest(
-			'Unable to process request. There was a problem with the query string. See details.',
-			error,
-			res
-		);
-	}
-
-	// For complex searches defer to ElasticSearch
-	if (query || closeTo || distance) {
-		return next();
-	}
-
-	try {
-		const results = await buildMongoQuery(req.query).exec();
-		res.json(results.map(r => r.toCleanJSON()));
-	} catch (err) {
-		const logId = req.logError('Failed to query database.', err);
-		serverError(res, logId);
-	}
-}
-
-// Query ElasticSearch for more robust searching...
-/* eslint-disable camelcase */
-export async function searchSites(req, res) {
-	const esQuery = {
-		query: {
-			bool: {
-				must: {}
-			}
-		},
-		from: req.query.skip ? parseInt(req.query.skip, 10) : 0,
-		size: req.query.count ? parseInt(req.query.count, 10) : 500
-	};
-
-	if (req.query.query) {
+function addSearchTerm(esQuery, searchTerm) {
+	if (searchTerm) {
 		esQuery.query.bool.must.multi_match = {
-			query: req.query.query,
+			query: searchTerm,
 			fields: [
 				'name^3',
 				'location',
@@ -76,29 +21,143 @@ export async function searchSites(req, res) {
 	} else {
 		esQuery.query.bool.must.match_all = {};
 	}
+}
 
-	if (req.query.closeTo) {
-		const [ lon, lat ] = req.query.closeTo;
+function addFilter(esQuery, filter) {
+	if (!esQuery.query.bool.filter) {
 		esQuery.query.bool.filter = {
-			geo_distance: {
-				distance: `${ req.query.distance || '50' }km`,
-				gps: {
-					lat,
-					lon
-				}
+			bool: {
+				must: []
 			}
 		};
 	}
 
+	esQuery.query.bool.filter.bool.must.push(filter);
+}
+
+function addSorting(esQuery, sortBy, sortOrder) {
+	if (sortBy) {
+		switch (sortBy) {
+		case 'difficulty':
+			esQuery.sort = {
+				difficulty: { order: sortOrder || 'asc' }
+			};
+			break;
+
+		default:
+		}
+
+	}
+}
+
+/* eslint-disable complexity */
+export async function searchSites(req, res) {
+	const { error } = Joi.validate(req.query, DiveSiteSearchSchema);
+	if (error) {
+		return badRequest(
+			'Unable to complete search because there was a problem with the query string.',
+			error,
+			res
+		);
+	}
+
+	const esQuery = {
+		query: {
+			bool: {
+				must: {}
+			}
+		}
+	};
+
 	try {
-		const results = await DiveSite.searchAsync(esQuery);
-		res.json(results);
+		esQuery.size = req.query.count
+			? parseInt(req.query.count, 10)
+			: 500;
+
+		if (req.query.skip) {
+			esQuery.from = parseInt(req.query.skip, 10);
+		}
+
+		addSearchTerm(esQuery, req.query.query);
+
+		if (req.query.owner) {
+			addFilter(esQuery, {
+				term: {
+					owner: req.query.owner
+				}
+			});
+		}
+
+		if (req.query.water) {
+			addFilter(esQuery, {
+				term: {
+					water: req.query.water
+				}
+			});
+		}
+
+		if (req.query.accessibility) {
+			addFilter(esQuery, {
+				term: {
+					accessibility: req.query.accessibility
+				}
+			});
+		}
+
+		if (req.query.avoidEntryFee) {
+			addFilter(esQuery, {
+				term: {
+					entryFee: false
+				}
+			});
+		}
+
+		if (req.query.maxDifficulty) {
+			addFilter(esQuery, {
+				range: {
+					difficulty: { lte: req.query.maxDifficulty }
+				}
+			});
+		}
+
+		if (req.query.closeTo) {
+			const [ lon, lat ] = req.query.closeTo;
+			addFilter(esQuery, {
+				geo_distance: {
+					distance: `${ req.query.distance || '50' }km`,
+					gps: {
+						lat,
+						lon
+					}
+				}
+			});
+		}
+
+		addSorting(esQuery, req.query.sortBy, req.query.sortOrder);
+
+		const results = await DiveSite.esSearch(esQuery);
+		res.json(results.body.hits.hits.map(hit => {
+			const site = {
+				siteId: hit._id,
+				...hit._source,
+				score: hit._score
+			};
+
+			if (site.gps) {
+				site.gps = {
+					lon: site.gps[0],
+					lat: site.gps[1]
+				};
+			}
+
+			return site;
+		}));
 	} catch (err) {
 		const logId = req.logError('Failed to search dive sites', err);
 		serverError(res, logId);
 	}
 }
-/* eslint-enable camelcase */
+/* eslint-enable complexity */
 
 export function getSite(req, res) {
 	res.json(req.diveSite.toCleanJSON());

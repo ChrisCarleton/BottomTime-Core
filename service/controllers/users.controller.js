@@ -5,8 +5,6 @@ import {
 	ConfirmResetPasswordSchema,
 	ChangePasswordSchema,
 	UserAccountSchema,
-	UsernameRegex,
-	UsernameSchema,
 	UserQuerySchema
 } from '../validation/user';
 import Joi from 'joi';
@@ -15,6 +13,7 @@ import moment from 'moment';
 import sessionManager from '../utils/session-manager';
 import templates from '../mail/templates';
 import User, { cleanUpUser } from '../data/user';
+import { UsernameRegex, UsernameSchema } from '../validation/common';
 import uuid from 'uuid/v4';
 
 export async function GetUsers(req, res, next) {
@@ -134,7 +133,7 @@ export async function RequireAccountPermission(req, res, next) {
 }
 
 function validateCreateUserAccount(req, res) {
-	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema);
+	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema.required());
 	const isBodyValid = Joi.validate(req.body, UserAccountSchema);
 
 	if (isUsernameValid.error) {
@@ -298,7 +297,7 @@ export async function RequestPasswordReset(req, res) {
 }
 
 export async function ConfirmPasswordReset(req, res) {
-	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema);
+	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema.required());
 	if (isUsernameValid.error) {
 		return badRequest(
 			'Unable to reset password. The username specified in the request URL is invalid',
