@@ -38,6 +38,6 @@ export const DiveSiteSearchSchema = Joi.object().keys({
 	distance: Joi.number().positive().max(1000),
 	count: Joi.number().integer().positive().max(1000),
 	skip: Joi.number().integer().min(0),
-	sortBy: Joi.string().only([ 'relevance', 'distance', 'difficulty', 'rating' ]),
+	sortBy: Joi.string().only([ 'relevance', 'difficulty', 'rating' ]),
 	sortOrder: Joi.string().only([ 'asc', 'desc' ])
 }).with('distance', 'closeTo');

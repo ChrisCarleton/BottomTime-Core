@@ -1,4 +1,5 @@
 import { App } from '../../service/server';
+import config from '../../service/config';
 import DiveSite from '../../service/data/sites';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
@@ -6,7 +7,9 @@ import fakeDiveSite, { toDiveSite } from '../util/fake-dive-site';
 import faker from 'faker';
 import { getDistance } from 'geolib';
 import request from 'supertest';
+import search from '../../service/search';
 import sinon from 'sinon';
+import { sleep } from '../util/test-methods';
 
 let stub = null;
 
@@ -50,7 +53,7 @@ describe('Searching Dive Sites', () => {
 
 	before(async () => {
 		for (let i = 0; i < fakes.length; i++) {
-			fakes[i] = fakeDiveSite();
+			fakes[i] = fakeDiveSite(faker.random.arrayElement([ 'mike', 'kevin', null ]));
 			fakes[i].gps = toGps(faker.random.arrayElement([
 				faker.random.arrayElement(CozumelDiveSites),
 				faker.random.arrayElement(RoatanDiveSites)
@@ -58,8 +61,18 @@ describe('Searching Dive Sites', () => {
 			diveSites[i] = toDiveSite(fakes[i]);
 		}
 
+		await search.deleteByQuery({
+			index: config.elasticSearchIndex,
+			type: 'Site',
+			body: {
+				query: {
+					'match_all': {}
+				}
+			}
+		});
 		await DiveSite.deleteMany({});
 		await DiveSite.insertMany(diveSites);
+		await sleep(1000);
 	});
 
 	afterEach(() => {
@@ -82,6 +95,80 @@ describe('Searching Dive Sites', () => {
 
 		expect(body).to.be.an('array').and.not.be.empty;
 		expect(body).to.be.descendingBy('score');
+	});
+
+	it('Results can be filtered by owner', async () => {
+		const { body } = await request(App)
+			.get('/diveSites')
+			.query({ owner: 'kevin', count: 10 })
+			.expect(200);
+
+		expect(body).to.be.an('array').and.not.be.empty;
+		body.forEach(site => {
+			expect(site.owner).to.equal('kevin');
+		});
+	});
+
+	[ 'fresh', 'salt' ].forEach(water => {
+		it(`Results can be filtered by ${ water } water sites`, async () => {
+			const { body } = await request(App)
+				.get('/diveSites')
+				.query({ water, count: 10 })
+				.expect(200);
+
+			expect(body).to.be.an('array').and.not.be.empty;
+			body.forEach(site => {
+				expect(site.water).to.equal(water);
+			});
+		});
+	});
+
+	[ 'shore', 'boat' ].forEach(accessibility => {
+		it(`Results can be filtered by ${ accessibility } access.`, async () => {
+			const { body } = await request(App)
+				.get('/diveSites')
+				.query({ accessibility, count: 10 })
+				.expect(200);
+
+			expect(body).to.be.an('array').and.not.be.empty;
+			body.forEach(site => {
+				expect(site.accessibility).to.equal(accessibility);
+			});
+		});
+	});
+
+	it('Results can be filtered to avoid sites with entry fees', async () => {
+		const { body } = await request(App)
+			.get('/diveSites')
+			.query({ avoidEntryFee: true, count: 10 })
+			.expect(200);
+
+		expect(body).to.be.an('array').and.not.be.empty;
+		body.forEach(site => {
+			expect(site.entryFee).to.be.false;
+		});
+	});
+
+	it('Results can be filtered by maximum difficulty', async () => {
+		const { body } = await request(App)
+			.get('/diveSites')
+			.query({ maxDifficulty: 3.5, count: 10 })
+			.expect(200);
+
+		expect(body).to.be.an('array').and.not.be.empty;
+		body.forEach(site => {
+			expect(site.difficulty).to.be.at.most(3.5);
+		});
+	});
+
+	it('Results can be ordered by difficulty', async () => {
+		const { body } = await request(App)
+			.get('/diveSites')
+			.query({ sortBy: 'difficulty', count: 10 })
+			.expect(200);
+
+		expect(body).to.be.an('array').and.not.be.empty;
+		expect(body).to.be.ascendingBy('difficulty');
 	});
 
 	it('Geo searches work', async () => {
@@ -117,6 +204,8 @@ describe('Searching Dive Sites', () => {
 			.query({
 				query: 'deep',
 				closeTo: SanMiguelDeCozumel,
+				water: 'salt',
+				accessibility: 'boat',
 				distance: 70,
 				count: 20
 			})
@@ -145,6 +234,18 @@ describe('Searching Dive Sites', () => {
 
 		expect(second).to.be.an('array').and.not.be.empty;
 		expect(second).to.be.descendingBy('score');
+	});
+
+	it('Will return 400 if the query parameters are invalid', async () => {
+		const { body } = await request(App)
+			.get('/diveSites')
+			.query({
+				sortBy: 'elevation'
+			})
+			.expect(400);
+
+		expect(body.status).to.equal(400);
+		expect(body.errorId).to.equal(ErrorIds.badRequest);
 	});
 
 	it('Returns 500 when a server error occurs', async () => {

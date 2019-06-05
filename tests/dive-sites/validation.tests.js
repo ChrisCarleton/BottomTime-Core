@@ -536,7 +536,7 @@ describe('Dive Site Validation', () => {
 			validateSiteSearch();
 		});
 
-		[ 'relevance', 'distance', 'difficulty', 'rating' ].forEach(value => {
+		[ 'relevance', 'difficulty', 'rating' ].forEach(value => {
 			it(`Sort by can be ${ value }`, () => {
 				siteSearch.sortBy = value;
 				validateSiteSearch();

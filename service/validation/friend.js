@@ -11,6 +11,7 @@ export const HandleFriendRequestSchema = Joi.object({
 
 export const BulkDeleteSchema = Joi
 	.array()
+	.min(1)
 	.max(1000)
-	.items(UsernameSchema.required())
+	.items(UsernameSchema)
 	.required();
