@@ -257,7 +257,7 @@ describe('Log entry validation', () => {
 
 		it('Tags must be alphanumeric', () => {
 			logEntry.tags = [ 'ok', 'not_ok' ];
-			validateCreate('string.alphanum');
+			validateCreate('string.regex.base');
 		});
 
 		it('Tags collection cannot have more than 50 tags', () => {
@@ -700,6 +700,62 @@ describe('Log entry validation', () => {
 			}
 
 			validateCreate('array.max');
+		});
+	});
+
+	describe('Conditions', () => {
+		[ 'rating', 'visibility', 'wind', 'current', 'waterChoppiness' ].forEach(field => {
+			it(`${ field } is optional`, () => {
+				delete logEntry[field];
+				validateCreate();
+			});
+
+			it(`${ field } can be null`, () => {
+				logEntry[field] = null;
+				validateCreate();
+			});
+
+			it(`${ field } must be a number`, () => {
+				logEntry[field] = '2stars';
+				validateCreate('number.base');
+			});
+
+			it(`${ field } cannot be less than one`, () => {
+				logEntry[field] = 0.8;
+				validateCreate('number.min');
+			});
+
+			it(`${ field } cannot be more than five`, () => {
+				logEntry[field] = 5.1;
+				validateCreate('number.max');
+			});
+		});
+
+		[ 'weather', 'suit' ].forEach(field => {
+			it(`${ field } is optional`, () => {
+				delete logEntry[field];
+				validateCreate();
+			});
+
+			it(`${ field } can be null`, () => {
+				logEntry[field] = null;
+				validateCreate();
+			});
+
+			it(`${ field } must be a string`, () => {
+				logEntry[field] = 78;
+				validateCreate('string.base');
+			});
+
+			it(`${ field } cannot be empty`, () => {
+				logEntry[field] = '';
+				validateCreate('any.empty');
+			});
+
+			it(`${ field } cannot be more than 100 characters`, () => {
+				logEntry[field] = faker.lorem.sentences(10).substr(0, 101);
+				validateCreate('string.max');
+			});
 		});
 	});
 

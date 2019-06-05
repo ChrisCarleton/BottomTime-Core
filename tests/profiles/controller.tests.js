@@ -2,7 +2,7 @@ import { App } from '../../service/server';
 import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
-import fakeLogEntry from '../util/fake-log-entry';
+import fakeLogEntry, { toLogEntry } from '../util/fake-log-entry';
 import fakeProfile from '../util/fake-profile';
 import Friend from '../../service/data/friend';
 import LogEntry from '../../service/data/log-entry';
@@ -83,7 +83,7 @@ describe('Profiles Controller', () => {
 		for (let i = 0; i < logEntries.length; i++) {
 			logEntries[i] = fakeLogEntry(publicUser.user.id);
 		}
-		await LogEntry.insertMany(logEntries.map(e => new LogEntry(e)));
+		await LogEntry.insertMany(logEntries.map(e => toLogEntry(e)));
 	});
 
 	afterEach(() => {

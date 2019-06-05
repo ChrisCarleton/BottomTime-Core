@@ -5,12 +5,17 @@ jobs:
     docker:
       - image: node:10.15.3-jessie
         environment:
+          BT_ES_ENDPOINT: http://es:9200
           BT_MONGO_ENDPOINT: mongodb://mongo/dev
           BT_SMTP_HOST: smtp
           BT_SMTP_PORT: 25
           BT_S3_ENDPOINT: http://s3:4569/
       - image: mongo:2.6.8
         name: mongo
+      - image: elasticsearch:6.5.4
+        name: es
+        environment:
+          discovery.type: single-node
       - image: lphoward/fake-s3:latest
         name: s3
       - image: tecnativa/smtp-sink:latest
@@ -35,6 +40,7 @@ jobs:
             npm install -g gulp-cli nyc
             npm install
             gulp lint
+            npm run init-local
             nyc gulp test
             npm run coverage
           environment:
@@ -63,6 +69,7 @@ jobs:
           working_directory: terraform/env/dev/us-east-1
           command: |
             echo "mongodb_endpoint = \"$DEV_DATABASE\"" >> secret.tfvars
+            echo "es_endpoint = \"$DEV_ELASTICSEARCH\"" >> secret.tfvars
             echo "google_client_secret = \"$GOOGLE_CLIENT_SECRET\"" >> secret.tfvars
             echo "build_number = \"$(cat ../../build)\"" >> secret.tfvars
             echo "smtp_auth_password = \"$DEV_SMTP_PASSWORD\"" >> secret.tfvars
@@ -135,6 +142,7 @@ jobs:
           command: |
             mv ../../db-maintenance.zip ../../../modules/resources/
             echo "mongodb_endpoint = \"$DEV_DATABASE\"" >> secret.tfvars
+            echo "es_endpoint = \"$DEV_ELASTICSEARCH\"" >> secret.tfvars
             echo "google_client_secret = \"$GOOGLE_CLIENT_SECRET\"" >> secret.tfvars
             echo "build_number = \"$(cat ../../build)\"" >> secret.tfvars
             echo "smtp_auth_password = \"$DEV_SMTP_PASSWORD\"" >> secret.tfvars
@@ -158,6 +166,7 @@ jobs:
           command: |
             mv ../../db-maintenance.zip ../../../modules/resources/
             echo "mongodb_endpoint = \"$PROD_DATABASE\"" >> secret.tfvars
+            echo "es_endpoint = \"$PROD_ELASTICSEARCH\"" >> secret.tfvars
             echo "google_client_secret = \"$GOOGLE_CLIENT_SECRET\"" >> secret.tfvars
             echo "build_number = \"$(cat ../../build)\"" >> secret.tfvars
             echo "session_secret = \"$PROD_SESSION_SECRET\"" >> secret.tfvars

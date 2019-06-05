@@ -3,7 +3,7 @@ import { App } from '../../service/server';
 import createAccount from '../util/create-fake-account';
 import mongoose from 'mongoose';
 import { expect } from 'chai';
-import fakeLogEntry from '../util/fake-log-entry';
+import fakeLogEntry, { toLogEntry } from '../util/fake-log-entry';
 import fakeMongoId from '../util/fake-mongo-id';
 import LogEntry from '../../service/data/log-entry';
 import request from 'supertest';
@@ -39,7 +39,7 @@ describe('Logs Controller', () => {
 
 		it('Will fetch the requested log entry', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const logEntry = new LogEntry(fake);
+			const logEntry = toLogEntry(fake);
 			delete fake.userId;
 
 			const entry = await logEntry.save();
@@ -160,7 +160,7 @@ describe('Logs Controller', () => {
 		it('Will return Server Error if database request fails', async () => {
 			const fake = fakeLogEntry();
 
-			stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub = sinon.stub(LogEntry, 'insertMany');
 			stub.rejects('nope');
 
 			const res = await request(App)
@@ -178,7 +178,7 @@ describe('Logs Controller', () => {
 
 		it('Will update the log entry', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const originalEntry = new LogEntry(fake);
+			const originalEntry = toLogEntry(fake);
 			let entryId = null;
 
 			const entry = await originalEntry.save();
@@ -215,7 +215,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Bad Request if update is invalid', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const originalEntry = new LogEntry(fake);
+			const originalEntry = toLogEntry(fake);
 			let entryId = null;
 
 			const entity = await originalEntry.save();
@@ -234,7 +234,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Server Error if database fails', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const originalEntry = new LogEntry(fake);
+			const originalEntry = toLogEntry(fake);
 			let entryId = null;
 
 			const entry = await originalEntry.save();
@@ -261,7 +261,7 @@ describe('Logs Controller', () => {
 
 		it('Will delete the specified log entry', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const entry = new LogEntry(fake);
+			const entry = toLogEntry(fake);
 
 			const entity = await entry.save();
 			fake.entryId = entity.id;
@@ -286,7 +286,7 @@ describe('Logs Controller', () => {
 
 		it('Will return Server Error if the database fails', async () => {
 			const fake = fakeLogEntry(user1.user.id);
-			const entry = new LogEntry(fake);
+			const entry = toLogEntry(fake);
 
 			const entity = await entry.save();
 			fake.entryId = entity.id;
@@ -311,9 +311,9 @@ describe('Logs Controller', () => {
 				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
-				new LogEntry(fakes[0]),
-				new LogEntry(fakes[1]),
-				new LogEntry(fakes[2])
+				toLogEntry(fakes[0]),
+				toLogEntry(fakes[1]),
+				toLogEntry(fakes[2])
 			];
 
 			let res = await Promise.all([
@@ -353,8 +353,8 @@ describe('Logs Controller', () => {
 				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
-				new LogEntry(fakes[0]),
-				new LogEntry(fakes[1])
+				toLogEntry(fakes[0]),
+				toLogEntry(fakes[1])
 			];
 
 			let res = await Promise.all([ logEntries[0].save(), logEntries[1].save() ]);
@@ -422,8 +422,8 @@ describe('Logs Controller', () => {
 				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
-				new LogEntry(fakes[0]),
-				new LogEntry(fakes[1])
+				toLogEntry(fakes[0]),
+				toLogEntry(fakes[1])
 			];
 
 			let res = await Promise.all([ logEntries[0].save(), logEntries[1].save() ]);
@@ -459,7 +459,7 @@ describe('Logs Controller', () => {
 
 			for (let i = 0; i < 101; i++) {
 				fakes[i] = fakeLogEntry(user1.user.id);
-				logEntries[i] = new LogEntry(fakes[i]);
+				logEntries[i] = toLogEntry(fakes[i]);
 			}
 
 			const res = await Promise.all(_.map(logEntries, e => e.save()));
@@ -482,9 +482,9 @@ describe('Logs Controller', () => {
 				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
-				new LogEntry(fakes[0]),
-				new LogEntry(fakes[1]),
-				new LogEntry(fakes[2])
+				toLogEntry(fakes[0]),
+				toLogEntry(fakes[1]),
+				toLogEntry(fakes[2])
 			];
 
 			let res = await Promise.all(
@@ -528,9 +528,9 @@ describe('Logs Controller', () => {
 				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
-				new LogEntry(fakes[0]),
-				new LogEntry(fakes[1]),
-				new LogEntry(fakes[2])
+				toLogEntry(fakes[0]),
+				toLogEntry(fakes[1]),
+				toLogEntry(fakes[2])
 			];
 
 			await Promise.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ]);
@@ -557,9 +557,9 @@ describe('Logs Controller', () => {
 				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
-				new LogEntry(fakes[0]),
-				new LogEntry(fakes[1]),
-				new LogEntry(fakes[2])
+				toLogEntry(fakes[0]),
+				toLogEntry(fakes[1]),
+				toLogEntry(fakes[2])
 			];
 
 			await Promise.all(
@@ -636,9 +636,9 @@ describe('Logs Controller', () => {
 				fakeLogEntry(user1.user.id)
 			];
 			const logEntries = [
-				new LogEntry(fakes[0]),
-				new LogEntry(fakes[1]),
-				new LogEntry(fakes[2])
+				toLogEntry(fakes[0]),
+				toLogEntry(fakes[1]),
+				toLogEntry(fakes[2])
 			];
 
 			await Promise.all([ logEntries[0].save(), logEntries[1].save(), logEntries[2].save() ]);

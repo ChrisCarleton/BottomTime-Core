@@ -2,6 +2,7 @@ import { App } from '../../service/server';
 import database from '../../service/data/database';
 import { expect } from 'chai';
 import request from 'supertest';
+import search from '../../service/search';
 import sinon from 'sinon';
 import storage from '../../service/storage';
 
@@ -32,7 +33,7 @@ describe('Admin Controller', () => {
 		it('Returns healthy when everything is cool', async () => {
 			const { body } = await request(App).get('/health').expect(200);
 			expect(body.status).to.equal('healthy');
-			expect(body.components).to.be.an('array').and.have.lengthOf(2);
+			expect(body.components).to.be.an('array').and.have.lengthOf(3);
 			body.components.forEach(c => {
 				expect(c.health).to.equal('healthy');
 			});
@@ -46,6 +47,21 @@ describe('Admin Controller', () => {
 			expect(body.status).to.equal('unhealthy');
 			body.components.forEach(c => {
 				if (c.name === 'MongoDB') {
+					expect(c.health).to.equal('unhealthy');
+				} else {
+					expect(c.health).to.equal('healthy');
+				}
+			});
+		});
+
+		it('Returns unhealthy when ElasticSearch is inaccessible', async () => {
+			stub = sinon.stub(search, 'ping');
+			stub.rejects(new Error('nope'));
+
+			const { body } = await request(App).get('/health').expect(500);
+			expect(body.status).to.equal('unhealthy');
+			body.components.forEach(c => {
+				if (c.name === 'ElasticSearch') {
 					expect(c.health).to.equal('unhealthy');
 				} else {
 					expect(c.health).to.equal('healthy');

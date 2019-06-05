@@ -120,7 +120,7 @@ describe('Friends Validation Tests', () => {
 
 		it('Fails if array is emtpy', () => {
 			body = [];
-			validateBulkDelete('array.includesRequiredUnknowns');
+			validateBulkDelete('array.min');
 		});
 
 		it('Fails if body is empty', () => {

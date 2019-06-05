@@ -1,5 +1,6 @@
 import config from '../config';
 import database from '../data/database';
+import search from '../search';
 import storage from '../storage';
 
 async function GetMongoDbHealth(req) {
@@ -54,10 +55,29 @@ async function GetS3Health(req) {
 	}
 }
 
+async function GetElasticSearchHealth(req) {
+	const response = {
+		name: 'ElasticSearch'
+	};
+
+	try {
+		await search.ping();
+		response.health = 'healthy';
+		response.details = 'ElasticSearch is responding to requests.';
+	} catch (err) {
+		req.logError('Failed to ping ElasticSearch', err);
+		response.health = 'unhealthy';
+		response.details = 'ElasticSearch is not responding to requests.';
+	}
+
+	return response;
+}
+
 export async function GetHealth(req, res) {
 	const components = await Promise.all([
 		GetMongoDbHealth(req),
-		GetS3Health(req)
+		GetS3Health(req),
+		GetElasticSearchHealth(req)
 	]);
 
 	let health = 'healthy';

@@ -14,10 +14,7 @@ const tankSchema = mongoose.Schema({
 	},
 	size: Number,
 	workingPressure: Number,
-	material: {
-		type: String,
-		enum: [ 'al', 'fe' ]
-	}
+	material: String
 });
 
 tankSchema.methods.toCleanJSON = function () {
