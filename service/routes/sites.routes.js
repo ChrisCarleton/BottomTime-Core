@@ -8,6 +8,7 @@ import {
 	getSiteRating,
 	listSiteRatings,
 	loadDiveSite,
+	loadRating,
 	searchSites,
 	updateSite,
 	updateSiteRating
@@ -31,7 +32,7 @@ module.exports = app => {
 		.get(loadDiveSite, listSiteRatings)
 		.post(RequireUser, loadDiveSite, addSiteRating);
 	app.route(RatingRoute)
-		.get(getSiteRating)
+		.get(loadRating, getSiteRating)
 		.put(updateSiteRating)
 		.delete(deleteSiteRating);
 };

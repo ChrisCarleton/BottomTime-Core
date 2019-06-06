@@ -13,20 +13,16 @@ import sinon from 'sinon';
 import User from '../../service/data/user';
 import { UsernameRegex } from '../../service/validation/common';
 
-const diveSiteFake = fakeDiveSite();
-
 let userAccount = null;
 let adminAccount = null;
-let diveSite = null;
-let ratings = null;
 let stub = null;
 
-function ratingsUrl() {
+function ratingsUrl(diveSite) {
 	return `/diveSites/${ diveSite.id }/ratings`;
 }
 
-function ratingUrl(ratingId) {
-	return `${ ratingsUrl() }/${ ratingId }`;
+function ratingUrl(diveSite, rating) {
+	return `${ ratingsUrl(diveSite) }/${ rating.id }`;
 }
 
 function validateRating(rating) {
@@ -40,11 +36,9 @@ function validateRating(rating) {
 
 describe('Dive Site Ratings', () => {
 	before(async () => {
-		diveSite = toDiveSite(diveSiteFake);
 		[ userAccount, adminAccount ] = await Promise.all([
 			createFakeAccount(),
-			createFakeAccount('admin'),
-			diveSite.save()
+			createFakeAccount('admin')
 		]);
 	});
 
@@ -65,11 +59,12 @@ describe('Dive Site Ratings', () => {
 	});
 
 	describe('GET /diveSites/:siteId/ratings', () => {
+		const diveSite = toDiveSite(fakeDiveSite());
+		const ratings = new Array(450);
+
 		before(async () => {
-			ratings = new Array(450);
 			for (let i = 0; i < ratings.length; i++) {
-				ratings[i] = toDiveSiteRating(fakeDiveSiteRating());
-				ratings[i].diveSite = diveSite._id;
+				ratings[i] = toDiveSiteRating(fakeDiveSiteRating(), diveSite._id);
 			}
 			diveSite.ratings = ratings.map(r => r._id);
 
@@ -80,16 +75,15 @@ describe('Dive Site Ratings', () => {
 		});
 
 		after(async () => {
-			diveSite.ratings = null;
 			await Promise.all([
-				diveSite.save(),
+				diveSite.remove(),
 				DiveSiteRating.deleteMany({})
 			]);
 		});
 
 		it('Returns dive site ratings', async () => {
 			const { body } = await request(App)
-				.get(ratingsUrl())
+				.get(ratingsUrl(diveSite))
 				.expect(200);
 
 			expect(body).to.be.an('array').and.have.a.lengthOf(200);
@@ -100,7 +94,7 @@ describe('Dive Site Ratings', () => {
 		it('Will return the correct number of ratings', async () => {
 			const count = 40;
 			const { body } = await request(App)
-				.get(ratingsUrl())
+				.get(ratingsUrl(diveSite))
 				.query({ count })
 				.expect(200);
 
@@ -112,11 +106,11 @@ describe('Dive Site Ratings', () => {
 			const count = 40;
 			const responses = await Promise.all([
 				request(App)
-					.get(ratingsUrl())
+					.get(ratingsUrl(diveSite))
 					.query({ count })
 					.expect(200),
 				request(App)
-					.get(ratingsUrl())
+					.get(ratingsUrl(diveSite))
 					.query({ count, skip: count })
 					.expect(200)
 			]);
@@ -131,7 +125,7 @@ describe('Dive Site Ratings', () => {
 				it(`Can return ratings ordered by ${ sortBy } (${ sortOrder })`, async () => {
 					const count = 40;
 					const { body } = await request(App)
-						.get(ratingsUrl())
+						.get(ratingsUrl(diveSite))
 						.query({ count, sortBy, sortOrder })
 						.expect(200);
 
@@ -143,7 +137,7 @@ describe('Dive Site Ratings', () => {
 
 		it('Will return 400 if query sting is invalid', async () => {
 			const { body } = await request(App)
-				.get(ratingsUrl())
+				.get(ratingsUrl(diveSite))
 				.query({ valid: false })
 				.expect(400);
 
@@ -163,7 +157,7 @@ describe('Dive Site Ratings', () => {
 			stub.throws(new Error('nope'));
 
 			const { body } = await request(App)
-				.get(ratingsUrl())
+				.get(ratingsUrl(diveSite))
 				.expect(500);
 
 			expect(body).isServerError;
@@ -171,14 +165,24 @@ describe('Dive Site Ratings', () => {
 	});
 
 	describe('POST /diveSites/:siteId/ratings', () => {
-		afterEach(async () => {
-			await DiveSiteRating.deleteMany({});
+		const diveSiteFake = fakeDiveSite();
+		const diveSite = toDiveSite(diveSiteFake);
+
+		before(async () => {
+			await diveSite.save();
+		});
+
+		after(async () => {
+			await Promise.all([
+				diveSite.remove(),
+				DiveSiteRating.deleteMany({})
+			]);
 		});
 
 		it('Will create a new dive site rating', async () => {
 			const fake = fakeDiveSiteRating();
 			const { body } = await request(App)
-				.post(ratingsUrl())
+				.post(ratingsUrl(diveSite))
 				.set(...userAccount.authHeader)
 				.send(fake)
 				.expect(200);
@@ -188,7 +192,7 @@ describe('Dive Site Ratings', () => {
 
 			const entity = await DiveSiteRating.findById(body.ratingId);
 			const result = await request(App)
-				.get(ratingsUrl())
+				.get(ratingsUrl(diveSite))
 				.expect(200);
 
 			expect(result.body[0]).to.exist;
@@ -203,7 +207,7 @@ describe('Dive Site Ratings', () => {
 			};
 
 			const { body } = await request(App)
-				.post(ratingsUrl())
+				.post(ratingsUrl(diveSite))
 				.set(...userAccount.authHeader)
 				.send(fake)
 				.expect(400);
@@ -213,7 +217,7 @@ describe('Dive Site Ratings', () => {
 
 		it('Will return 400 if message body is missing', async () => {
 			const { body } = await request(App)
-				.post(ratingsUrl())
+				.post(ratingsUrl(diveSite))
 				.set(...userAccount.authHeader)
 				.expect(400);
 
@@ -223,7 +227,7 @@ describe('Dive Site Ratings', () => {
 		it('Will return 401 if the user is not authenticated', async () => {
 			const fake = fakeDiveSiteRating();
 			const { body } = await request(App)
-				.post(ratingsUrl())
+				.post(ratingsUrl(diveSite))
 				.send(fake)
 				.expect(401);
 
@@ -247,7 +251,7 @@ describe('Dive Site Ratings', () => {
 			stub.throws(new Error('nope'));
 
 			const { body } = await request(App)
-				.post(ratingsUrl())
+				.post(ratingsUrl(diveSite))
 				.set(...userAccount.authHeader)
 				.send(fake)
 				.expect(500);
@@ -257,7 +261,58 @@ describe('Dive Site Ratings', () => {
 	});
 
 	describe('GET /diveSites/:siteId/ratings/:ratingId', () => {
+		const diveSite = toDiveSite(fakeDiveSite());
+		const rating = toDiveSiteRating(fakeDiveSiteRating(), diveSite._id);
+		diveSite.ratings = [ rating._id ];
 
+		before(async () => {
+			await Promise.all([
+				diveSite.save(),
+				rating.save()
+			]);
+		});
+
+		after(async () => {
+			await Promise.all([
+				diveSite.remove(),
+				rating.remove()
+			]);
+		});
+
+		it('Will retrieve a single dive site rating', async () => {
+			const { body } = await request(App)
+				.get(ratingUrl(diveSite, rating))
+				.expect(200);
+
+			expect(body).to.eql(rating.toCleanJSON());
+		});
+
+		it('Will return 404 if the dive site is not found', async () => {
+			const { body } = await request(App)
+				.get(`/diveSites/${ fakeMongoId() }/ratings/${ rating.id }`)
+				.expect(404);
+
+			expect(body).isNotFound;
+		});
+
+		it('Will return 404 if the dive site rating is not found', async () => {
+			const { body } = await request(App)
+				.get(`/diveSites/${ diveSite.id }/ratings/${ fakeMongoId() }`)
+				.expect(404);
+
+			expect(body).isNotFound;
+		});
+
+		it('Will return 500 if a server error occurs', async () => {
+			stub = sinon.stub(DiveSiteRating, 'findOne');
+			stub.rejects('nope');
+
+			const { body } = await request(App)
+				.get(ratingUrl(diveSite, rating))
+				.expect(500);
+
+			expect(body).isServerError;
+		});
 	});
 
 	describe('PUT /diveSites/:siteId/ratings/:ratingId', () => {

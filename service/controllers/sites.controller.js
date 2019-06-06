@@ -253,7 +253,7 @@ export async function listSiteRatings(req, res) {
 }
 
 export function getSiteRating(req, res) {
-	res.sendStatus(501);
+	res.json(req.diveSiteRating.toCleanJSON());
 }
 
 export async function addSiteRating(req, res) {
@@ -304,6 +304,24 @@ export async function loadDiveSite(req, res, next) {
 		return next();
 	} catch (err) {
 		const logId = req.logError('Failed to retrieve dive site info', err);
+		return serverError(res, logId);
+	}
+}
+
+export async function loadRating(req, res, next) {
+	try {
+		req.diveSiteRating = await DiveSiteRating.findOne({
+			_id: req.params.ratingId,
+			diveSite: req.params.siteId
+		});
+
+		if (!req.diveSiteRating) {
+			return notFound(req, res);
+		}
+
+		return next();
+	} catch (err) {
+		const logId = req.logError(`Failed to retrieve dive site rating ${ req.params.ratingId }.`, err);
 		return serverError(res, logId);
 	}
 }
