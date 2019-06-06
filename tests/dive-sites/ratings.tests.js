@@ -186,9 +186,14 @@ describe('Dive Site Ratings', () => {
 			validateRating(body);
 			expect(body.ratingId).to.exist;
 
-			const result = await DiveSiteRating.findById(body.ratingId);
-			expect(result).to.exist;
-			expect(result.toCleanJSON()).to.eql(result.toCleanJSON());
+			const entity = await DiveSiteRating.findById(body.ratingId);
+			const result = await request(App)
+				.get(ratingsUrl())
+				.expect(200);
+
+			expect(result.body[0]).to.exist;
+			expect(entity.diveSite.toString()).to.equal(diveSite.id);
+			expect(result.body[0]).to.eql(entity.toCleanJSON());
 		});
 
 		it('Will return 400 if message body is invalid', async () => {

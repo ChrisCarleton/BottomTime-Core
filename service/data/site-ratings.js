@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import moment from 'moment';
 import mongoose from './database';
 
 const siteRatingSchema = mongoose.Schema({
@@ -29,10 +30,10 @@ siteRatingSchema.methods.toCleanJSON = function () {
 		ratingId: this.id,
 		..._.pick(this, [
 			'user',
-			'date',
 			'rating',
 			'comments'
-		])
+		]),
+		date: moment(this.date).utc().toISOString()
 	};
 
 	return clean;

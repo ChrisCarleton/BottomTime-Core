@@ -270,7 +270,8 @@ export async function addSiteRating(req, res) {
 		const rating = new DiveSiteRating({
 			...req.body,
 			user: req.user.username,
-			date: moment().utc().toDate()
+			date: moment().utc().toDate(),
+			diveSite: req.diveSite.id
 		});
 		req.diveSite.ratings = req.diveSite.ratings || [];
 		req.diveSite.ratings.push(rating._id);
