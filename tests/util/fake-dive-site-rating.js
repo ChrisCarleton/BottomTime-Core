@@ -11,10 +11,10 @@ export default () => {
 	return fake;
 };
 
-export function toDiveSiteRating(fake, diveSiteId) {
+export function toDiveSiteRating(fake, diveSiteId, user) {
 	const rating = new DiveSiteRating(fake);
 	rating.date = moment(faker.date.past(4)).utc().toDate();
-	rating.user = faker.internet.userName();
+	rating.user = user || faker.internet.userName();
 	rating.diveSite = diveSiteId;
 	return rating;
 }

@@ -316,7 +316,151 @@ describe('Dive Site Ratings', () => {
 	});
 
 	describe('PUT /diveSites/:siteId/ratings/:ratingId', () => {
+		let diveSite = null;
+		let myRating = null;
+		let otherRating = null;
 
+		before(async () => {
+			diveSite = toDiveSite(fakeDiveSite());
+			myRating = toDiveSiteRating(
+				fakeDiveSiteRating(),
+				diveSite._id,
+				userAccount.user.username
+			);
+			otherRating = toDiveSiteRating(
+				fakeDiveSiteRating(),
+				diveSite._id
+			);
+			diveSite.ratings = [ myRating._id, otherRating._id ];
+
+			await Promise.all([
+				diveSite.save(),
+				myRating.save(),
+				otherRating.save()
+			]);
+		});
+
+		after(async () => {
+			await Promise.all([
+				diveSite.remove(),
+				myRating.remove(),
+				otherRating.remove()
+			]);
+		});
+
+		it('Will update dive site rating', async () => {
+			const fake = fakeDiveSiteRating();
+			await request(App)
+				.put(ratingUrl(diveSite, myRating))
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(204);
+
+			myRating = await DiveSiteRating.findById(myRating.id);
+			fake.ratingId = myRating.id;
+			fake.user = userAccount.user.username;
+			fake.date = moment(myRating.date).utc().toISOString();
+
+			expect(myRating.diveSite.toString()).to.equal(diveSite.id);
+			expect(myRating.toCleanJSON()).to.eql(fake);
+		});
+
+		it('Will return 400 if the request body is invalid', async () => {
+			const fake = {
+				invalid: 'yup',
+				rating: 77
+			};
+			const { body } = await request(App)
+				.put(ratingUrl(diveSite, myRating))
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(400);
+
+			expect(body).isBadRequest;
+		});
+
+		it('Will return 400 if the request body is empty', async () => {
+			const { body } = await request(App)
+				.put(ratingUrl(diveSite, myRating))
+				.set(...userAccount.authHeader)
+				.expect(400);
+
+			expect(body).isBadRequest;
+		});
+
+		it('Will return 401 if user is not authenticated', async () => {
+			const fake = fakeDiveSiteRating();
+			const { body } = await request(App)
+				.put(ratingUrl(diveSite, myRating))
+				.send(fake)
+				.expect(401);
+
+			expect(body).isUnauthorized;
+		});
+
+		it('Will return 403 if the user does not own the dive site rating', async () => {
+			const fake = fakeDiveSiteRating();
+			const { body } = await request(App)
+				.put(ratingUrl(diveSite, otherRating))
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(403);
+
+			expect(body).isForbidden;
+		});
+
+		it('Administrators can update other users\' dive site ratings', async () => {
+			const fake = fakeDiveSiteRating();
+			await request(App)
+				.put(ratingUrl(diveSite, myRating))
+				.set(...adminAccount.authHeader)
+				.send(fake)
+				.expect(204);
+
+			myRating = await DiveSiteRating.findById(myRating.id);
+			fake.ratingId = myRating.id;
+			fake.user = userAccount.user.username;
+			fake.date = moment(myRating.date).utc().toISOString();
+
+			expect(myRating.diveSite.toString()).to.equal(diveSite.id);
+			expect(myRating.toCleanJSON()).to.eql(fake);
+		});
+
+		it('Will return 404 if the dive site does not exist', async () => {
+			const fake = fakeDiveSiteRating();
+			const { body } = await request(App)
+				.put(`/diveSites/${ fakeMongoId() }/ratings/${ myRating.id }`)
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(404);
+
+			expect(body).isNotFound;
+		});
+
+		it('Will return 404 if the dive site rating does not exist', async () => {
+			const fake = fakeDiveSiteRating();
+			const { body } = await request(App)
+				.put(`/diveSites/${ diveSite.id }/ratings/${ fakeMongoId() }`)
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(404);
+
+			expect(body).isNotFound;
+		});
+
+		it('Will return 500 if a server error occurs', async () => {
+			stub = sinon.stub(DiveSiteRating.prototype, 'save');
+			stub.rejects('nope');
+
+			const fake = fakeDiveSiteRating();
+			const { body } = await request(App)
+				.put(ratingUrl(diveSite, myRating))
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(500);
+
+			expect(body).isServerError;
+		});
 	});
 
 	describe('DELETE /diveSites/:siteId/ratings/:ratingId', () => {

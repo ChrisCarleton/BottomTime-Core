@@ -39,4 +39,9 @@ siteRatingSchema.methods.toCleanJSON = function () {
 	return clean;
 };
 
+siteRatingSchema.methods.assign = function (entity) {
+	this.comments = entity.comments;
+	this.rating = entity.rating;
+};
+
 export default mongoose.model('SiteRating', siteRatingSchema);

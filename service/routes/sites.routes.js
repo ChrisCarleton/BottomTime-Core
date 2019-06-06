@@ -1,6 +1,7 @@
 import {
 	addSiteRating,
-	assertWriteAccess,
+	assertRatingWriteAccess,
+	assertSiteWriteAccess,
 	createSites,
 	deleteSite,
 	deleteSiteRating,
@@ -26,13 +27,13 @@ module.exports = app => {
 		.post(RequireUser, createSites);
 	app.route(SiteRoute)
 		.get(loadDiveSite, getSite)
-		.put(RequireUser, loadDiveSite, assertWriteAccess, updateSite)
-		.delete(RequireUser, loadDiveSite, assertWriteAccess, deleteSite);
+		.put(RequireUser, loadDiveSite, assertSiteWriteAccess, updateSite)
+		.delete(RequireUser, loadDiveSite, assertSiteWriteAccess, deleteSite);
 	app.route(RatingsRoute)
 		.get(loadDiveSite, listSiteRatings)
 		.post(RequireUser, loadDiveSite, addSiteRating);
 	app.route(RatingRoute)
 		.get(loadRating, getSiteRating)
-		.put(updateSiteRating)
+		.put(RequireUser, loadRating, assertRatingWriteAccess, updateSiteRating)
 		.delete(deleteSiteRating);
 };

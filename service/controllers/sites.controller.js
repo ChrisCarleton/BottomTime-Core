@@ -286,8 +286,24 @@ export async function addSiteRating(req, res) {
 	}
 }
 
-export function updateSiteRating(req, res) {
-	res.sendStatus(501);
+export async function updateSiteRating(req, res) {
+	const { error } = Joi.validate(req.body, DiveSiteRatingSchema);
+	if (error) {
+		return badRequest(
+			'Unable to update dive site rating. There was a problem in the request body.',
+			error,
+			res
+		);
+	}
+
+	try {
+		req.diveSiteRating.assign(req.body);
+		await req.diveSiteRating.save();
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError(`Failed to update dive site rating ${ req.params.ratingId }.`, err);
+		serverError(res, logId);
+	}
 }
 
 export function deleteSiteRating(req, res) {
@@ -326,10 +342,18 @@ export async function loadRating(req, res, next) {
 	}
 }
 
-export function assertWriteAccess(req, res, next) {
+export function assertSiteWriteAccess(req, res, next) {
 	if (req.diveSite.owner === req.user.username || req.user.role === 'admin') {
 		return next();
 	}
 
-	forbidden(res, 'User does not have permission to modify or delete this dive site entry.');
+	return forbidden(res, 'User does not have permission to modify or delete this dive site entry.');
+}
+
+export function assertRatingWriteAccess(req, res, next) {
+	if (req.diveSiteRating.user === req.user.username || req.user.role === 'admin') {
+		return next();
+	}
+
+	return forbidden(res, 'User does not have permission to modify or delete this dive site rating.');
 }
