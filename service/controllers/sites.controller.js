@@ -306,8 +306,20 @@ export async function updateSiteRating(req, res) {
 	}
 }
 
-export function deleteSiteRating(req, res) {
-	res.sendStatus(501);
+export async function deleteSiteRating(req, res) {
+	try {
+		// req.diveSite.ratings.splice(req.diveSite.ratings.indexOf(req.diveSiteRating._id), 1);
+		const index = req.diveSite.ratings.indexOf(req.diveSiteRating._id);
+		req.diveSite.ratings.splice(index, 1);
+		await Promise.all([
+			req.diveSiteRating.remove(),
+			req.diveSite.save()
+		]);
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError(`Failed to delete dive site rating ${ req.params.ratingId }.`, err);
+		serverError(res, logId);
+	}
 }
 
 export async function loadDiveSite(req, res, next) {

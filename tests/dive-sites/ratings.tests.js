@@ -464,6 +464,130 @@ describe('Dive Site Ratings', () => {
 	});
 
 	describe('DELETE /diveSites/:siteId/ratings/:ratingId', () => {
+		let diveSite = null;
+		let myRating = null;
+		let myOtherRating = null;
+		let otherRating = null;
 
+		beforeEach(async () => {
+			diveSite = toDiveSite(fakeDiveSite());
+			myRating = toDiveSiteRating(
+				fakeDiveSiteRating(),
+				diveSite._id,
+				userAccount.user.username
+			);
+			myOtherRating = toDiveSiteRating(
+				fakeDiveSiteRating(),
+				diveSite._id,
+				userAccount.user.username
+			);
+			otherRating = toDiveSiteRating(
+				fakeDiveSiteRating(),
+				diveSite._id
+			);
+			diveSite.ratings = [ myRating._id, myOtherRating._id, otherRating._id ];
+
+			await Promise.all([
+				diveSite.save(),
+				myRating.save(),
+				otherRating.save()
+			]);
+		});
+
+		afterEach(async () => {
+			if (stub) {
+				stub.restore();
+				stub = null;
+			}
+
+			await Promise.all([
+				diveSite.remove(),
+				myOtherRating.remove(),
+				otherRating.remove()
+			]);
+
+			if (myRating) {
+				await myRating.remove();
+			}
+		});
+
+		it('Will delete a dive site rating', async () => {
+			await request(App)
+				.delete(ratingUrl(diveSite, myRating))
+				.set(...userAccount.authHeader)
+				.expect(204);
+
+			[ diveSite, myRating ] = await Promise.all([
+				DiveSite.findById(diveSite.id),
+				DiveSiteRating.findById(myRating.id)
+			]);
+
+			expect(myRating).to.be.null;
+			expect(diveSite.ratings).to.be.have.a.lengthOf(2);
+			expect(diveSite.ratings).to.eql([ myOtherRating._id, otherRating._id ]);
+		});
+
+		it('Will return 401 if user is not authenticated', async () => {
+			const { body } = await request(App)
+				.delete(ratingUrl(diveSite, myRating))
+				.expect(401);
+
+			expect(body).isUnauthorized;
+		});
+
+		it('Will return 403 if user does not own the dive site rating', async () => {
+			const { body } = await request(App)
+				.delete(ratingUrl(diveSite, otherRating))
+				.set(...userAccount.authHeader)
+				.expect(403);
+
+			expect(body).isForbidden;
+		});
+
+		it('Administrators can delete other users\' dive site ratings', async () => {
+			await request(App)
+				.delete(ratingUrl(diveSite, myRating))
+				.set(...adminAccount.authHeader)
+				.expect(204);
+
+			[ diveSite, myRating ] = await Promise.all([
+				DiveSite.findById(diveSite.id),
+				DiveSiteRating.findById(myRating.id)
+			]);
+
+			expect(myRating).to.be.null;
+			expect(diveSite.ratings).to.be.have.a.lengthOf(2);
+			expect(diveSite.ratings).to.eql([ myOtherRating._id, otherRating._id ]);
+		});
+
+		it('Will return 404 if the dive site does not exist', async () => {
+			const { body } = await request(App)
+				.delete(`/diveSites/${ fakeMongoId() }/ratings/${ myRating.id }`)
+				.set(...userAccount.authHeader)
+				.expect(404);
+
+			expect(body).isNotFound;
+		});
+
+		it('Will return 404 if the dive site rating does not exist', async () => {
+			const { body } = await request(App)
+				.delete(`/diveSites/${ diveSite.id }/ratings/${ fakeMongoId() }`)
+				.set(...userAccount.authHeader)
+				.expect(404);
+
+			expect(body).isNotFound;
+		});
+
+		it('Will return 500 if a server error occurs', async () => {
+			stub = sinon.stub(DiveSiteRating.prototype, 'remove');
+			stub.rejects('nope');
+
+			const { body } = await request(App)
+				.delete(ratingUrl(diveSite, myRating))
+				.set(...userAccount.authHeader)
+				.expect(500);
+
+			expect(body).isServerError;
+		});
 	});
 });

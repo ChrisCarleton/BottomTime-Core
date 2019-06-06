@@ -35,5 +35,5 @@ module.exports = app => {
 	app.route(RatingRoute)
 		.get(loadRating, getSiteRating)
 		.put(RequireUser, loadRating, assertRatingWriteAccess, updateSiteRating)
-		.delete(deleteSiteRating);
+		.delete(RequireUser, loadDiveSite, loadRating, assertRatingWriteAccess, deleteSiteRating);
 };
