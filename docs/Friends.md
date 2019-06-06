@@ -86,7 +86,7 @@ HTTP Status Code | Details
 **409 Conflict** | The request was rejected because the friend request already exists.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
-### POST /users/:username/friends/:friendName/[approve|reject]
+### POST /users/:username/friends/:friendName/(approve|reject)
 These routes can approve or reject a friend request, respectively. If the request is approved, then both
 users will become "friends" with each other. (That is, a reciprocal friendship will be created under the
 new friend's account.) The route must actually be called by the "friend" and not the user, which is a
