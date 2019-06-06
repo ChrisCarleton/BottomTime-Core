@@ -4,7 +4,7 @@ import DiveSite from '../../service/data/sites';
 import DiveSiteRating from '../../service/data/site-ratings';
 import { expect } from 'chai';
 import fakeDiveSite, { toDiveSite } from '../util/fake-dive-site';
-import fakeDiveSiteRating from '../util/fake-dive-site-rating';
+import fakeDiveSiteRating, { toDiveSiteRating } from '../util/fake-dive-site-rating';
 import fakeMongoId from '../util/fake-mongo-id';
 import moment from 'moment';
 import request from 'supertest';
@@ -43,18 +43,7 @@ describe('Dive Site Ratings', () => {
 		diveSite = toDiveSite(diveSiteFake);
 		[ userAccount, adminAccount ] = await Promise.all([
 			createFakeAccount(),
-			createFakeAccount('admin')
-		]);
-
-		ratings = new Array(450);
-		for (let i = 0; i < ratings.length; i++) {
-			ratings[i] = new DiveSiteRating(fakeDiveSiteRating());
-			ratings[i].diveSite = diveSite._id;
-		}
-		diveSite.ratings = ratings.map(r => r._id);
-
-		await Promise.all([
-			DiveSiteRating.insertMany(ratings),
+			createFakeAccount('admin'),
 			diveSite.save()
 		]);
 	});
@@ -76,6 +65,28 @@ describe('Dive Site Ratings', () => {
 	});
 
 	describe('GET /diveSites/:siteId/ratings', () => {
+		before(async () => {
+			ratings = new Array(450);
+			for (let i = 0; i < ratings.length; i++) {
+				ratings[i] = toDiveSiteRating(fakeDiveSiteRating());
+				ratings[i].diveSite = diveSite._id;
+			}
+			diveSite.ratings = ratings.map(r => r._id);
+
+			await Promise.all([
+				DiveSiteRating.insertMany(ratings),
+				diveSite.save()
+			]);
+		});
+
+		after(async () => {
+			diveSite.ratings = null;
+			await Promise.all([
+				diveSite.save(),
+				DiveSiteRating.deleteMany({})
+			]);
+		});
+
 		it('Returns dive site ratings', async () => {
 			const { body } = await request(App)
 				.get(ratingsUrl())
@@ -160,7 +171,84 @@ describe('Dive Site Ratings', () => {
 	});
 
 	describe('POST /diveSites/:siteId/ratings', () => {
+		afterEach(async () => {
+			await DiveSiteRating.deleteMany({});
+		});
 
+		it('Will create a new dive site rating', async () => {
+			const fake = fakeDiveSiteRating();
+			const { body } = await request(App)
+				.post(ratingsUrl())
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(200);
+
+			validateRating(body);
+			expect(body.ratingId).to.exist;
+
+			const result = await DiveSiteRating.findById(body.ratingId);
+			expect(result).to.exist;
+			expect(result.toCleanJSON()).to.eql(result.toCleanJSON());
+		});
+
+		it('Will return 400 if message body is invalid', async () => {
+			const fake = {
+				comments: 'This is totally invalid',
+				extraField: true
+			};
+
+			const { body } = await request(App)
+				.post(ratingsUrl())
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(400);
+
+			expect(body).isBadRequest;
+		});
+
+		it('Will return 400 if message body is missing', async () => {
+			const { body } = await request(App)
+				.post(ratingsUrl())
+				.set(...userAccount.authHeader)
+				.expect(400);
+
+			expect(body).isBadRequest;
+		});
+
+		it('Will return 401 if the user is not authenticated', async () => {
+			const fake = fakeDiveSiteRating();
+			const { body } = await request(App)
+				.post(ratingsUrl())
+				.send(fake)
+				.expect(401);
+
+			expect(body).isUnauthorized;
+		});
+
+		it('Will return 404 if the dive site does not exist', async () => {
+			const fake = fakeDiveSiteRating();
+			const { body } = await request(App)
+				.post(`/diveSites/${ fakeMongoId() }/ratings`)
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(404);
+
+			expect(body).isNotFound;
+		});
+
+		it('Will return 500 if a server error occurs', async () => {
+			const fake = fakeDiveSiteRating();
+			stub = sinon.stub(DiveSiteRating.prototype, 'toCleanJSON');
+			stub.throws(new Error('nope'));
+
+			const { body } = await request(App)
+				.post(ratingsUrl())
+				.set(...userAccount.authHeader)
+				.send(fake)
+				.expect(500);
+
+			expect(body).isServerError;
+		});
 	});
 
 	describe('GET /diveSites/:siteId/ratings/:ratingId', () => {

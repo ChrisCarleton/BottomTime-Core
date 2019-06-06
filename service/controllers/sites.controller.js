@@ -6,10 +6,12 @@ import DiveSiteRating from '../data/site-ratings';
 import {
 	DiveSiteSchema,
 	DiveSiteCollectionSchema,
+	DiveSiteRatingSchema,
 	DiveSiteSearchSchema,
 	ListDiveSiteRatingsSchema
 } from '../validation/site';
 import Joi from 'joi';
+import moment from 'moment';
 
 function addSearchTerm(esQuery, searchTerm) {
 	if (searchTerm) {
@@ -254,8 +256,33 @@ export function getSiteRating(req, res) {
 	res.sendStatus(501);
 }
 
-export function addSiteRating(req, res) {
-	res.sendStatus(501);
+export async function addSiteRating(req, res) {
+	const { error } = Joi.validate(req.body, DiveSiteRatingSchema);
+	if (error) {
+		return badRequest(
+			'Unable to post the site rating because the request body was invalid.',
+			error,
+			res
+		);
+	}
+
+	try {
+		const rating = new DiveSiteRating({
+			...req.body,
+			user: req.user.username,
+			date: moment().utc().toDate()
+		});
+		req.diveSite.ratings = req.diveSite.ratings || [];
+		req.diveSite.ratings.push(rating._id);
+		await Promise.all([
+			rating.save(),
+			req.diveSite.save()
+		]);
+		res.json(rating.toCleanJSON());
+	} catch (err) {
+		const logId = req.logError('Failed to create new dive site rating.', err);
+		serverError(res, logId);
+	}
 }
 
 export function updateSiteRating(req, res) {
