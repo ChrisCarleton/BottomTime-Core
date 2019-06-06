@@ -192,6 +192,7 @@ HTTP Status Code | Details
 ----- | -----
 **200 Ok** | The call succeeded and the response body will contain an array of [DiveSiteRating](#divesiterating-object) objects.
 **400 Bad Request** | The request was rejected because the query string was invalid.
+**404 Not Found** | The request was rejected because the indicated dive site could not be found.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### POST /diveSites/:siteId/ratings
@@ -207,6 +208,7 @@ HTTP Status Code | Details
 **200 Ok** | The call succeeded and the response body will contain the [DiveSiteRating](#divesiterating-object) object with the read-only fields filled in.
 **400 Bad Request** | The request was rejected because the message body was invalid. Check the details of the error message to see, specifically, what was wrong.
 **401 Not Authorized** | The request was rejected because the current user is not authenticated.
+**404 Not Found** | The request was rejected because the indicated dive site could not be found.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### GET /diveSites/:siteId/ratings/:ratingId

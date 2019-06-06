@@ -2,7 +2,13 @@
 
 import { badRequest, forbidden, notFound, serverError } from '../utils/error-response';
 import DiveSite from '../data/sites';
-import { DiveSiteSchema, DiveSiteCollectionSchema, DiveSiteSearchSchema } from '../validation/site';
+import DiveSiteRating from '../data/site-ratings';
+import {
+	DiveSiteSchema,
+	DiveSiteCollectionSchema,
+	DiveSiteSearchSchema,
+	ListDiveSiteRatingsSchema
+} from '../validation/site';
 import Joi from 'joi';
 
 function addSearchTerm(esQuery, searchTerm) {
@@ -219,8 +225,29 @@ export async function deleteSite(req, res) {
 	}
 }
 
-export function listSiteRatings(req, res) {
-	res.sendStatus(501);
+export async function listSiteRatings(req, res) {
+	const { error } = Joi.validate(req.query, ListDiveSiteRatingsSchema);
+	if (error) {
+		return badRequest(
+			'Could not complete request. There was a problem with the query string.',
+			error,
+			res
+		);
+	}
+
+	try {
+		const sortOrder = `${ req.query.sortOrder === 'asc' ? '' : '-' }${ req.query.sortBy || 'date' }`;
+		const ratings = await DiveSiteRating
+			.find({ diveSite: req.diveSite.id })
+			.sort(sortOrder)
+			.skip(req.query.skip ? parseInt(req.query.skip, 10) : 0)
+			.limit(req.query.count ? parseInt(req.query.count, 10) : 200)
+			.exec();
+		res.json(ratings.map(rating => rating.toCleanJSON()));
+	} catch (err) {
+		const logId = req.logError('Failed to query for dive site ratings', err);
+		serverError(res, logId);
+	}
 }
 
 export function getSiteRating(req, res) {

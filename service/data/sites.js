@@ -7,34 +7,7 @@ import mongoose from './database';
 import { v6 as mexp } from 'mongoose-elasticsearch-xp';
 import search from '../search';
 
-const siteRatingSchema = mongoose.Schema({
-	user: {
-		type: String,
-		required: true,
-		index: true,
-		es_type: 'keyword',
-		es_indexed: true
-	},
-	date: {
-		type: Date,
-		required: true,
-		index: true,
-		es_type: 'date',
-		es_indexed: true
-	},
-	rating: {
-		type: Number,
-		required: true,
-		index: true,
-		es_type: 'float',
-		es_indexed: true
-	},
-	comments: {
-		type: String,
-		es_type: 'text',
-		es_indexed: true
-	}
-});
+require('./site-ratings');
 
 const siteSchema = mongoose.Schema({
 	name: {
@@ -101,8 +74,23 @@ const siteSchema = mongoose.Schema({
 		es_indexed: true
 	},
 	ratings: {
-		type: [ siteRatingSchema ],
-		es_indexed: true
+		type: [ mongoose.SchemaTypes.ObjectId ],
+		ref: 'SiteRating',
+		es_indexed: true,
+		es_type: {
+			user: {
+				es_type: 'keyword'
+			},
+			date: {
+				es_type: 'date'
+			},
+			rating: {
+				es_type: 'float'
+			},
+			comments: {
+				es_type: 'text'
+			}
+		}
 	}
 });
 
