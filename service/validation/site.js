@@ -41,3 +41,15 @@ export const DiveSiteSearchSchema = Joi.object().keys({
 	sortBy: Joi.string().only([ 'relevance', 'difficulty', 'rating' ]),
 	sortOrder: Joi.string().only([ 'asc', 'desc' ])
 }).with('distance', 'closeTo');
+
+export const DiveSiteRatingSchema = Joi.object().keys({
+	rating: Joi.number().min(1.0).max(5.0).required(),
+	comments: Joi.string().max(1000).allow(null)
+});
+
+export const ListDiveSiteRatingsSchema = Joi.object().keys({
+	count: Joi.number().integer().positive().max(1000),
+	skip: Joi.number().integer().min(0),
+	sortBy: Joi.string().only([ 'rating', 'date' ]),
+	sortOrder: Joi.string().only([ 'asc', 'desc' ])
+});

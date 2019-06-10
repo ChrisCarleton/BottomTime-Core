@@ -2,8 +2,16 @@
 
 import { badRequest, forbidden, notFound, serverError } from '../utils/error-response';
 import DiveSite from '../data/sites';
-import { DiveSiteSchema, DiveSiteCollectionSchema, DiveSiteSearchSchema } from '../validation/site';
+import DiveSiteRating from '../data/site-ratings';
+import {
+	DiveSiteSchema,
+	DiveSiteCollectionSchema,
+	DiveSiteRatingSchema,
+	DiveSiteSearchSchema,
+	ListDiveSiteRatingsSchema
+} from '../validation/site';
 import Joi from 'joi';
+import moment from 'moment';
 
 function addSearchTerm(esQuery, searchTerm) {
 	if (searchTerm) {
@@ -219,6 +227,100 @@ export async function deleteSite(req, res) {
 	}
 }
 
+export async function listSiteRatings(req, res) {
+	const { error } = Joi.validate(req.query, ListDiveSiteRatingsSchema);
+	if (error) {
+		return badRequest(
+			'Could not complete request. There was a problem with the query string.',
+			error,
+			res
+		);
+	}
+
+	try {
+		const sortOrder = `${ req.query.sortOrder === 'asc' ? '' : '-' }${ req.query.sortBy || 'date' }`;
+		const ratings = await DiveSiteRating
+			.find({ diveSite: req.diveSite.id })
+			.sort(sortOrder)
+			.skip(req.query.skip ? parseInt(req.query.skip, 10) : 0)
+			.limit(req.query.count ? parseInt(req.query.count, 10) : 200)
+			.exec();
+		res.json(ratings.map(rating => rating.toCleanJSON()));
+	} catch (err) {
+		const logId = req.logError('Failed to query for dive site ratings', err);
+		serverError(res, logId);
+	}
+}
+
+export function getSiteRating(req, res) {
+	res.json(req.diveSiteRating.toCleanJSON());
+}
+
+export async function addSiteRating(req, res) {
+	const { error } = Joi.validate(req.body, DiveSiteRatingSchema);
+	if (error) {
+		return badRequest(
+			'Unable to post the site rating because the request body was invalid.',
+			error,
+			res
+		);
+	}
+
+	try {
+		const rating = new DiveSiteRating({
+			...req.body,
+			user: req.user.username,
+			date: moment().utc().toDate(),
+			diveSite: req.diveSite.id
+		});
+		req.diveSite.ratings = req.diveSite.ratings || [];
+		req.diveSite.ratings.push(rating._id);
+		await Promise.all([
+			rating.save(),
+			req.diveSite.save()
+		]);
+		res.json(rating.toCleanJSON());
+	} catch (err) {
+		const logId = req.logError('Failed to create new dive site rating.', err);
+		serverError(res, logId);
+	}
+}
+
+export async function updateSiteRating(req, res) {
+	const { error } = Joi.validate(req.body, DiveSiteRatingSchema);
+	if (error) {
+		return badRequest(
+			'Unable to update dive site rating. There was a problem in the request body.',
+			error,
+			res
+		);
+	}
+
+	try {
+		req.diveSiteRating.assign(req.body);
+		await req.diveSiteRating.save();
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError(`Failed to update dive site rating ${ req.params.ratingId }.`, err);
+		serverError(res, logId);
+	}
+}
+
+export async function deleteSiteRating(req, res) {
+	try {
+		const index = req.diveSite.ratings.indexOf(req.diveSiteRating._id);
+		req.diveSite.ratings.splice(index, 1);
+		await Promise.all([
+			req.diveSiteRating.remove(),
+			req.diveSite.save()
+		]);
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError(`Failed to delete dive site rating ${ req.params.ratingId }.`, err);
+		serverError(res, logId);
+	}
+}
+
 export async function loadDiveSite(req, res, next) {
 	try {
 		req.diveSite = await DiveSite.findById(req.params.siteId);
@@ -233,10 +335,36 @@ export async function loadDiveSite(req, res, next) {
 	}
 }
 
-export function assertWriteAccess(req, res, next) {
+export async function loadRating(req, res, next) {
+	try {
+		req.diveSiteRating = await DiveSiteRating.findOne({
+			_id: req.params.ratingId,
+			diveSite: req.params.siteId
+		});
+
+		if (!req.diveSiteRating) {
+			return notFound(req, res);
+		}
+
+		return next();
+	} catch (err) {
+		const logId = req.logError(`Failed to retrieve dive site rating ${ req.params.ratingId }.`, err);
+		return serverError(res, logId);
+	}
+}
+
+export function assertSiteWriteAccess(req, res, next) {
 	if (req.diveSite.owner === req.user.username || req.user.role === 'admin') {
 		return next();
 	}
 
-	forbidden(res, 'User does not have permission to modify or delete this dive site entry.');
+	return forbidden(res, 'User does not have permission to modify or delete this dive site entry.');
+}
+
+export function assertRatingWriteAccess(req, res, next) {
+	if (req.diveSiteRating.user === req.user.username || req.user.role === 'admin') {
+		return next();
+	}
+
+	return forbidden(res, 'User does not have permission to modify or delete this dive site rating.');
 }

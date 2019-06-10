@@ -10,12 +10,14 @@ import chalk from 'chalk';
 import database from '../service/data/database';
 import faker from 'faker';
 import fakeDiveSite, { toDiveSite } from '../tests/util/fake-dive-site';
+import fakeDiveSiteRating, { toDiveSiteRating } from '../tests/util/fake-dive-site-rating';
 import fakeLogEntry, { toLogEntry } from '../tests/util/fake-log-entry';
 import fakeUser from '../tests/util/fake-user';
 import log from 'fancy-log';
 import LogEntry from '../service/data/log-entry';
 import search from '../service/search';
 import Site from '../service/data/sites';
+import SiteRating from '../service/data/site-ratings';
 import User from '../service/data/user';
 
 (async () => {
@@ -24,6 +26,7 @@ import User from '../service/data/user';
 
 		await User.insertMany(users);
 		const userNames = _.map(users, u => u.username);
+		const randomUserNames = [ null, ...userNames ];
 		log('Created users: ', userNames);
 
 		log('Checking for admin account...');
@@ -42,13 +45,29 @@ import User from '../service/data/user';
 
 		log('Creating dive sites...');
 		const diveSites = new Array(faker.random.number({ min: 1000, max: 3500 }));
+		let ratings = null;
+		let ratingsCount = 0;
 		for (let i = 0; i < diveSites.length; i++) {
 			diveSites[i] = toDiveSite(fakeDiveSite(
-				faker.random.arrayElement([ null, ...userNames ])
+				faker.random.arrayElement(randomUserNames)
 			));
+
+			ratings = new Array(faker.random.number({ min: 1, max: 300 }));
+			for (let j = 0; j < ratings.length; j++) {
+				ratings[j] = toDiveSiteRating(
+					fakeDiveSiteRating(),
+					diveSites[i]._id,
+					faker.random.arrayElement(randomUserNames)
+				);
+			}
+
+			diveSites[i].ratings = ratings.map(r => r._id);
+			SiteRating.insertMany(ratings);
+			ratingsCount += ratings.length;
 		}
 		await Site.insertMany(diveSites);
-		log(`Generated ${ chalk.bold(diveSites.length) } dive sites.`);
+		log(`Generated ${ chalk.bold(diveSites.length) } dive sites`);
+		log(`and ${ chalk.bold(ratingsCount) } dive site ratings.`);
 
 		let totalEntries = 0;
 

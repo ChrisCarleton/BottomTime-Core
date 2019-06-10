@@ -1,8 +1,14 @@
 /* eslint max-statements: 0 */
 
-import { DiveSiteSchema, DiveSiteSearchSchema } from '../../service/validation/site';
+import {
+	DiveSiteRatingSchema,
+	DiveSiteSchema,
+	DiveSiteSearchSchema,
+	ListDiveSiteRatingsSchema
+} from '../../service/validation/site';
 import { expect } from 'chai';
 import fakeDiveSite from '../util/fake-dive-site';
+import fakeDiveSiteRating from '../util/fake-dive-site-rating';
 import faker from 'faker';
 import Joi from 'joi';
 
@@ -568,6 +574,163 @@ describe('Dive Site Validation', () => {
 		it('Sort order cannot be any other value', () => {
 			siteSearch.sortOrder = 'not_allowed';
 			validateSiteSearch('any.allowOnly');
+		});
+	});
+});
+
+describe('Dive Site Rating Validation', () => {
+	describe('Rating', () => {
+		let rating = null;
+
+		function validateRating(expectedError) {
+			const isValid = Joi.validate(rating, DiveSiteRatingSchema);
+			ensureValid(isValid, expectedError);
+		}
+
+		beforeEach(() => {
+			rating = fakeDiveSiteRating();
+		});
+
+		it('Rating is required', () => {
+			delete rating.rating;
+			validateRating('any.required');
+		});
+
+		it('Rating must be a number', () => {
+			rating.rating = 'excellent';
+			validateRating('number.base');
+		});
+
+		it('Rating cannot be less than 1', () => {
+			rating.rating = 0.5;
+			validateRating('number.min');
+		});
+
+		it('Rating cannot be more than 5', () => {
+			rating.rating = 5.5;
+			validateRating('number.max');
+		});
+
+		it('Comments are optional', () => {
+			delete rating.comments;
+			validateRating();
+		});
+
+		it('Comments can be null', () => {
+			rating.comments = null;
+			validateRating();
+		});
+
+		it('Comments cannot be longer than 1000 characters', () => {
+			rating.comments = VeryLongString;
+			validateRating('string.max');
+		});
+	});
+
+	describe('List Ratings', () => {
+		let listRatings = null;
+
+		function validateListRatings(expectedError) {
+			const isValid = Joi.validate(listRatings, ListDiveSiteRatingsSchema);
+			ensureValid(isValid, expectedError);
+		}
+
+		beforeEach(() => {
+			listRatings = {
+				count: 500,
+				skip: 1500,
+				sortBy: 'rating',
+				sortOrder: 'asc'
+			};
+		});
+
+		it('Count is not required', () => {
+			delete listRatings.count;
+			validateListRatings();
+		});
+
+		it('Count must be a number', () => {
+			listRatings.count = 'lots';
+			validateListRatings('number.base');
+		});
+
+		it('Count must be an integer', () => {
+			listRatings.count = 500.2;
+			validateListRatings('number.integer');
+		});
+
+		it('Count must be positive', () => {
+			listRatings.count = 0;
+			validateListRatings('number.positive');
+		});
+
+		it('Count cannot be more than 1000', () => {
+			listRatings.count = 1001;
+			validateListRatings('number.max');
+		});
+
+		it('Skip is optional', () => {
+			delete listRatings.skip;
+			validateListRatings();
+		});
+
+		it('Skip must be a number', () => {
+			listRatings.skip = true;
+			validateListRatings('number.base');
+		});
+
+		it('Skip must be an integer', () => {
+			listRatings.skip = 1500.7;
+			validateListRatings('number.integer');
+		});
+
+		it('Skip cannot be negative', () => {
+			listRatings.skip = -1;
+			validateListRatings('number.min');
+		});
+
+		it('Sort by is optional', () => {
+			delete listRatings.sortBy;
+			validateListRatings();
+		});
+
+		it('Sort by must be a string', () => {
+			listRatings.sortBy = 7;
+			validateListRatings('string.base');
+		});
+
+		[ 'date', 'rating' ].forEach(value => {
+			it(`Sort by can be ${ value }`, () => {
+				listRatings.sortBy = value;
+				validateListRatings();
+			});
+		});
+
+		it('Sort by cannot be invalid', () => {
+			listRatings.sortBy = 'user';
+			validateListRatings('any.allowOnly');
+		});
+
+		it('Sort order is optional', () => {
+			delete listRatings.sortOrder;
+			validateListRatings();
+		});
+
+		it('Sort order must be a string', () => {
+			listRatings.sortOrder = 23;
+			validateListRatings('string.base');
+		});
+
+		[ 'asc', 'desc' ].forEach(value => {
+			it(`Sort order can be ${ value }`, () => {
+				listRatings.sortOrder = value;
+				validateListRatings();
+			});
+		});
+
+		it('Sort order cannot be invalid', () => {
+			listRatings.sortOrder = 'up';
+			validateListRatings('any.allowOnly');
 		});
 	});
 });
