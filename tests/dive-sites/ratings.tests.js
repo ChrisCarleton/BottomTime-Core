@@ -165,8 +165,7 @@ describe('Dive Site Ratings', () => {
 	});
 
 	describe('POST /diveSites/:siteId/ratings', () => {
-		const diveSiteFake = fakeDiveSite();
-		const diveSite = toDiveSite(diveSiteFake);
+		const diveSite = toDiveSite(fakeDiveSite());
 
 		before(async () => {
 			await diveSite.save();
@@ -490,6 +489,7 @@ describe('Dive Site Ratings', () => {
 			await Promise.all([
 				diveSite.save(),
 				myRating.save(),
+				myOtherRating.save(),
 				otherRating.save()
 			]);
 		});

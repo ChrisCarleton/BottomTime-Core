@@ -308,7 +308,6 @@ export async function updateSiteRating(req, res) {
 
 export async function deleteSiteRating(req, res) {
 	try {
-		// req.diveSite.ratings.splice(req.diveSite.ratings.indexOf(req.diveSiteRating._id), 1);
 		const index = req.diveSite.ratings.indexOf(req.diveSiteRating._id);
 		req.diveSite.ratings.splice(index, 1);
 		await Promise.all([

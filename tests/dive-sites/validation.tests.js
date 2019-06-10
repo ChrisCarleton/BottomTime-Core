@@ -8,6 +8,7 @@ import {
 } from '../../service/validation/site';
 import { expect } from 'chai';
 import fakeDiveSite from '../util/fake-dive-site';
+import fakeDiveSiteRating from '../util/fake-dive-site-rating';
 import faker from 'faker';
 import Joi from 'joi';
 
@@ -587,10 +588,7 @@ describe('Dive Site Rating Validation', () => {
 		}
 
 		beforeEach(() => {
-			rating = {
-				rating: faker.random.number({ min: 10, max: 50 }) / 10,
-				comments: faker.lorem.sentences(4)
-			};
+			rating = fakeDiveSiteRating();
 		});
 
 		it('Rating is required', () => {
