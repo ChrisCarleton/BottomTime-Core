@@ -13,6 +13,28 @@ import {
 import Joi from 'joi';
 import moment from 'moment';
 
+async function getAverageRating(diveSiteId) {
+	const result = await DiveSiteRating.aggregate([
+		{
+			$match: { diveSite: diveSiteId }
+		},
+		{
+			$group: {
+				_id: null,
+				avgRating: { $avg: '$rating' }
+			}
+		},
+		{
+			$project: {
+				_id: 0,
+				avgRating: 1
+			}
+		}
+	]);
+
+	return result && result[0] ? result[0].avgRating : null;
+}
+
 function addSearchTerm(esQuery, searchTerm) {
 	if (searchTerm) {
 		esQuery.query.bool.must.multi_match = {
@@ -49,6 +71,12 @@ function addSorting(esQuery, sortBy, sortOrder) {
 		case 'difficulty':
 			esQuery.sort = {
 				difficulty: { order: sortOrder || 'asc' }
+			};
+			break;
+
+		case 'rating':
+			esQuery.sort = {
+				avgRating: { order: sortOrder || 'asc' }
 			};
 			break;
 
@@ -124,6 +152,14 @@ export async function searchSites(req, res) {
 			addFilter(esQuery, {
 				range: {
 					difficulty: { lte: req.query.maxDifficulty }
+				}
+			});
+		}
+
+		if (req.query.minRating) {
+			addFilter(esQuery, {
+				range: {
+					avgRating: { gte: req.query.minRating }
 				}
 			});
 		}
@@ -273,12 +309,11 @@ export async function addSiteRating(req, res) {
 			date: moment().utc().toDate(),
 			diveSite: req.diveSite.id
 		});
-		req.diveSite.ratings = req.diveSite.ratings || [];
-		req.diveSite.ratings.push(rating._id);
-		await Promise.all([
-			rating.save(),
-			req.diveSite.save()
-		]);
+
+		await rating.save();
+		req.diveSite.avgRating = await getAverageRating(req.diveSite._id);
+		await req.diveSite.save();
+
 		res.json(rating.toCleanJSON());
 	} catch (err) {
 		const logId = req.logError('Failed to create new dive site rating.', err);
@@ -298,7 +333,11 @@ export async function updateSiteRating(req, res) {
 
 	try {
 		req.diveSiteRating.assign(req.body);
+
 		await req.diveSiteRating.save();
+		req.diveSite.avgRating = await getAverageRating(req.diveSite._id);
+		await req.diveSite.save();
+
 		res.sendStatus(204);
 	} catch (err) {
 		const logId = req.logError(`Failed to update dive site rating ${ req.params.ratingId }.`, err);
@@ -308,12 +347,11 @@ export async function updateSiteRating(req, res) {
 
 export async function deleteSiteRating(req, res) {
 	try {
-		const index = req.diveSite.ratings.indexOf(req.diveSiteRating._id);
-		req.diveSite.ratings.splice(index, 1);
-		await Promise.all([
-			req.diveSiteRating.remove(),
-			req.diveSite.save()
-		]);
+
+		await req.diveSiteRating.remove();
+		req.diveSite.avgRating = await getAverageRating(req.diveSite._id);
+		await req.diveSite.save();
+
 		res.sendStatus(204);
 	} catch (err) {
 		const logId = req.logError(`Failed to delete dive site rating ${ req.params.ratingId }.`, err);

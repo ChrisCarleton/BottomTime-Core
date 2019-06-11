@@ -73,24 +73,10 @@ const siteSchema = mongoose.Schema({
 		es_type: 'geo_point',
 		es_indexed: true
 	},
-	ratings: {
-		type: [ mongoose.SchemaTypes.ObjectId ],
-		ref: 'SiteRating',
-		es_indexed: true,
-		es_type: {
-			user: {
-				es_type: 'keyword'
-			},
-			date: {
-				es_type: 'date'
-			},
-			rating: {
-				es_type: 'float'
-			},
-			comments: {
-				es_type: 'text'
-			}
-		}
+	avgRating: {
+		type: Number,
+		es_type: 'float',
+		es_indexed: true
 	}
 });
 
@@ -112,7 +98,8 @@ siteSchema.methods.toCleanJSON = function () {
 			'entryFee',
 			'difficulty',
 			'description',
-			'tags'
+			'tags',
+			'avgRating'
 		])
 	};
 

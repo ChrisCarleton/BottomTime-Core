@@ -251,7 +251,8 @@ describe('Dive sites controller', () => {
 			expect(result.toCleanJSON()).to.eql({
 				...fake,
 				owner: userAccount.user.username,
-				siteId: diveSite.id
+				siteId: diveSite.id,
+				avgRating: diveSite.avgRating
 			});
 		});
 
@@ -310,7 +311,8 @@ describe('Dive sites controller', () => {
 			expect(result.toCleanJSON()).to.eql({
 				...fake,
 				owner: userAccount.user.username,
-				siteId: diveSite.id
+				siteId: diveSite.id,
+				avgRating: diveSite.avgRating
 			});
 		});
 

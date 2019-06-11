@@ -44,14 +44,15 @@ import User from '../service/data/user';
 		log(`Admin user ${ chalk.bold.green(adminUser.username) } exists.`);
 
 		log('Creating dive sites...');
-		const diveSites = new Array(faker.random.number({ min: 1000, max: 3500 }));
-		let ratings = null;
+		const diveSites = new Array(faker.random.number({ min: 700, max: 2000 }));
 		let ratingsCount = 0;
 		for (let i = 0; i < diveSites.length; i++) {
 			diveSites[i] = toDiveSite(fakeDiveSite(
 				faker.random.arrayElement(randomUserNames)
 			));
 
+			let ratings = null;
+			let ratingSum = 0;
 			ratings = new Array(faker.random.number({ min: 1, max: 300 }));
 			for (let j = 0; j < ratings.length; j++) {
 				ratings[j] = toDiveSiteRating(
@@ -59,9 +60,10 @@ import User from '../service/data/user';
 					diveSites[i]._id,
 					faker.random.arrayElement(randomUserNames)
 				);
+				ratingSum += ratings[j].rating;
 			}
+			diveSites[i].avgRating = ratingSum / ratings.length;
 
-			diveSites[i].ratings = ratings.map(r => r._id);
 			SiteRating.insertMany(ratings);
 			ratingsCount += ratings.length;
 		}
