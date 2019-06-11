@@ -66,7 +66,6 @@ describe('Dive Site Ratings', () => {
 			for (let i = 0; i < ratings.length; i++) {
 				ratings[i] = toDiveSiteRating(fakeDiveSiteRating(), diveSite._id);
 			}
-			diveSite.ratings = ratings.map(r => r._id);
 
 			await Promise.all([
 				DiveSiteRating.insertMany(ratings),
@@ -262,7 +261,6 @@ describe('Dive Site Ratings', () => {
 	describe('GET /diveSites/:siteId/ratings/:ratingId', () => {
 		const diveSite = toDiveSite(fakeDiveSite());
 		const rating = toDiveSiteRating(fakeDiveSiteRating(), diveSite._id);
-		diveSite.ratings = [ rating._id ];
 
 		before(async () => {
 			await Promise.all([
@@ -330,7 +328,6 @@ describe('Dive Site Ratings', () => {
 				fakeDiveSiteRating(),
 				diveSite._id
 			);
-			diveSite.ratings = [ myRating._id, otherRating._id ];
 
 			await Promise.all([
 				diveSite.save(),
@@ -484,7 +481,6 @@ describe('Dive Site Ratings', () => {
 				fakeDiveSiteRating(),
 				diveSite._id
 			);
-			diveSite.ratings = [ myRating._id, myOtherRating._id, otherRating._id ];
 
 			await Promise.all([
 				diveSite.save(),
@@ -523,8 +519,7 @@ describe('Dive Site Ratings', () => {
 			]);
 
 			expect(myRating).to.be.null;
-			expect(diveSite.ratings).to.be.have.a.lengthOf(2);
-			expect(diveSite.ratings).to.eql([ myOtherRating._id, otherRating._id ]);
+			expect(diveSite.avgRating).to.be.a('number');
 		});
 
 		it('Will return 401 if user is not authenticated', async () => {
@@ -556,8 +551,7 @@ describe('Dive Site Ratings', () => {
 			]);
 
 			expect(myRating).to.be.null;
-			expect(diveSite.ratings).to.be.have.a.lengthOf(2);
-			expect(diveSite.ratings).to.eql([ myOtherRating._id, otherRating._id ]);
+			expect(diveSite.avgRating).to.be.a('number');
 		});
 
 		it('Will return 404 if the dive site does not exist', async () => {

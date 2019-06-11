@@ -56,6 +56,7 @@ describe('Searching Dive Sites', () => {
 				faker.random.arrayElement(RoatanDiveSites)
 			]));
 			diveSites[i] = toDiveSite(fakes[i]);
+			diveSites[i].avgRating = faker.random.number({ min: 10, max: 50 }) / 10;
 		}
 
 		await DiveSite.deleteMany({});
@@ -138,25 +139,58 @@ describe('Searching Dive Sites', () => {
 	});
 
 	it('Results can be filtered by maximum difficulty', async () => {
+		const maxDifficulty = 3.5;
 		const { body } = await request(App)
 			.get('/diveSites')
-			.query({ maxDifficulty: 3.5, count: 10 })
+			.query({ maxDifficulty, count: 10 })
 			.expect(200);
 
 		expect(body).to.be.an('array').and.not.be.empty;
 		body.forEach(site => {
-			expect(site.difficulty).to.be.at.most(3.5);
+			expect(site.difficulty).to.be.at.most(maxDifficulty);
 		});
 	});
 
-	it('Results can be ordered by difficulty', async () => {
+	it('Results can be filtered by minimum average rating', async () => {
+		const minRating = 3.8;
 		const { body } = await request(App)
 			.get('/diveSites')
-			.query({ sortBy: 'difficulty', count: 10 })
+			.query({ minRating, count: 10 })
 			.expect(200);
 
 		expect(body).to.be.an('array').and.not.be.empty;
-		expect(body).to.be.ascendingBy('difficulty');
+		body.forEach(site => {
+			expect(site.avgRating).to.be.at.least(minRating);
+		});
+	});
+
+	[ 'relevance', 'difficulty', 'rating' ].forEach(sortBy => {
+		[ 'asc', 'desc' ].forEach(sortOrder => {
+			it(`Results can be ordered by ${ sortBy } (${ sortOrder })`, async () => {
+				const count = 25;
+				const { body } = await request(App)
+					.get('/diveSites')
+					.query({ sortBy, sortOrder, count })
+					.expect(200);
+
+				let sortProperty = 'score';
+				switch (sortBy) {
+				case 'difficulty':
+					sortProperty = 'difficulty';
+					break;
+				case 'rating':
+					sortProperty = 'avgRating';
+					break;
+				default:
+				}
+
+				expect(body).to.be.an('array').and.have.lengthOf(count);
+				expect(body).to.be.sortedBy(
+					sortProperty,
+					{ descending: sortOrder === 'desc' }
+				);
+			});
+		});
 	});
 
 	it('Geo searches work', async () => {
@@ -194,6 +228,7 @@ describe('Searching Dive Sites', () => {
 				closeTo: SanMiguelDeCozumel,
 				water: 'salt',
 				accessibility: 'boat',
+				minRating: 2.0,
 				distance: 70,
 				count: 20
 			})
