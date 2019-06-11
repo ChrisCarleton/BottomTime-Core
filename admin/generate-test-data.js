@@ -44,7 +44,7 @@ import User from '../service/data/user';
 		log(`Admin user ${ chalk.bold.green(adminUser.username) } exists.`);
 
 		log('Creating dive sites...');
-		const diveSites = new Array(faker.random.number({ min: 1000, max: 3500 }));
+		const diveSites = new Array(faker.random.number({ min: 700, max: 2000 }));
 		let ratingsCount = 0;
 		for (let i = 0; i < diveSites.length; i++) {
 			diveSites[i] = toDiveSite(fakeDiveSite(
