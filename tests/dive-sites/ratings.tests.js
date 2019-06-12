@@ -140,7 +140,7 @@ describe('Dive Site Ratings', () => {
 				.query({ valid: false })
 				.expect(400);
 
-			expect(body).isBadRequest;
+			expect(body).to.be.a.badRequestResponse;
 		});
 
 		it('Will return 404 if the dive site does not exist', async () => {
@@ -148,7 +148,7 @@ describe('Dive Site Ratings', () => {
 				.get(`/diveSites/${ fakeMongoId() }/ratings`)
 				.expect(404);
 
-			expect(body).isNotFound;
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 500 if a server error occurs', async () => {
@@ -159,7 +159,7 @@ describe('Dive Site Ratings', () => {
 				.get(ratingsUrl(diveSite))
 				.expect(500);
 
-			expect(body).isServerError;
+			expect(body).to.be.a.serverErrorResponse;
 		});
 	});
 
@@ -210,7 +210,7 @@ describe('Dive Site Ratings', () => {
 				.send(fake)
 				.expect(400);
 
-			expect(body).isBadRequest;
+			expect(body).to.be.a.badRequestResponse;
 		});
 
 		it('Will return 400 if message body is missing', async () => {
@@ -219,7 +219,7 @@ describe('Dive Site Ratings', () => {
 				.set(...userAccount.authHeader)
 				.expect(400);
 
-			expect(body).isBadRequest;
+			expect(body).to.be.a.badRequestResponse;
 		});
 
 		it('Will return 401 if the user is not authenticated', async () => {
@@ -229,7 +229,7 @@ describe('Dive Site Ratings', () => {
 				.send(fake)
 				.expect(401);
 
-			expect(body).isUnauthorized;
+			expect(body).to.be.a.unauthorizedResponse;
 		});
 
 		it('Will return 404 if the dive site does not exist', async () => {
@@ -240,7 +240,7 @@ describe('Dive Site Ratings', () => {
 				.send(fake)
 				.expect(404);
 
-			expect(body).isNotFound;
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 500 if a server error occurs', async () => {
@@ -254,7 +254,7 @@ describe('Dive Site Ratings', () => {
 				.send(fake)
 				.expect(500);
 
-			expect(body).isServerError;
+			expect(body).to.be.a.serverErrorResponse;
 		});
 	});
 
@@ -289,7 +289,7 @@ describe('Dive Site Ratings', () => {
 				.get(`/diveSites/${ fakeMongoId() }/ratings/${ rating.id }`)
 				.expect(404);
 
-			expect(body).isNotFound;
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 404 if the dive site rating is not found', async () => {
@@ -297,7 +297,7 @@ describe('Dive Site Ratings', () => {
 				.get(`/diveSites/${ diveSite.id }/ratings/${ fakeMongoId() }`)
 				.expect(404);
 
-			expect(body).isNotFound;
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 500 if a server error occurs', async () => {
@@ -308,7 +308,7 @@ describe('Dive Site Ratings', () => {
 				.get(ratingUrl(diveSite, rating))
 				.expect(500);
 
-			expect(body).isServerError;
+			expect(body).to.be.a.serverErrorResponse;
 		});
 	});
 
@@ -372,7 +372,7 @@ describe('Dive Site Ratings', () => {
 				.send(fake)
 				.expect(400);
 
-			expect(body).isBadRequest;
+			expect(body).to.be.a.badRequestResponse;
 		});
 
 		it('Will return 400 if the request body is empty', async () => {
@@ -381,7 +381,7 @@ describe('Dive Site Ratings', () => {
 				.set(...userAccount.authHeader)
 				.expect(400);
 
-			expect(body).isBadRequest;
+			expect(body).to.be.a.badRequestResponse;
 		});
 
 		it('Will return 401 if user is not authenticated', async () => {
@@ -391,7 +391,7 @@ describe('Dive Site Ratings', () => {
 				.send(fake)
 				.expect(401);
 
-			expect(body).isUnauthorized;
+			expect(body).to.be.an.unauthorizedResponse;
 		});
 
 		it('Will return 403 if the user does not own the dive site rating', async () => {
@@ -402,7 +402,7 @@ describe('Dive Site Ratings', () => {
 				.send(fake)
 				.expect(403);
 
-			expect(body).isForbidden;
+			expect(body).to.be.a.forbiddenResponse;
 		});
 
 		it('Administrators can update other users\' dive site ratings', async () => {
@@ -430,7 +430,7 @@ describe('Dive Site Ratings', () => {
 				.send(fake)
 				.expect(404);
 
-			expect(body).isNotFound;
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 404 if the dive site rating does not exist', async () => {
@@ -441,7 +441,7 @@ describe('Dive Site Ratings', () => {
 				.send(fake)
 				.expect(404);
 
-			expect(body).isNotFound;
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 500 if a server error occurs', async () => {
@@ -455,7 +455,7 @@ describe('Dive Site Ratings', () => {
 				.send(fake)
 				.expect(500);
 
-			expect(body).isServerError;
+			expect(body).to.be.a.serverErrorResponse;
 		});
 	});
 
@@ -527,7 +527,7 @@ describe('Dive Site Ratings', () => {
 				.delete(ratingUrl(diveSite, myRating))
 				.expect(401);
 
-			expect(body).isUnauthorized;
+			expect(body).to.be.an.unauthorizedResponse;
 		});
 
 		it('Will return 403 if user does not own the dive site rating', async () => {
@@ -536,7 +536,7 @@ describe('Dive Site Ratings', () => {
 				.set(...userAccount.authHeader)
 				.expect(403);
 
-			expect(body).isForbidden;
+			expect(body).to.be.a.forbiddenResponse;
 		});
 
 		it('Administrators can delete other users\' dive site ratings', async () => {
@@ -560,7 +560,7 @@ describe('Dive Site Ratings', () => {
 				.set(...userAccount.authHeader)
 				.expect(404);
 
-			expect(body).isNotFound;
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 404 if the dive site rating does not exist', async () => {
@@ -569,7 +569,7 @@ describe('Dive Site Ratings', () => {
 				.set(...userAccount.authHeader)
 				.expect(404);
 
-			expect(body).isNotFound;
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 500 if a server error occurs', async () => {
@@ -581,7 +581,7 @@ describe('Dive Site Ratings', () => {
 				.set(...userAccount.authHeader)
 				.expect(500);
 
-			expect(body).isServerError;
+			expect(body).to.be.a.serverErrorResponse;
 		});
 	});
 });

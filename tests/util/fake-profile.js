@@ -36,15 +36,15 @@ function fakeSpecialties() {
 	return selected.join(', ');
 }
 
-export default logsVisibility => {
+export default (logsVisibility, firstName, lastName) => {
 	const year = moment().year();
 	logsVisibility = logsVisibility
 		|| faker.random.arrayElement([ 'public', 'friends-only', 'private' ]);
 
 	return {
 		logsVisibility,
-		firstName: faker.name.firstName(),
-		lastName: faker.name.lastName(),
+		firstName: firstName || faker.name.firstName(),
+		lastName: lastName || faker.name.lastName(),
 		location: faker.fake('{{address.city}}{{address.citySuffix}}, {{address.stateAbbr}}'),
 		occupation: faker.commerce.department(),
 		gender: faker.random.arrayElement([ 'male', 'female', null ]),

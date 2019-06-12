@@ -24,11 +24,15 @@ const userSchema = mongoose.Schema({
 	},
 	username: {
 		type: String,
-		required: true
+		required: true,
+		es_indexed: true,
+		es_type: 'text'
 	},
 	email: {
 		type: String,
-		required: true
+		required: true,
+		es_indexed: true,
+		es_type: 'text'
 	},
 	googleId: {
 		type: String,

@@ -23,14 +23,17 @@ export const ConfirmResetPasswordSchema = Joi.object().keys({
 }).required();
 
 export const UserQuerySchema = Joi.alternatives().try([
-	UsernameSchema.required(),
+	UsernameSchema,
 	Joi.string().email()
 ]).required();
 
 export const AdminUserQuerySchema = Joi.object().keys({
 	query: Joi.string(),
-	count: Joi.number().integer().min(1).max(1000),
-	sortBy: Joi.string().only([ 'username' ]),
+	count: Joi.number().integer().positive().max(1000),
+	skip: Joi.number().integer().min(0),
+	sortBy: Joi.string().only([ 'relevance', 'username', 'created' ]),
 	sortOrder: Joi.string().only([ 'asc', 'desc' ]),
-	lastSeen: Joi.string()
+	lockedOut: Joi.boolean(),
+	role: Joi.string().only([ 'user', 'admin' ]),
+	logsVisibility: Joi.string().only([ 'private', 'public', 'friends-only' ])
 });

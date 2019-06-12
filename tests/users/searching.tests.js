@@ -10,11 +10,23 @@ import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
+function toSearchResult(user) {
+	return _.pick(user, [
+		'username',
+		'email',
+		'role',
+		'createdAt',
+		'isLockedOut',
+		'logsVisibility',
+		'firstName',
+		'lastName'
+	]);
+}
+
 describe('User searching', () => {
+	const users = new Array(198);
 	let adminUser = null;
 	let regularUser = null;
-	let users = new Array(198);
-	let expectedUsers = null;
 	let stub = null;
 
 	before(async () => {
@@ -30,20 +42,8 @@ describe('User searching', () => {
 
 		users.push(adminUser.user);
 		users.push(regularUser.user);
-		users = _.sortBy(users, [ 'username' ]);
-		expectedUsers = users.map(u => {
-			const json = _.pick(u, [
-				'username',
-				'email',
-				'role',
-				'isLockedOut'
-			]);
-			json.createdAt = moment(u.createdAt).toISOString();
-			json.hasPassword = true;
-			json.isAnonymous = false;
 
-			return json;
-		});
+		await User.esSynchronize();
 	});
 
 	afterEach(() => {
@@ -75,142 +75,137 @@ describe('User searching', () => {
 
 	describe('As administrator', () => {
 		it('Gets a page of users', async () => {
-			const response = await request(App)
+			const count = 50;
+			const { body } = await request(App)
 				.get('/users')
 				.set(...adminUser.authHeader)
-				.query({ count: 50 })
+				.query({ count })
 				.expect(200);
 
-			const results = response.body;
-			const expected = expectedUsers.slice(0, 50);
-			expect(results).to.be.an('array').and.have.a.lengthOf(50);
-			for (let i = 0; i < results.length; i++) {
-				expect(expected[i]).to.eql(results[i]);
-			}
+			expect(body).to.be.an('array').and.have.a.lengthOf(count);
+			expect(body).to.be.descendingBy('score');
 		});
 
-		it('Can sort by username in descending order', async () => {
-			const response = await request(App)
+		[ 'relevance', 'username', 'created' ].forEach(sortBy => {
+			[ 'asc', 'desc' ].forEach(sortOrder => {
+				it(`Can return results sorted by ${ sortBy } (${ sortOrder })`, async () => {
+					const count = 50;
+					const { body } = await request(App)
+						.get('/users')
+						.set(...adminUser.authHeader)
+						.query({ count, sortBy, sortOrder })
+						.expect(200);
+
+					let sortProperty = 'score';
+					switch (sortBy) {
+					case 'username':
+						sortProperty = 'username';
+						break;
+
+					case 'created':
+						sortProperty = 'createdAt';
+						break;
+
+					default:
+					}
+
+					expect(body).to.be.an('array').and.have.a.lengthOf(count);
+					expect(body).to.be.sortedBy(sortProperty, { descending: sortOrder === 'desc' });
+				});
+			});
+		});
+
+		it('Can load additional pages of information', async () => {
+			const count = 50;
+			const sortBy = 'created';
+			const firstResponse = await request(App)
+				.get('/users')
+				.set(...adminUser.authHeader)
+				.query({ count, sortBy })
+				.expect(200);
+
+			const secondResponse = await request(App)
+				.get('/users')
+				.set(...adminUser.authHeader)
+				.query({ count, skip: count, sortBy })
+				.expect(200);
+
+			const results = [ ...firstResponse.body, ...secondResponse.body ];
+			expect(results).to.have.a.lengthOf(count * 2);
+			expect(results).to.be.ascendingBy('username');
+		});
+
+		it('Can perform a text search for a username', async () => {
+			const { body } = await request(App)
 				.get('/users')
 				.set(...adminUser.authHeader)
 				.query({
-					count: 50,
-					sortOrder: 'desc'
+					query: users[61].username
 				})
 				.expect(200);
 
-			const results = response.body;
-			const expected = _.orderBy(expectedUsers.slice(expectedUsers.length - 50), 'username', 'desc');
-			expect(results).to.be.an('array').and.have.a.lengthOf(50);
-			for (let i = 0; i < results.length; i++) {
-				expect(expected[i]).to.eql(results[i], `Failed ${ i }`);
-			}
-		});
-
-		it('Can load additional pages of information in ascending order', async () => {
-			const response = await request(App)
-				.get('/users')
-				.set(...adminUser.authHeader)
-				.query({
-					count: 50,
-					lastSeen: expectedUsers[49].username
-				})
-				.expect(200);
-
-			const results = response.body;
-			const expected = expectedUsers.slice(50, 100);
-			expect(results).to.be.an('array').and.have.a.lengthOf(50);
-			for (let i = 0; i < results.length; i++) {
-				expect(expected[i]).to.eql(results[i]);
-			}
-		});
-
-		it('Can load additional pages of information in descending order', async () => {
-			const response = await request(App)
-				.get('/users')
-				.set(...adminUser.authHeader)
-				.query({
-					count: 50,
-					sortOrder: 'desc',
-					lastSeen: expectedUsers[expectedUsers.length - 50].username
-				})
-				.expect(200);
-
-			const results = response.body;
-			const expected = _.orderBy(
-				expectedUsers.slice(expectedUsers.length - 100, expectedUsers.length - 50),
-				'username',
-				'desc');
-			expect(results).to.be.an('array').and.have.a.lengthOf(50);
-			for (let i = 0; i < results.length; i++) {
-				expect(expected[i]).to.eql(results[i]);
-			}
-		});
-
-		it('Can search for a username', async () => {
-			const response = await request(App)
-				.get('/users')
-				.set(...adminUser.authHeader)
-				.query({
-					query: expectedUsers[61].username
-				})
-				.expect(200);
-
-			expect(response.body).to.be.an('array').and.to.have.a.lengthOf(1);
-			const [ result ] = response.body;
-			expect(expectedUsers[61]).to.eql(result);
+			expect(body).to.be.an('array');
+			expect(body).to.contain(toSearchResult(users[61]));
 		});
 
 		it('Can search for an e-mail address', async () => {
-			const response = await request(App)
+			const { body } = await request(App)
 				.get('/users')
 				.set(...adminUser.authHeader)
 				.query({
-					query: expectedUsers[61].email
+					query: users[61].email
 				})
 				.expect(200);
 
-			expect(response.body).to.be.an('array').and.to.have.a.lengthOf(1);
-			const [ result ] = response.body;
-			expect(expectedUsers[61]).to.eql(result);
+			expect(body).to.be.an('array');
+			expect(body).to.contain(toSearchResult(users[61]));
 		});
 
-		it.skip('Can search for a partial username', async () => {
-			// TODO: Find a safe way to do this.
-		});
-
-		it.skip('Can search for a partial e-mail address', async () => {
-			// TODO: Find a safe way to do this.
-		});
-
-		it('Returns 400 if query string is malformed', async () => {
-			const response = await request(App)
+		it('Can search for a partial username', async () => {
+			const { body } = await request(App)
 				.get('/users')
 				.set(...adminUser.authHeader)
-				.query({ sortBy: 'favouriteIceCream' })
-				.expect(400);
+				.query({
+					query: `${ users[61].username.substr(0, 5) }*`
+				})
+				.expect(200);
 
-			const result = response.body;
-			expect(result).to.exist;
-			expect(result.errorId).to.equal(ErrorIds.badRequest);
-			expect(result.status).to.equal(400);
+			expect(body).to.be.an('array');
+			expect(body).to.contain(toSearchResult(users[61]));
 		});
 
-		it('Returns 500 if a server error occurs while performing search', async () => {
-			stub = sinon.stub(User.prototype, 'getAccountJSON');
-			stub.throws(new Error('nope'));
+		// it.skip('Can search for a partial e-mail address', async () => {
+		// 	// TODO: Find a safe way to do this.
+		// });
 
-			const response = await request(App)
-				.get('/users')
-				.set(...adminUser.authHeader)
-				.expect(500);
+		// it('Returns 400 if query string is malformed', async () => {
+		// 	const response = await request(App)
+		// 		.get('/users')
+		// 		.set(...adminUser.authHeader)
+		// 		.query({ sortBy: 'favouriteIceCream' })
+		// 		.expect(400);
 
-			const result = response.body;
-			expect(result).to.exist;
-			expect(result.errorId).to.equal(ErrorIds.serverError);
-			expect(result.status).to.equal(500);
-			expect(result.logId).to.exist;
-		});
+		// 	const result = response.body;
+		// 	expect(result).to.exist;
+		// 	expect(result.errorId).to.equal(ErrorIds.badRequest);
+		// 	expect(result.status).to.equal(400);
+		// });
+
+		// it('Returns 500 if a server error occurs while performing search', async () => {
+		// 	stub = sinon.stub(User.prototype, 'getAccountJSON');
+		// 	stub.throws(new Error('nope'));
+
+		// 	const response = await request(App)
+		// 		.get('/users')
+		// 		.set(...adminUser.authHeader)
+		// 		.expect(500);
+
+		// 	const result = response.body;
+		// 	expect(result).to.exist;
+		// 	expect(result.errorId).to.equal(ErrorIds.serverError);
+		// 	expect(result.status).to.equal(500);
+		// 	expect(result.logId).to.exist;
+		// });
 	});
 
 	describe('As a regular user', () => {
