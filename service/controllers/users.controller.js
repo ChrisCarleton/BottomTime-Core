@@ -12,7 +12,7 @@ import mailer from '../mail/mailer';
 import moment from 'moment';
 import sessionManager from '../utils/session-manager';
 import templates from '../mail/templates';
-import User, { cleanUpUser } from '../data/user';
+import User from '../data/user';
 import { UsernameRegex, UsernameSchema } from '../validation/common';
 import uuid from 'uuid/v4';
 
@@ -210,13 +210,13 @@ export async function CreateUserAccount(req, res) {
 
 		if (req.user && req.user.role === 'admin') {
 			return res.status(201).json({
-				user: cleanUpUser(req.user)
+				user: User.cleanUpUser(req.user)
 			});
 		}
 
 		req.log.info('Created account for and logged in user ', entity.username);
 		res.status(201).json({
-			user: cleanUpUser(entity),
+			user: User.cleanUpUser(entity),
 			token: await sessionManager.createSessionToken(entity.username)
 		});
 

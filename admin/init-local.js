@@ -41,18 +41,20 @@ function sleep(duration) {
 			}
 		}
 
-		log('Creating ElasticSearch index...');
+		log('Creating ElasticSearch indices...');
 		esClient = new Client({
 			log: 'debug',
 			node: config.elasticSearchEndpoint
 		});
 
-		await esClient.indices.create({
-			index: config.elasticSearchIndex
-		});
+		await Promise.all([
+			esClient.indices.create({ index: `${ config.elasticSearchIndex }_sites` }),
+			esClient.indices.create({ index: `${ config.elasticSearchIndex }_users` })
+		]);
 
-		log('Creating Dive Sites type...');
-		require('../service/data/sites');
+		log('Creating ElasticSearch types...');
+		await require('../service/data/sites').esCreateMapping();
+		await require('../service/data/user').esCreateMapping();
 		log('ElasticSearch has been initialized.');
 
 	} catch (err) {

@@ -8,7 +8,7 @@ import { Login } from '../../service/controllers/auth.controller';
 import request from 'supertest';
 import Session from '../../service/data/session';
 import sinon from 'sinon';
-import User, { cleanUpUser } from '../../service/data/user';
+import User from '../../service/data/user';
 
 describe('Auth Controller', () => {
 
@@ -40,13 +40,13 @@ describe('Auth Controller', () => {
 				})
 				.expect(200);
 			expect(res.body.token).to.exist;
-			expect(res.body.user).to.eql(cleanUpUser(user));
+			expect(res.body.user).to.eql(User.cleanUpUser(user));
 
 			res = await request(App)
 				.get('/auth/me')
 				.set('Authorization', `Bearer ${ res.body.token }`)
 				.expect(200);
-			expect(res.body).to.eql(cleanUpUser(user));
+			expect(res.body).to.eql(User.cleanUpUser(user));
 		});
 
 		it('Fails when user cannot be found', async () => {
@@ -151,7 +151,7 @@ describe('Auth Controller', () => {
 			const res = await request(App)
 				.get('/auth/me')
 				.expect(200);
-			expect(res.body).to.eql(cleanUpUser(null));
+			expect(res.body).to.eql(User.cleanUpUser(null));
 		});
 
 		it('Returns user information for authenticated users', async () => {
@@ -160,7 +160,7 @@ describe('Auth Controller', () => {
 				.get('/auth/me')
 				.set(...user.authHeader)
 				.expect(200);
-			expect(result.body).to.eql(cleanUpUser(user.user));
+			expect(result.body).to.eql(User.cleanUpUser(user.user));
 		});
 
 		it('Returns Server Error if there is a problem accessing the database', async () => {

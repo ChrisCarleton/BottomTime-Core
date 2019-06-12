@@ -2,7 +2,6 @@
 
 import _ from 'lodash';
 import config from '../config';
-import log from '../logger';
 import mongoose from './database';
 import { v6 as mexp } from 'mongoose-elasticsearch-xp';
 import search from '../search';
@@ -81,7 +80,7 @@ const siteSchema = mongoose.Schema({
 });
 
 siteSchema.plugin(mexp, {
-	index: config.elasticSearchIndex,
+	index: `${ config.elasticSearchIndex }_sites`,
 	client: search
 });
 
@@ -135,14 +134,5 @@ siteSchema.methods.assign = function (entity) {
 };
 
 const model = mongoose.model('Site', siteSchema);
-
-const message = 'Mapping dive sites data to ElasticSearch:';
-model.esCreateMapping()
-	.then(mapping => {
-		log.debug(message, mapping);
-	})
-	.catch(err => {
-		log.warn(message, JSON.stringify(err, null, '  '));
-	});
-
 export default model;
+module.exports = model;
