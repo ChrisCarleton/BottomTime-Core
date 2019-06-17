@@ -95,7 +95,8 @@ export async function AdminGetUsers(req, res) {
 			score: hit._score
 		})));
 	} catch (err) {
-		console.error(JSON.stringify(err, null, '  '));
+		const logId = req.logError('Unable to search for users', err);
+		serverError(res, logId);
 	}
 }
 

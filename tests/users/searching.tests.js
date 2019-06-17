@@ -6,21 +6,26 @@ import { expect } from 'chai';
 import fakeUser from '../util/fake-user';
 import moment from 'moment';
 import request from 'supertest';
+import searchUtils from '../../service/utils/search-utils';
 import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
 function toSearchResult(user) {
-	return _.pick(user, [
-		'username',
-		'email',
-		'role',
-		'createdAt',
-		'isLockedOut',
-		'logsVisibility',
-		'firstName',
-		'lastName'
-	]);
+	const result = {
+		createdAt: moment(user.createdAt).utc().toISOString(),
+		..._.pick(user, [
+			'username',
+			'email',
+			'role',
+			'isLockedOut',
+			'logsVisibility',
+			'firstName',
+			'lastName'
+		])
+	};
+
+	return result;
 }
 
 describe('User searching', () => {
@@ -30,6 +35,7 @@ describe('User searching', () => {
 	let stub = null;
 
 	before(async () => {
+		await User.deleteMany({});
 		[ adminUser, regularUser ] = await Promise.all([
 			createFakeAccount('admin'),
 			createFakeAccount()
@@ -117,22 +123,23 @@ describe('User searching', () => {
 
 		it('Can load additional pages of information', async () => {
 			const count = 50;
-			const sortBy = 'created';
+			const sortBy = 'username';
+			const sortOrder = 'desc';
 			const firstResponse = await request(App)
 				.get('/users')
 				.set(...adminUser.authHeader)
-				.query({ count, sortBy })
+				.query({ count, sortBy, sortOrder })
 				.expect(200);
 
 			const secondResponse = await request(App)
 				.get('/users')
 				.set(...adminUser.authHeader)
-				.query({ count, skip: count, sortBy })
+				.query({ count, skip: count, sortBy, sortOrder })
 				.expect(200);
 
 			const results = [ ...firstResponse.body, ...secondResponse.body ];
 			expect(results).to.have.a.lengthOf(count * 2);
-			expect(results).to.be.ascendingBy('username');
+			expect(results).to.be.descendingBy('username');
 		});
 
 		it('Can perform a text search for a username', async () => {
@@ -145,10 +152,13 @@ describe('User searching', () => {
 				.expect(200);
 
 			expect(body).to.be.an('array');
-			expect(body).to.contain(toSearchResult(users[61]));
+			expect(body[0]).to.eql({
+				...toSearchResult(users[61]),
+				score: body[0].score
+			});
 		});
 
-		it('Can search for an e-mail address', async () => {
+		it('Can perform a text search for an e-mail address', async () => {
 			const { body } = await request(App)
 				.get('/users')
 				.set(...adminUser.authHeader)
@@ -158,54 +168,33 @@ describe('User searching', () => {
 				.expect(200);
 
 			expect(body).to.be.an('array');
-			expect(body).to.contain(toSearchResult(users[61]));
+			expect(body[0]).to.eql({
+				...toSearchResult(users[61]),
+				score: body[0].score
+			});
 		});
 
-		it('Can search for a partial username', async () => {
+		it('Returns 400 if query string is malformed', async () => {
 			const { body } = await request(App)
 				.get('/users')
 				.set(...adminUser.authHeader)
-				.query({
-					query: `${ users[61].username.substr(0, 5) }*`
-				})
-				.expect(200);
+				.query({ sortBy: 'favouriteIceCream' })
+				.expect(400);
 
-			expect(body).to.be.an('array');
-			expect(body).to.contain(toSearchResult(users[61]));
+			expect(body).to.be.a.badRequestResponse;
 		});
 
-		// it.skip('Can search for a partial e-mail address', async () => {
-		// 	// TODO: Find a safe way to do this.
-		// });
+		it('Returns 500 if a server error occurs while performing search', async () => {
+			stub = sinon.stub(searchUtils, 'getBaseQuery');
+			stub.throws(new Error('nope'));
 
-		// it('Returns 400 if query string is malformed', async () => {
-		// 	const response = await request(App)
-		// 		.get('/users')
-		// 		.set(...adminUser.authHeader)
-		// 		.query({ sortBy: 'favouriteIceCream' })
-		// 		.expect(400);
+			const { body } = await request(App)
+				.get('/users')
+				.set(...adminUser.authHeader)
+				.expect(500);
 
-		// 	const result = response.body;
-		// 	expect(result).to.exist;
-		// 	expect(result.errorId).to.equal(ErrorIds.badRequest);
-		// 	expect(result.status).to.equal(400);
-		// });
-
-		// it('Returns 500 if a server error occurs while performing search', async () => {
-		// 	stub = sinon.stub(User.prototype, 'getAccountJSON');
-		// 	stub.throws(new Error('nope'));
-
-		// 	const response = await request(App)
-		// 		.get('/users')
-		// 		.set(...adminUser.authHeader)
-		// 		.expect(500);
-
-		// 	const result = response.body;
-		// 	expect(result).to.exist;
-		// 	expect(result.errorId).to.equal(ErrorIds.serverError);
-		// 	expect(result.status).to.equal(500);
-		// 	expect(result.logId).to.exist;
-		// });
+			expect(body).to.be.a.serverErrorResponse;
+		});
 	});
 
 	describe('As a regular user', () => {
@@ -289,4 +278,25 @@ describe('User searching', () => {
 			expect(result.logId).to.exist;
 		});
 	});
+
+	// describe('Auto-complete search', () => {
+	// 	it('Can search for a partial username', async () => {
+	// 		const { body } = await request(App)
+	// 			.get('/users')
+	// 			.set(...adminUser.authHeader)
+	// 			.query({
+	// 				count: 15,
+	// 				autocomplete: `${ users[61].username.substr(0, users[61].username.length - 4) }*`
+	// 			})
+	// 			.expect(200);
+
+	// 		expect(body).to.be.an('array').and.not.be.empty;
+	// 		body.forEach(r => delete r.score);
+	// 		expect(body).to.contain(toSearchResult(users[61]));
+	// 	});
+
+	// 	it.skip('Can search for a partial e-mail address', async () => {
+	// 		// TODO: Find a safe way to do this.
+	// 	});
+	// });
 });
