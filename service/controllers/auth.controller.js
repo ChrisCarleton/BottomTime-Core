@@ -1,10 +1,10 @@
 import { badRequest, conflict, serverError, unauthorized } from '../utils/error-response';
-import { cleanUpUser } from '../data/user';
 import Joi from 'joi';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
 import Session from '../data/session';
 import sessionManager from '../utils/session-manager';
+import User from '../data/user';
 
 export function AuthenticateUser(req, res, next) {
 	passport.authenticate('local', { session: false }, (err, user) => {
@@ -57,7 +57,7 @@ export async function Login(req, res) {
 			`${ req.useragent.platform } / ${ req.useragent.os } / ${ req.useragent.browser }`
 		);
 		res.json({
-			user: cleanUpUser(req.user),
+			user: User.cleanUpUser(req.user),
 			token
 		});
 	} catch (err) {
@@ -82,7 +82,7 @@ export async function Logout(req, res) {
 }
 
 export function GetCurrentUser(req, res) {
-	res.json(cleanUpUser(req.user));
+	res.json(User.cleanUpUser(req.user));
 }
 
 export function GoogleCallback(req, res) {

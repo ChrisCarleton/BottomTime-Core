@@ -44,7 +44,7 @@ export default function errorResponseAssertions(chai, utils) {
 	const { Assertion, expect } = chai;
 	utils.addProperty(
 		Assertion.prototype,
-		'isServerError',
+		'serverErrorResponse',
 		function () {
 			isServerError(expect, this._obj);
 		}
@@ -52,7 +52,7 @@ export default function errorResponseAssertions(chai, utils) {
 
 	utils.addProperty(
 		Assertion.prototype,
-		'isNotFound',
+		'notFoundResponse',
 		function () {
 			isNotFound(expect, this._obj);
 		}
@@ -60,7 +60,7 @@ export default function errorResponseAssertions(chai, utils) {
 
 	utils.addProperty(
 		Assertion.prototype,
-		'isBadRequest',
+		'badRequestResponse',
 		function () {
 			isBadRequest(expect, this._obj);
 		}
@@ -68,7 +68,7 @@ export default function errorResponseAssertions(chai, utils) {
 
 	utils.addProperty(
 		Assertion.prototype,
-		'isConflict',
+		'conflictResponse',
 		function () {
 			isConflict(expect, this._obj);
 		}
@@ -76,7 +76,7 @@ export default function errorResponseAssertions(chai, utils) {
 
 	utils.addProperty(
 		Assertion.prototype,
-		'isUnauthorized',
+		'unauthorizedResponse',
 		function () {
 			isUnauthorized(expect, this._obj);
 		}
@@ -84,7 +84,7 @@ export default function errorResponseAssertions(chai, utils) {
 
 	utils.addProperty(
 		Assertion.prototype,
-		'isForbidden',
+		'forbiddenResponse',
 		function () {
 			isForbidden(expect, this._obj);
 		}

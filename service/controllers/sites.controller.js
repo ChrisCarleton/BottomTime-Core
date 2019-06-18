@@ -12,6 +12,7 @@ import {
 } from '../validation/site';
 import Joi from 'joi';
 import moment from 'moment';
+import searchUtils from '../utils/search-utils';
 
 async function getAverageRating(diveSiteId) {
 	const result = await DiveSiteRating.aggregate([
@@ -35,57 +36,6 @@ async function getAverageRating(diveSiteId) {
 	return result && result[0] ? result[0].avgRating : null;
 }
 
-function addSearchTerm(esQuery, searchTerm) {
-	if (searchTerm) {
-		esQuery.query.bool.must.multi_match = {
-			query: searchTerm,
-			fields: [
-				'name^3',
-				'location',
-				'country',
-				'description^1',
-				'tags^5'
-			],
-			fuzziness: 'AUTO'
-		};
-	} else {
-		esQuery.query.bool.must.match_all = {};
-	}
-}
-
-function addFilter(esQuery, filter) {
-	if (!esQuery.query.bool.filter) {
-		esQuery.query.bool.filter = {
-			bool: {
-				must: []
-			}
-		};
-	}
-
-	esQuery.query.bool.filter.bool.must.push(filter);
-}
-
-function addSorting(esQuery, sortBy, sortOrder) {
-	if (sortBy) {
-		switch (sortBy) {
-		case 'difficulty':
-			esQuery.sort = {
-				difficulty: { order: sortOrder || 'asc' }
-			};
-			break;
-
-		case 'rating':
-			esQuery.sort = {
-				avgRating: { order: sortOrder || 'asc' }
-			};
-			break;
-
-		default:
-		}
-
-	}
-}
-
 /* eslint-disable complexity */
 export async function searchSites(req, res) {
 	const { error } = Joi.validate(req.query, DiveSiteSearchSchema);
@@ -97,27 +47,20 @@ export async function searchSites(req, res) {
 		);
 	}
 
-	const esQuery = {
-		query: {
-			bool: {
-				must: {}
-			}
-		}
-	};
+	const esQuery = searchUtils.getBaseQuery();
 
 	try {
-		esQuery.size = req.query.count
-			? parseInt(req.query.count, 10)
-			: 500;
-
-		if (req.query.skip) {
-			esQuery.from = parseInt(req.query.skip, 10);
-		}
-
-		addSearchTerm(esQuery, req.query.query);
+		searchUtils.setLimits(esQuery, req.query.skip, req.query.count);
+		searchUtils.addSearchTerm(esQuery, req.query.query, [
+			'name^3',
+			'location',
+			'country',
+			'description^1',
+			'tags^5'
+		]);
 
 		if (req.query.owner) {
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				term: {
 					owner: req.query.owner
 				}
@@ -125,7 +68,7 @@ export async function searchSites(req, res) {
 		}
 
 		if (req.query.water) {
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				term: {
 					water: req.query.water
 				}
@@ -133,7 +76,7 @@ export async function searchSites(req, res) {
 		}
 
 		if (req.query.accessibility) {
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				term: {
 					accessibility: req.query.accessibility
 				}
@@ -141,7 +84,7 @@ export async function searchSites(req, res) {
 		}
 
 		if (req.query.avoidEntryFee) {
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				term: {
 					entryFee: false
 				}
@@ -149,7 +92,7 @@ export async function searchSites(req, res) {
 		}
 
 		if (req.query.maxDifficulty) {
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				range: {
 					difficulty: { lte: req.query.maxDifficulty }
 				}
@@ -157,7 +100,7 @@ export async function searchSites(req, res) {
 		}
 
 		if (req.query.minRating) {
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				range: {
 					avgRating: { gte: req.query.minRating }
 				}
@@ -166,7 +109,7 @@ export async function searchSites(req, res) {
 
 		if (req.query.closeTo) {
 			const [ lon, lat ] = req.query.closeTo;
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				geo_distance: {
 					distance: `${ req.query.distance || '50' }km`,
 					gps: {
@@ -177,7 +120,10 @@ export async function searchSites(req, res) {
 			});
 		}
 
-		addSorting(esQuery, req.query.sortBy, req.query.sortOrder);
+		searchUtils.addSorting(esQuery, req.query.sortBy, req.query.sortOrder, {
+			difficulty: 'difficulty',
+			rating: 'avgRating'
+		});
 
 		const results = await DiveSite.esSearch(esQuery);
 		res.json(results.body.hits.hits.map(hit => {

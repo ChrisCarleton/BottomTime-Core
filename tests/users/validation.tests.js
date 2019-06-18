@@ -279,14 +279,13 @@ describe('Admin user search query', () => {
 		adminUserQuery = {
 			query: 'ji',
 			count: 500,
+			skip: 1500,
 			sortBy: 'username',
 			sortOrder: 'asc',
-			lastSeen: 'Jimmy64'
+			lockedOut: false,
+			role: 'user',
+			logsVisibility: 'private'
 		};
-	});
-
-	it('Succeeds if query is valid', () => {
-		validateAdminUserSearch();
 	});
 
 	it('Query is optional', () => {
@@ -297,6 +296,11 @@ describe('Admin user search query', () => {
 	it('Query must be a string', () => {
 		adminUserQuery.query = 50;
 		validateAdminUserSearch('string.base');
+	});
+
+	it('Count is optional', () => {
+		delete adminUserQuery.count;
+		validateAdminUserSearch();
 	});
 
 	it('Count must be a number', () => {
@@ -311,7 +315,7 @@ describe('Admin user search query', () => {
 
 	it('Count cannot be less than 1', () => {
 		adminUserQuery.count = 0;
-		validateAdminUserSearch('number.min');
+		validateAdminUserSearch('number.positive');
 	});
 
 	it('Count cannot be greater than 1000', () => {
@@ -319,12 +323,37 @@ describe('Admin user search query', () => {
 		validateAdminUserSearch('number.max');
 	});
 
-	it('Count is optional', () => {
-		delete adminUserQuery.count;
+	it('Skip is optional', () => {
+		delete adminUserQuery.skip;
 		validateAdminUserSearch();
 	});
 
-	[ 'username' ].forEach(f => {
+	it('Skip must be a number', () => {
+		adminUserQuery.skip = 'a few';
+		validateAdminUserSearch('number.base');
+	});
+
+	it('Skip must be an integer', () => {
+		adminUserQuery.skip = 200.3;
+		validateAdminUserSearch('number.integer');
+	});
+
+	it('Skip cannot be less than zero', () => {
+		adminUserQuery.skip = -1;
+		validateAdminUserSearch('number.min');
+	});
+
+	it('Sort by is optional', () => {
+		delete adminUserQuery.sortBy;
+		validateAdminUserSearch();
+	});
+
+	it('Sort by must be a string', () => {
+		adminUserQuery.sortBy = 7;
+		validateAdminUserSearch('string.base');
+	});
+
+	[ 'relevance', 'username', 'created' ].forEach(f => {
 		it(`Sort by can be "${ f }"`, () => {
 			adminUserQuery.sortBy = f;
 			validateAdminUserSearch();
@@ -338,6 +367,16 @@ describe('Admin user search query', () => {
 
 	it('Sort by must be a string', () => {
 		adminUserQuery.sortBy = 1;
+		validateAdminUserSearch('string.base');
+	});
+
+	it('Sort order is optional', () => {
+		delete adminUserQuery.sortOrder;
+		validateAdminUserSearch();
+	});
+
+	it('Sort order must be a string', () => {
+		adminUserQuery.sortOrder = 13;
 		validateAdminUserSearch('string.base');
 	});
 
@@ -356,5 +395,59 @@ describe('Admin user search query', () => {
 	it('Sort order must be a string', () => {
 		adminUserQuery.sortOrder = 50;
 		validateAdminUserSearch('string.base');
+	});
+
+	it('Locked out is optional', () => {
+		delete adminUserQuery.lockedOut;
+		validateAdminUserSearch();
+	});
+
+	it('Locked out must be a boolean value', () => {
+		adminUserQuery.lockedOut = 'no';
+		validateAdminUserSearch('boolean.base');
+	});
+
+	it('Role is optional', () => {
+		delete adminUserQuery.role;
+		validateAdminUserSearch();
+	});
+
+	it('Role must be a string', () => {
+		adminUserQuery.role = 7;
+		validateAdminUserSearch('string.base');
+	});
+
+	[ 'user', 'admin' ].forEach(r => {
+		it(`Role can be ${ r }`, () => {
+			adminUserQuery.role = r;
+			validateAdminUserSearch();
+		});
+	});
+
+	it('Role cannot be invalid', () => {
+		adminUserQuery.role = 'supervisor';
+		validateAdminUserSearch('any.allowOnly');
+	});
+
+	it('Logs visibility is optional', () => {
+		delete adminUserQuery.logsVisibility;
+		validateAdminUserSearch();
+	});
+
+	it('Logs visibility must be a string', () => {
+		adminUserQuery.logsVisibility = true;
+		validateAdminUserSearch('string.base');
+	});
+
+	[ 'private', 'public', 'friends-only' ].forEach(v => {
+		it(`Logs visibility can be ${ v }`, () => {
+			adminUserQuery.logsVisibility = v;
+			validateAdminUserSearch();
+		});
+	});
+
+	it('Logs visibility cannot be invalid', () => {
+		adminUserQuery.logsVisibility = 'just-tom';
+		validateAdminUserSearch('any.allowOnly');
 	});
 });

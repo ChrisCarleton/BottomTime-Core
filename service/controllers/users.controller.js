@@ -12,9 +12,10 @@ import mailer from '../mail/mailer';
 import moment from 'moment';
 import sessionManager from '../utils/session-manager';
 import templates from '../mail/templates';
-import User, { cleanUpUser } from '../data/user';
+import User from '../data/user';
 import { UsernameRegex, UsernameSchema } from '../validation/common';
 import uuid from 'uuid/v4';
+import searchUtils from '../utils/search-utils';
 
 export async function GetUsers(req, res, next) {
 	if (req.user.role === 'admin') {
@@ -57,51 +58,45 @@ export async function AdminGetUsers(req, res) {
 	const { error } = Joi.validate(req.query, AdminUserQuerySchema);
 	if (error) {
 		return badRequest(
-			'Could not complete query. Query string was invalid.',
+			'Unable to perform search. There is a problem with the query string.',
 			error,
-			res);
+			res
+		);
 	}
 
 	try {
-		const query = {};
-		req.query.sortBy = req.query.sortBy || 'username';
-		req.query.sortOrder = req.query.sortOrder || 'asc';
+		const esQuery = searchUtils.getBaseQuery();
+		searchUtils.setLimits(esQuery, req.query.skip, req.query.count);
+		searchUtils.addSearchTerm(esQuery, req.query.query, [
+			'username^4',
+			'email^4',
+			'firstName^2',
+			'lastName^2',
+			'about'
+		]);
+		searchUtils.selectFields(esQuery, [
+			'username',
+			'email',
+			'role',
+			'createdAt',
+			'isLockedOut',
+			'logsVisibility',
+			'firstName',
+			'lastName'
+		]);
+		searchUtils.addSorting(esQuery, req.query.sortBy, req.query.sortOrder, {
+			username: 'usernameLower',
+			created: 'createdAt'
+		});
 
-		if (req.query.query) {
-			req.query.query = req.query.query.toLowerCase();
-			query.$or = [
-				{ usernameLower: req.query.query },
-				{ emailLower: req.query.query }
-			];
-		}
-
-		if (req.query.lastSeen) {
-			if (req.query.sortOrder === 'asc') {
-				query.username = { $gt: req.query.lastSeen };
-			} else {
-				query.username = { $lt: req.query.lastSeen };
-			}
-		}
-
-		const results = await User
-			.find(query)
-			.sort(`${ req.query.sortOrder === 'asc' ? '' : '-' }${ req.query.sortBy }`)
-			.limit(req.query.count ? parseInt(req.query.count, 10) : 500)
-			.select([
-				'username',
-				'email',
-				'role',
-				'isLockedOut',
-				'passwordHash',
-				'createdAt'
-			])
-			.exec();
-
-		const json = results.map(u => u.getAccountJSON());
-		return res.json(json);
+		const results = await User.esSearch(esQuery);
+		res.json(results.body.hits.hits.map(hit => ({
+			...hit._source,
+			score: hit._score
+		})));
 	} catch (err) {
-		const logId = req.logError('Failed to search users.', err);
-		return serverError(res, logId);
+		const logId = req.logError('Unable to search for users', err);
+		serverError(res, logId);
 	}
 }
 
@@ -210,13 +205,13 @@ export async function CreateUserAccount(req, res) {
 
 		if (req.user && req.user.role === 'admin') {
 			return res.status(201).json({
-				user: cleanUpUser(req.user)
+				user: User.cleanUpUser(req.user)
 			});
 		}
 
 		req.log.info('Created account for and logged in user ', entity.username);
 		res.status(201).json({
-			user: cleanUpUser(entity),
+			user: User.cleanUpUser(entity),
 			token: await sessionManager.createSessionToken(entity.username)
 		});
 

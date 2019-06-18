@@ -1,25 +1,38 @@
+/* eslint camelcase: 0 */
+
 import _ from 'lodash';
+import config from '../config';
+import mexp from 'mongoose-elasticsearch-xp';
 import moment from 'moment';
 import mongoose from './database';
+import search from '../search';
 
 const userSchema = mongoose.Schema({
 	usernameLower: {
 		type: String,
 		unique: true,
-		required: true
+		required: true,
+		es_indexed: true,
+		es_type: 'keyword'
 	},
 	emailLower: {
 		type: String,
 		unique: true,
-		required: true
+		required: true,
+		es_indexed: true,
+		es_type: 'keyword'
 	},
 	username: {
 		type: String,
-		required: true
+		required: true,
+		es_indexed: true,
+		es_type: 'text'
 	},
 	email: {
 		type: String,
-		required: true
+		required: true,
+		es_indexed: true,
+		es_type: 'text'
 	},
 	googleId: {
 		type: String,
@@ -30,11 +43,15 @@ const userSchema = mongoose.Schema({
 		type: String,
 		required: true,
 		index: true,
-		default: 'user'
+		default: 'user',
+		es_indexed: true,
+		es_type: 'keyword'
 	},
 	createdAt: {
 		type: Date,
-		required: true
+		required: true,
+		es_indexed: true,
+		es_type: 'date'
 	},
 	passwordHash: String,
 	passwordResetToken: String,
@@ -42,12 +59,16 @@ const userSchema = mongoose.Schema({
 	isLockedOut: {
 		type: Boolean,
 		required: true,
-		default: false
+		default: false,
+		es_indexed: true,
+		es_type: 'boolean'
 	},
 	logsVisibility: {
 		type: String,
 		required: true,
-		default: 'friends-only'
+		default: 'friends-only',
+		es_indexed: true,
+		es_type: 'keyword'
 	},
 	weightUnit: {
 		type: String,
@@ -69,18 +90,71 @@ const userSchema = mongoose.Schema({
 		default: 'bar',
 		required: true
 	},
-	firstName: String,
-	lastName: String,
-	location: String,
-	occupation: String,
-	gender: String,
-	birthdate: Date,
-	typeOfDiver: String,
-	startedDiving: Number,
-	certificationLevel: String,
-	certificationAgencies: String,
-	specialties: String,
-	about: String
+	firstName: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
+	lastName: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
+	location: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
+	occupation: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
+	gender: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
+	birthdate: {
+		type: Date,
+		es_indexed: true,
+		es_type: 'date'
+	},
+	typeOfDiver: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
+	startedDiving: {
+		type: Number,
+		es_indexed: true,
+		es_type: 'integer'
+	},
+	certificationLevel: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
+	certificationAgencies: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
+	specialties: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
+	about: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	}
+});
+
+userSchema.plugin(mexp, {
+	index: `${ config.elasticSearchIndex }_users`,
+	client: search
 });
 
 userSchema.statics.findByUsername = function (username, done) {
@@ -89,6 +163,21 @@ userSchema.statics.findByUsername = function (username, done) {
 
 userSchema.statics.findByEmail = function (email, done) {
 	return this.findOne({ emailLower: email.toLowerCase() }, done);
+};
+
+userSchema.statics.cleanUpUser = function (user) {
+	if (!user) {
+		return {
+			username: 'Anonymous_User',
+			email: '',
+			createdAt: null,
+			role: 'user',
+			isAnonymous: true,
+			isLockedOut: false
+		};
+	}
+
+	return user.getAccountJSON();
 };
 
 userSchema.methods.getAccountJSON = function () {
@@ -158,19 +247,6 @@ userSchema.methods.getFullName = function () {
 	return this.firstName || this.username;
 };
 
-export default mongoose.model('User', userSchema);
-
-export function cleanUpUser(user) {
-	if (!user) {
-		return {
-			username: 'Anonymous_User',
-			email: '',
-			createdAt: null,
-			role: 'user',
-			isAnonymous: true,
-			isLockedOut: false
-		};
-	}
-
-	return user.getAccountJSON();
-}
+const model = mongoose.model('User', userSchema);
+export default model;
+module.exports = model;
