@@ -2,52 +2,38 @@
 
 import { badRequest, forbidden, notFound, serverError } from '../utils/error-response';
 import DiveSite from '../data/sites';
-import { DiveSiteSchema, DiveSiteCollectionSchema, DiveSiteSearchSchema } from '../validation/site';
+import DiveSiteRating from '../data/site-ratings';
+import {
+	DiveSiteSchema,
+	DiveSiteCollectionSchema,
+	DiveSiteRatingSchema,
+	DiveSiteSearchSchema,
+	ListDiveSiteRatingsSchema
+} from '../validation/site';
 import Joi from 'joi';
+import moment from 'moment';
+import searchUtils from '../utils/search-utils';
 
-function addSearchTerm(esQuery, searchTerm) {
-	if (searchTerm) {
-		esQuery.query.bool.must.multi_match = {
-			query: searchTerm,
-			fields: [
-				'name^3',
-				'location',
-				'country',
-				'description^1',
-				'tags^5'
-			],
-			fuzziness: 'AUTO'
-		};
-	} else {
-		esQuery.query.bool.must.match_all = {};
-	}
-}
-
-function addFilter(esQuery, filter) {
-	if (!esQuery.query.bool.filter) {
-		esQuery.query.bool.filter = {
-			bool: {
-				must: []
+async function getAverageRating(diveSiteId) {
+	const result = await DiveSiteRating.aggregate([
+		{
+			$match: { diveSite: diveSiteId }
+		},
+		{
+			$group: {
+				_id: null,
+				avgRating: { $avg: '$rating' }
 			}
-		};
-	}
-
-	esQuery.query.bool.filter.bool.must.push(filter);
-}
-
-function addSorting(esQuery, sortBy, sortOrder) {
-	if (sortBy) {
-		switch (sortBy) {
-		case 'difficulty':
-			esQuery.sort = {
-				difficulty: { order: sortOrder || 'asc' }
-			};
-			break;
-
-		default:
+		},
+		{
+			$project: {
+				_id: 0,
+				avgRating: 1
+			}
 		}
+	]);
 
-	}
+	return result && result[0] ? result[0].avgRating : null;
 }
 
 /* eslint-disable complexity */
@@ -61,27 +47,20 @@ export async function searchSites(req, res) {
 		);
 	}
 
-	const esQuery = {
-		query: {
-			bool: {
-				must: {}
-			}
-		}
-	};
+	const esQuery = searchUtils.getBaseQuery();
 
 	try {
-		esQuery.size = req.query.count
-			? parseInt(req.query.count, 10)
-			: 500;
-
-		if (req.query.skip) {
-			esQuery.from = parseInt(req.query.skip, 10);
-		}
-
-		addSearchTerm(esQuery, req.query.query);
+		searchUtils.setLimits(esQuery, req.query.skip, req.query.count);
+		searchUtils.addSearchTerm(esQuery, req.query.query, [
+			'name^3',
+			'location',
+			'country',
+			'description^1',
+			'tags^5'
+		]);
 
 		if (req.query.owner) {
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				term: {
 					owner: req.query.owner
 				}
@@ -89,7 +68,7 @@ export async function searchSites(req, res) {
 		}
 
 		if (req.query.water) {
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				term: {
 					water: req.query.water
 				}
@@ -97,7 +76,7 @@ export async function searchSites(req, res) {
 		}
 
 		if (req.query.accessibility) {
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				term: {
 					accessibility: req.query.accessibility
 				}
@@ -105,7 +84,7 @@ export async function searchSites(req, res) {
 		}
 
 		if (req.query.avoidEntryFee) {
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				term: {
 					entryFee: false
 				}
@@ -113,16 +92,24 @@ export async function searchSites(req, res) {
 		}
 
 		if (req.query.maxDifficulty) {
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				range: {
 					difficulty: { lte: req.query.maxDifficulty }
 				}
 			});
 		}
 
+		if (req.query.minRating) {
+			searchUtils.addFilter(esQuery, {
+				range: {
+					avgRating: { gte: req.query.minRating }
+				}
+			});
+		}
+
 		if (req.query.closeTo) {
 			const [ lon, lat ] = req.query.closeTo;
-			addFilter(esQuery, {
+			searchUtils.addFilter(esQuery, {
 				geo_distance: {
 					distance: `${ req.query.distance || '50' }km`,
 					gps: {
@@ -133,7 +120,10 @@ export async function searchSites(req, res) {
 			});
 		}
 
-		addSorting(esQuery, req.query.sortBy, req.query.sortOrder);
+		searchUtils.addSorting(esQuery, req.query.sortBy, req.query.sortOrder, {
+			difficulty: 'difficulty',
+			rating: 'avgRating'
+		});
 
 		const results = await DiveSite.esSearch(esQuery);
 		res.json(results.body.hits.hits.map(hit => {
@@ -219,6 +209,102 @@ export async function deleteSite(req, res) {
 	}
 }
 
+export async function listSiteRatings(req, res) {
+	const { error } = Joi.validate(req.query, ListDiveSiteRatingsSchema);
+	if (error) {
+		return badRequest(
+			'Could not complete request. There was a problem with the query string.',
+			error,
+			res
+		);
+	}
+
+	try {
+		const sortOrder = `${ req.query.sortOrder === 'asc' ? '' : '-' }${ req.query.sortBy || 'date' }`;
+		const ratings = await DiveSiteRating
+			.find({ diveSite: req.diveSite.id })
+			.sort(sortOrder)
+			.skip(req.query.skip ? parseInt(req.query.skip, 10) : 0)
+			.limit(req.query.count ? parseInt(req.query.count, 10) : 200)
+			.exec();
+		res.json(ratings.map(rating => rating.toCleanJSON()));
+	} catch (err) {
+		const logId = req.logError('Failed to query for dive site ratings', err);
+		serverError(res, logId);
+	}
+}
+
+export function getSiteRating(req, res) {
+	res.json(req.diveSiteRating.toCleanJSON());
+}
+
+export async function addSiteRating(req, res) {
+	const { error } = Joi.validate(req.body, DiveSiteRatingSchema);
+	if (error) {
+		return badRequest(
+			'Unable to post the site rating because the request body was invalid.',
+			error,
+			res
+		);
+	}
+
+	try {
+		const rating = new DiveSiteRating({
+			...req.body,
+			user: req.user.username,
+			date: moment().utc().toDate(),
+			diveSite: req.diveSite.id
+		});
+
+		await rating.save();
+		req.diveSite.avgRating = await getAverageRating(req.diveSite._id);
+		await req.diveSite.save();
+
+		res.json(rating.toCleanJSON());
+	} catch (err) {
+		const logId = req.logError('Failed to create new dive site rating.', err);
+		serverError(res, logId);
+	}
+}
+
+export async function updateSiteRating(req, res) {
+	const { error } = Joi.validate(req.body, DiveSiteRatingSchema);
+	if (error) {
+		return badRequest(
+			'Unable to update dive site rating. There was a problem in the request body.',
+			error,
+			res
+		);
+	}
+
+	try {
+		req.diveSiteRating.assign(req.body);
+
+		await req.diveSiteRating.save();
+		req.diveSite.avgRating = await getAverageRating(req.diveSite._id);
+		await req.diveSite.save();
+
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError(`Failed to update dive site rating ${ req.params.ratingId }.`, err);
+		serverError(res, logId);
+	}
+}
+
+export async function deleteSiteRating(req, res) {
+	try {
+
+		await req.diveSiteRating.remove();
+		req.diveSite.avgRating = await getAverageRating(req.diveSite._id);
+		await req.diveSite.save();
+
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError(`Failed to delete dive site rating ${ req.params.ratingId }.`, err);
+		serverError(res, logId);
+	}
+}
+
 export async function loadDiveSite(req, res, next) {
 	try {
 		req.diveSite = await DiveSite.findById(req.params.siteId);
@@ -233,10 +319,36 @@ export async function loadDiveSite(req, res, next) {
 	}
 }
 
-export function assertWriteAccess(req, res, next) {
+export async function loadRating(req, res, next) {
+	try {
+		req.diveSiteRating = await DiveSiteRating.findOne({
+			_id: req.params.ratingId,
+			diveSite: req.params.siteId
+		});
+
+		if (!req.diveSiteRating) {
+			return notFound(req, res);
+		}
+
+		return next();
+	} catch (err) {
+		const logId = req.logError(`Failed to retrieve dive site rating ${ req.params.ratingId }.`, err);
+		return serverError(res, logId);
+	}
+}
+
+export function assertSiteWriteAccess(req, res, next) {
 	if (req.diveSite.owner === req.user.username || req.user.role === 'admin') {
 		return next();
 	}
 
-	forbidden(res, 'User does not have permission to modify or delete this dive site entry.');
+	return forbidden(res, 'User does not have permission to modify or delete this dive site entry.');
+}
+
+export function assertRatingWriteAccess(req, res, next) {
+	if (req.diveSiteRating.user === req.user.username || req.user.role === 'admin') {
+		return next();
+	}
+
+	return forbidden(res, 'User does not have permission to modify or delete this dive site rating.');
 }

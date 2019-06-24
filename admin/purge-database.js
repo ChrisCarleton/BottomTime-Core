@@ -13,6 +13,7 @@ import LogEntry from '../service/data/log-entry';
 import readline from 'readline-sync';
 import Session from '../service/data/session';
 import Site from '../service/data/sites';
+import SiteRating from '../service/data/site-ratings';
 import Tank from '../service/data/tanks';
 import User from '../service/data/user';
 
@@ -33,6 +34,7 @@ import User from '../service/data/user';
 			Session.deleteMany({}),
 			LogEntry.deleteMany({}),
 			Site.deleteMany({}),
+			SiteRating.deleteMany({}),
 			User.deleteMany({})
 		]);
 		log('Done.');

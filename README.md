@@ -17,8 +17,8 @@ the behaviour of the running application:
 
 * **BT_ES_ENDPOINT** Sets the connection string used to connect to ElasticSearch. The default is
 `http://localhost:9200`.
-* **BT_ES_INDEX** Sets the name of the ElasticSearch index in which documents are stored. The default is
-`bottomtime_dev`.
+* **BT_ES_INDEX** Sets the prefix for the ElasticSearch indices in which documents are stored. The default
+is `bottomtime_dev`.
 * **BT_FRIEND_LIMIT** Sets the maximum number of friends users are limitted to. The default is 1000.
 * **BT_LOG_FILE** Setting this to a file name will force the application to write its logs to the file
 rather than `stdout`.

@@ -2,10 +2,11 @@
 
 import _ from 'lodash';
 import config from '../config';
-import log from '../logger';
 import mongoose from './database';
 import { v6 as mexp } from 'mongoose-elasticsearch-xp';
 import search from '../search';
+
+require('./site-ratings');
 
 const siteSchema = mongoose.Schema({
 	name: {
@@ -70,11 +71,16 @@ const siteSchema = mongoose.Schema({
 		type: [ Number ],
 		es_type: 'geo_point',
 		es_indexed: true
+	},
+	avgRating: {
+		type: Number,
+		es_type: 'float',
+		es_indexed: true
 	}
 });
 
 siteSchema.plugin(mexp, {
-	index: config.elasticSearchIndex,
+	index: `${ config.elasticSearchIndex }_sites`,
 	client: search
 });
 
@@ -91,7 +97,8 @@ siteSchema.methods.toCleanJSON = function () {
 			'entryFee',
 			'difficulty',
 			'description',
-			'tags'
+			'tags',
+			'avgRating'
 		])
 	};
 
@@ -127,14 +134,5 @@ siteSchema.methods.assign = function (entity) {
 };
 
 const model = mongoose.model('Site', siteSchema);
-
-const message = 'Mapping dive sites data to ElasticSearch:';
-model.esCreateMapping()
-	.then(mapping => {
-		log.debug(message, mapping);
-	})
-	.catch(err => {
-		log.warn(message, JSON.stringify(err, null, '  '));
-	});
-
 export default model;
+module.exports = model;

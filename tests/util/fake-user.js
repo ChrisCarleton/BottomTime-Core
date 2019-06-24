@@ -16,6 +16,6 @@ export default (password, logsVisibility = 'friends-only') => {
 		email,
 		createdAt: faker.date.past(5),
 		passwordHash: bcrypt.hashSync(password, 5),
-		...fakeProfile(logsVisibility)
+		...fakeProfile(logsVisibility, firstName, lastName)
 	};
 };
