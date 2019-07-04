@@ -13,7 +13,9 @@
     "init-local": "node admin/bootstrap.js ./init-local",
     "kill-sessions": "node admin/bootstrap.js ./kill-sessions",
     "create-admin-user": "node admin/bootstrap.js ./create-admin-user",
-    "purge-database": "node admin/bootstrap.js ./purge-database"
+    "purge-database": "node admin/bootstrap.js ./purge-database",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -91,6 +93,8 @@
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
     "pug": "^2.0.3",
-    "uuid": "^3.3.2"
-  }
+    "uuid": "^3.3.2",
+    "snyk": "^1.189.0"
+  },
+  "snyk": true
 }
