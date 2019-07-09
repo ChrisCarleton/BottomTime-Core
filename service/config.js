@@ -1,4 +1,5 @@
 /* eslint no-process-env: 0 */
+import path from 'path';
 
 const config = {
 	nodeEnv: process.env.NODE_ENV,
@@ -33,6 +34,7 @@ const config = {
 
 	s3Endpoint: process.env.BT_S3_ENDPOINT,
 	mediaBucket: process.env.BT_MEDIA_BUCKET || 'BottomTime-Media',
+	tempDir: process.env.BT__TEMP_DIR || path.resolve(__dirname, '../temp/'),
 
 	elasticSearchEndpoint: process.env.BT_ES_ENDPOINT || 'http://localhost:9200/',
 	elasticSearchIndex: process.env.BT_ES_INDEX || 'bottomtime_dev',

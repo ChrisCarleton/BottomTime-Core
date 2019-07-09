@@ -4,7 +4,8 @@ import log from './logger';
 
 const params = {
 	apiVersion: '2006-03-01',
-	signatureVersion: 'v4'
+	signatureVersion: 'v4',
+	s3ForcePathStyle: true
 };
 
 if (config.s3Endpoint) {

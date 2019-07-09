@@ -25,6 +25,8 @@ rather than `stdout`.
 * **BT_LOG_LEVEL** Sets the level of verbosity of the log output. Valid values are `trace`, `debug`, `info`,
 `warn`, `error`, and `fatal`. The default is `debug`.
 * **BT_MEDIA_BUCKET** The name of the S3 bucket where dive media (videos and pictures) are stored for users.
+* **BT_TEMP_DIR** The absolute path to the directory where the application can create temp files.
+(Defaults to `${__dirname}/../temp`.)
 * **BT_MONGO_ENDPOINT** Sets the connection string for the MongoDB database. The default is
 `mongodb://localhost/dev`.
 * **BT_PORT** Can be set to override the default port the application listens for requests on. The default
