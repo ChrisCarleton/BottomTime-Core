@@ -2,14 +2,19 @@ import { App } from '../../service/server';
 import config from '../../service/config';
 import createFakeAccount from '../util/create-fake-account';
 import { expect } from 'chai';
+import faker from 'faker';
 import fakeLogEntry, { toLogEntry } from '../util/fake-log-entry';
+import fakeLogEntryImage, { toLogEntryImage } from '../util/fake-log-entry-image';
 import LogEntry from '../../service/data/log-entry';
 import LogEntryImage from '../../service/data/log-entry-images';
+import moment from 'moment';
 import path from 'path';
 import request from 'supertest';
 import Session from '../../service/data/session';
+import sinon from 'sinon';
 import storage from '../../service/storage';
 import User from '../../service/data/user';
+import fakeMongoId from '../util/fake-mongo-id';
 
 const ImagePaths = [ path.resolve(__dirname, '../assets/diver.jpg') ];
 
@@ -25,6 +30,8 @@ describe('Log Entry Images', () => {
 	let publicLogEntry = null;
 	let friendsOnlyLogEntry = null;
 
+	let stub = null;
+
 	before(async () => {
 		[ adminAccount, publicAccount, friendsOnlyAccount ] = await Promise.all([
 			createFakeAccount('admin'),
@@ -37,6 +44,13 @@ describe('Log Entry Images', () => {
 		await LogEntry.insertMany([ publicLogEntry, friendsOnlyLogEntry ]);
 	});
 
+	afterEach(() => {
+		if (stub) {
+			stub.restore();
+			stub = null;
+		}
+	});
+
 	after(async () => {
 		await Promise.all([
 			LogEntry.deleteMany({}),
@@ -47,20 +61,84 @@ describe('Log Entry Images', () => {
 	});
 
 	describe('GET /users/:userName/logs/:logId/images', () => {
-		it('Will retrieve a list of images for the specified log entry', async () => {
+		const fakes = new Array(100);
+		const entities = new Array(100);
 
+		let imageStub = null;
+		let thumbnailStub = null;
+
+		before(async () => {
+			imageStub = sinon.stub(LogEntryImage.prototype, 'getImageUrl');
+			thumbnailStub = sinon.stub(LogEntryImage.prototype, 'getThumbnailUrl');
+
+			imageStub.resolves(faker.image.imageUrl());
+			thumbnailStub.resolves(faker.image.imageUrl());
+
+			for (let i = 0; i < 70; i++) {
+				fakes[i] = fakeLogEntryImage();
+				entities[i] = toLogEntryImage(fakes[i], friendsOnlyLogEntry.id);
+			}
+
+			for (let i = 70; i < 100; i++) {
+				fakes[i] = fakeLogEntryImage();
+				entities[i] = toLogEntryImage(fakes[i], publicLogEntry.id);
+			}
+
+			await LogEntryImage.insertMany(entities);
+		});
+
+		after(async () => {
+			imageStub.restore();
+			thumbnailStub.restore();
+			await LogEntryImage.deleteMany({});
+		});
+
+		it('Will retrieve a list of images for the specified log entry', async () => {
+			const { body } = await request(App)
+				.get(imagesRoute(friendsOnlyAccount.user, friendsOnlyLogEntry))
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(200);
+
+			expect(body).to.be.an('array').and.to.have.a.lengthOf(70);
+
+			body.forEach(img => {
+				expect(img.imageId).to.match(/^[0-9a-f]{24}$/);
+				expect(img.title).to.exist;
+				expect(img.description).to.exist;
+				expect(moment(img.timestamp).isValid()).to.be.true;
+				expect(img.location.lon).to.be.a('number');
+				expect(img.location.lat).to.be.a('number');
+			});
 		});
 
 		it('Will return 404 if username is not found', async () => {
+			const { body } = await request(App)
+				.get(`/users/mystery_user/logs/${ friendsOnlyLogEntry.id }/images`)
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(404);
 
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 404 if log entry is not found', async () => {
+			const { body } = await request(App)
+				.get(`/users/${ friendsOnlyAccount.user.username }/logs/${ fakeMongoId() }/images`)
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(404);
 
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 500 if a server error occurs', async () => {
+			stub = sinon.stub(LogEntryImage.prototype, 'toCleanJSON');
+			stub.throws(new Error('nope'));
 
+			const { body } = await request(App)
+				.get(imagesRoute(friendsOnlyAccount.user, friendsOnlyLogEntry))
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(500);
+
+			expect(body).to.be.a.serverErrorResponse;
 		});
 	});
 

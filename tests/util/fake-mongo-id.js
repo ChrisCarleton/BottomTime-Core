@@ -1,4 +1,2 @@
-export default () => Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')
-	+ Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')
-	+ Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')
-	+ Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+import hexgen from 'hex-generator';
+export default () => hexgen(96);

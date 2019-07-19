@@ -1,4 +1,4 @@
-import { badRequest } from '../utils/error-response';
+import { badRequest, serverError } from '../utils/error-response';
 import config from '../config';
 import crypto from 'crypto';
 import fs from 'fs';
@@ -24,8 +24,17 @@ function safeDeleteFile(filePath, logError) {
 	});
 }
 
-export function ListImages(req, res) {
-	res.sendStatus(501);
+export async function ListImages(req, res) {
+	try {
+		const results = await LogEntryImage.find({
+			logEntry: req.logEntry._id
+		});
+
+		res.json(results.map(r => r.toCleanJSON()));
+	} catch (err) {
+		const logId = req.logError(`Failed to list images for log entry ${ req.params.logId }`, err);
+		serverError(res, logId);
+	}
 }
 
 export function AddImage(req, res) {
@@ -135,9 +144,8 @@ export function AddImage(req, res) {
 			]);
 			res.json(metadata.toCleanJSON());
 		} catch (err) {
-			console.error(err);
-			process.exit(1);
-			res.status(500).json(err);
+			const logId = req.logError('Failed to add image to log entry', err);
+			serverError(res, logId);
 		} finally {
 			// Clean up temp files.
 			await Promise.all([

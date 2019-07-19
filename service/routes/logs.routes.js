@@ -39,7 +39,7 @@ module.exports = app => {
 		.delete(RetrieveUserAccount, RetrieveLogEntry, AssertUserWritePermission, DeleteLog);
 
 	app.route(ImagesRoute)
-		.get(ListImages)
+		.get(RetrieveUserAccount, RetrieveLogEntry, ListImages)
 		.post(RetrieveUserAccount, RetrieveLogEntry, AddImage);
 
 	app.route(ImageRoute)

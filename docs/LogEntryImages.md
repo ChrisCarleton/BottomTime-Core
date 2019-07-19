@@ -11,8 +11,6 @@ This sub-domain allows for the management of pictures taken during a logged dive
 	"title": "String: The image title. (Max 100 characters.)",
 	"description": "String: A brief description of the image (Max 500 characters.)",
 	"imageUrl": "String: The URL from which the image can be downloaded.",
-	"thumbnailUrl": "String: The URL from which the image thumbnail can be downloaded.",
-	"timestamp": "String: Timestamp marking when the picture was taken. (ISO date.)",
 	"location": {
 		"lat": "REQUIRED Number: Latitude at which the picture was taken.",
 		"lon": "REQUIRED Number: Longitude at which the picture was taken."
@@ -120,5 +118,23 @@ HTTP Status Code | Details
 **204 No Content** | The call succeeded and the image was deleted along with its metadata.
 **401 Unauthorized** | The request was rejected because the user is not authenticated.
 **403 Forbidden** | The request was rejected because the user does not have access to modify the log book.
+**404 Not Found** | Either the user, the log entry, or the image specified in the route could not be found.
+**500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
+
+### GET /users/:userName/logs/:logId/images/:imageId/image
+### GET /users/:userName/logs/:logId/images/:imageId/thumbnail
+These routes can be used to download the actual images and image thumbnails, respectively.
+
+#### Route Parameters
+* **userName** - The username of the user to whom the log entry belongs.
+* **logId** - The ID of the log entry to which the image belongs.
+* **imageId** - The ID of the image for which the image or thumbnail should be downloaded.
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**302 Found** | The call succeeded and the user agent will be redirected to a signed URL that will allow access to the resource in AWS S3.
+**401 Unauthorized** | The request was rejected because the user is not authenticated and the log book is not publicly-viewable.
+**403 Forbidden** | The request was rejected because the user does not have access to view the log book.
 **404 Not Found** | Either the user, the log entry, or the image specified in the route could not be found.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.

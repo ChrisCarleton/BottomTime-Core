@@ -95,7 +95,7 @@ describe('User searching', () => {
 		[ 'relevance', 'username', 'created' ].forEach(sortBy => {
 			[ 'asc', 'desc' ].forEach(sortOrder => {
 				it(`Can return results sorted by ${ sortBy } (${ sortOrder })`, async () => {
-					const count = 50;
+					const count = 25;
 					const { body } = await request(App)
 						.get('/users')
 						.set(...adminUser.authHeader)
