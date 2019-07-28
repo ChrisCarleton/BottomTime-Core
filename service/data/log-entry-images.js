@@ -1,17 +1,20 @@
-import config from '../config';
 import moment from 'moment';
 import mongoose from './database';
-import storage from '../storage';
 
 const logEntryImagesSchema = mongoose.Schema({
-	checksum: {
+	contentType: {
 		type: String,
-		indexed: true,
 		required: true
 	},
-	extension: {
+	awsS3Key: {
 		type: String,
-		required: true
+		required: true,
+		unique: true
+	},
+	awsS3ThumbKey: {
+		type: String,
+		required: true,
+		unique: true
 	},
 	logEntry: {
 		type: mongoose.SchemaTypes.ObjectId,
@@ -69,40 +72,40 @@ logEntryImagesSchema.methods.assign = function (entity) {
 	}
 };
 
-logEntryImagesSchema.methods.getImageUrl = function () {
-	const { checksum, extension } = this;
-	return new Promise((resolve, reject) => {
-		storage.getSignedUrl(
-			'getObject', {
-				Bucket: config.mediaBucket,
-				Key: `${ checksum }.${ extension }`,
-				Expires: 7200
-			}, (err, url) => {
-				if (err) {
-					return reject(err);
-				}
+// logEntryImagesSchema.methods.getImageUrl = function () {
+// 	const { checksum, extension } = this;
+// 	return new Promise((resolve, reject) => {
+// 		storage.getSignedUrl(
+// 			'getObject', {
+// 				Bucket: config.mediaBucket,
+// 				Key: `${ checksum }.${ extension }`,
+// 				Expires: 7200
+// 			}, (err, url) => {
+// 				if (err) {
+// 					return reject(err);
+// 				}
 
-				resolve(url);
-			});
-	});
-};
+// 				resolve(url);
+// 			});
+// 	});
+// };
 
-logEntryImagesSchema.methods.getThumbnailUrl = function () {
-	const { checksum, extension } = this;
-	return new Promise((resolve, reject) => {
-		storage.getSignedUrl(
-			'getObject', {
-				Bucket: config.mediaBucket,
-				Key: `${ checksum }-thumb.${ extension }`,
-				Expires: 7200
-			}, (err, url) => {
-				if (err) {
-					return reject(err);
-				}
+// logEntryImagesSchema.methods.getThumbnailUrl = function () {
+// 	const { checksum, extension } = this;
+// 	return new Promise((resolve, reject) => {
+// 		storage.getSignedUrl(
+// 			'getObject', {
+// 				Bucket: config.mediaBucket,
+// 				Key: `${ checksum }-thumb.${ extension }`,
+// 				Expires: 7200
+// 			}, (err, url) => {
+// 				if (err) {
+// 					return reject(err);
+// 				}
 
-				resolve(url);
-			});
-	});
-};
+// 				resolve(url);
+// 			});
+// 	});
+// };
 
 export default mongoose.model('LogEntryImage', logEntryImagesSchema);

@@ -3,11 +3,13 @@ import {
 	DeleteImage,
 	GetImageDetails,
 	ListImages,
+	RetrieveLogEntryImage,
 	UpdateImageDetails
 } from '../controllers/logs-images.controller';
 import {
 	AssertUserReadPermission,
 	AssertUserWritePermission,
+	RequireUser,
 	RetrieveUserAccount
 } from '../controllers/security.controller';
 import {
@@ -25,6 +27,7 @@ const LogsRoute = '/users/:username/logs';
 const LogRoute = `${ LogsRoute }/:logId([a-f0-9]{24})`;
 const ImagesRoute = `${ LogRoute }/images`;
 const ImageRoute = `${ ImagesRoute }/:imageId([a-f0-9]{24})`;
+const DownloadImageRoute = `${ ImageRoute }/:imageType(image|thumbnail)`;
 
 module.exports = app => {
 	app.route(LogsRoute)
@@ -43,7 +46,14 @@ module.exports = app => {
 		.post(RetrieveUserAccount, RetrieveLogEntry, AddImage);
 
 	app.route(ImageRoute)
-		.get(GetImageDetails)
+		.get(RetrieveUserAccount, RetrieveLogEntryImage, GetImageDetails)
 		.put(UpdateImageDetails)
-		.delete(DeleteImage);
+		.delete(
+			RequireUser,
+			RetrieveUserAccount,
+			AssertUserWritePermission,
+			RetrieveLogEntryImage,
+			DeleteImage);
+
+	app.route(DownloadImageRoute);
 };

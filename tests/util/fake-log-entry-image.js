@@ -1,7 +1,7 @@
 import fakeMongoId from './fake-mongo-id';
 import faker from 'faker';
-import hexgen from 'hex-generator';
 import LogEntryImage from '../../service/data/log-entry-images';
+import path from 'path';
 
 export default () => ({
 	title: faker.fake('{{hacker.adjective}} {{hacker.noun}}'),
@@ -13,11 +13,25 @@ export default () => ({
 	}
 });
 
-export function toLogEntryImage(fake, logEntry) {
+export function toLogEntryImage(fake, logEntry, imageKey, thumbnailKey) {
+	const username = faker.internet.userName();
+	logEntry = logEntry || fakeMongoId();
+
 	const entity = new LogEntryImage({
-		checksum: hexgen(256),
-		extension: faker.random.arrayElement([ '.jpg', '.jpeg', '.png', '.tiff' ]),
-		logEntry: logEntry || fakeMongoId()
+		awsS3Key: imageKey || path.join(
+			username,
+			logEntry,
+			'images',
+			faker.fake('{{system.fileName}}{{system.fileExt}}')
+		),
+		awsS3ThumbKey: thumbnailKey || path.join(
+			username,
+			logEntry,
+			'images',
+			faker.fake('{{system.fileName}}-thumb{{system.fileExt}}')
+		),
+		contentType: faker.system.mimeType(),
+		logEntry
 	});
 
 	entity.assign(fake);

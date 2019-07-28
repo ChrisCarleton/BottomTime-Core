@@ -1,11 +1,11 @@
-import { badRequest, serverError } from '../utils/error-response';
+import { badRequest, serverError, notFound } from '../utils/error-response';
 import config from '../config';
-import crypto from 'crypto';
 import fs from 'fs';
 import LogEntryImage from '../data/log-entry-images';
+import mime from 'mime-types';
 import moment from 'moment';
-import multi from 'multi-write-stream';
 import path from 'path';
+import slug from 'slug';
 import sharp from 'sharp';
 import uuid from 'uuid/v4';
 import storage from '../storage';
@@ -48,11 +48,12 @@ export function AddImage(req, res) {
 
 	const uploadId = uuid();
 	const imageInfo = {};
-	const checksumStream = crypto.createHash('sha256');
 
 	let imagePath = null;
-	let imageExtension = null;
 	let thumbnailPath = null;
+	let imageExtension = null;
+	let imageFileName = null;
+	let mimeType = null;
 
 	req.busboy.on('file', (fieldname, stream, filename) => {
 		if (fieldname !== 'image') {
@@ -63,18 +64,13 @@ export function AddImage(req, res) {
 			// We need to split the file stream up across several other streams
 			const parsedPath = path.parse(filename);
 			imageExtension = parsedPath.ext;
+			imageFileName = parsedPath.name;
+			mimeType = mime.lookup(imageExtension);
 			imagePath = path.resolve(ImageDir, `${ uploadId }${ parsedPath.ext }`);
 			thumbnailPath = path.resolve(ImageDir, `${ uploadId }-thumb${ parsedPath.ext }`);
 
 			const imageFile = fs.createWriteStream(imagePath);
-
-			// Save the file and compute the checksum at the same time.
-			const multiStream = multi([
-				imageFile,
-				checksumStream
-			]);
-
-			stream.pipe(multiStream);
+			stream.pipe(imageFile);
 		} catch (err) {
 			req.logError('An error occured processing the file stream', err);
 		}
@@ -98,13 +94,28 @@ export function AddImage(req, res) {
 		}
 
 		try {
+			const fileSlug = slug(imageInfo.title || imageFileName, { lower: true });
+			const imageKey = path.join(
+				req.account.username,
+				req.logEntry.id,
+				'images',
+				`${ fileSlug }${ imageExtension }`
+			);
+			const thumbnailKey = path.join(
+				req.account.username,
+				req.logEntry.id,
+				'images',
+				`${ fileSlug }-thumb${ imageExtension }`
+			);
+
 			await sharp(imagePath)
 				.resize(150, 150)
 				.toFile(thumbnailPath);
 
 			const metadata = new LogEntryImage({
-				checksum: checksumStream.digest('hex'),
-				extension: imageExtension,
+				awsS3Key: imageKey,
+				awsS3ThumbKey: thumbnailKey,
+				contentType: mimeType,
 				logEntry: req.logEntry._id,
 				title: imageInfo.title,
 				description: imageInfo.description
@@ -125,21 +136,15 @@ export function AddImage(req, res) {
 				metadata.save(),
 				storage.upload({
 					Bucket: config.mediaBucket,
-					Key: path.join(
-						'images',
-						req.account.username,
-						`${ metadata.checksum }${ metadata.extension }`
-					),
-					Body: fs.createReadStream(imagePath)
+					Key: imageKey,
+					Body: fs.createReadStream(imagePath),
+					ContentType: mimeType
 				}).promise(),
 				storage.upload({
 					Bucket: config.mediaBucket,
-					Key: path.join(
-						'images',
-						req.account.username,
-						`${ metadata.checksum }-thumb${ metadata.extension }`
-					),
-					Body: fs.createReadStream(thumbnailPath)
+					Key: thumbnailKey,
+					Body: fs.createReadStream(thumbnailPath),
+					ContentType: mimeType
 				}).promise()
 			]);
 			res.json(metadata.toCleanJSON());
@@ -159,13 +164,50 @@ export function AddImage(req, res) {
 }
 
 export function GetImageDetails(req, res) {
-	res.sendStatus(501);
+	res.json(req.imageMetadata.toCleanJSON());
 }
 
 export function UpdateImageDetails(req, res) {
 	res.sendStatus(501);
 }
 
-export function DeleteImage(req, res) {
-	res.sendStatus(501);
+export async function DeleteImage(req, res) {
+	try {
+		await Promise.all([
+			storage.deleteObject({
+				Bucket: config.mediaBucket,
+				Key: req.imageMetadata.awsS3Key
+			}).promise(),
+			storage.deleteObject({
+				Bucket: config.mediaBucket,
+				Key: req.imageMetadata.awsS3ThumbKey
+			}).promise()
+		]);
+		await req.imageMetadata.remove();
+		res.sendStatus(200);
+	} catch (err) {
+		const logId = req.logError(`Failed to delete image with ID ${ req.params.imageId }.`, err);
+		serverError(res, logId);
+	}
 }
+
+export async function RetrieveLogEntryImage(req, res, next) {
+	try {
+		req.imageMetadata = await LogEntryImage.findOne({
+			_id: req.params.imageId,
+			logEntry: req.params.logId
+		});
+
+		if (!req.imageMetadata) {
+			return notFound(req, res);
+		}
+
+		return next();
+	} catch (err) {
+		const logId = req.logError(
+			`Failed to retrieve image metadata for image with ID ${ req.params.imageId }`,
+			err);
+		return serverError(res, logId);
+	}
+}
+

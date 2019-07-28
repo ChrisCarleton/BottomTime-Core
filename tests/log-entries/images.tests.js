@@ -2,9 +2,9 @@ import { App } from '../../service/server';
 import config from '../../service/config';
 import createFakeAccount from '../util/create-fake-account';
 import { expect } from 'chai';
-import faker from 'faker';
 import fakeLogEntry, { toLogEntry } from '../util/fake-log-entry';
 import fakeLogEntryImage, { toLogEntryImage } from '../util/fake-log-entry-image';
+import fs from 'fs';
 import LogEntry from '../../service/data/log-entry';
 import LogEntryImage from '../../service/data/log-entry-images';
 import moment from 'moment';
@@ -16,10 +16,44 @@ import storage from '../../service/storage';
 import User from '../../service/data/user';
 import fakeMongoId from '../util/fake-mongo-id';
 
-const ImagePaths = [ path.resolve(__dirname, '../assets/diver.jpg') ];
+const ImagePaths = [
+	path.resolve(__dirname, '../assets/diver.jpg'),
+	path.resolve(__dirname, '../assets/diver-thumb.jpg')
+];
 
 function imagesRoute(user, logEntry) {
 	return `/users/${ user.username }/logs/${ logEntry.id }/images`;
+}
+
+function imageRoute(user, logEntry, imageId) {
+	return `/users/${ user.username }/logs/${ logEntry.id }/images/${ imageId }`;
+}
+
+function validateImageMetadata(img) {
+	expect(img.imageId).to.match(/^[0-9a-f]{24}$/);
+	expect(img.title).to.exist;
+	expect(img.description).to.exist;
+	expect(moment(img.timestamp).isValid()).to.be.true;
+	expect(img.location.lon).to.be.a('number');
+	expect(img.location.lat).to.be.a('number');
+}
+
+async function headObject(key) {
+	try {
+		const result = await storage.headObject({
+			Bucket: config.mediaBucket,
+			Key: key
+		}).promise();
+
+		console.log('finished:', result);
+		return result;
+	} catch (err) {
+		if (err.code === 'NotFound') {
+			return null;
+		}
+
+		throw err;
+	}
 }
 
 describe('Log Entry Images', () => {
@@ -64,16 +98,7 @@ describe('Log Entry Images', () => {
 		const fakes = new Array(100);
 		const entities = new Array(100);
 
-		let imageStub = null;
-		let thumbnailStub = null;
-
 		before(async () => {
-			imageStub = sinon.stub(LogEntryImage.prototype, 'getImageUrl');
-			thumbnailStub = sinon.stub(LogEntryImage.prototype, 'getThumbnailUrl');
-
-			imageStub.resolves(faker.image.imageUrl());
-			thumbnailStub.resolves(faker.image.imageUrl());
-
 			for (let i = 0; i < 70; i++) {
 				fakes[i] = fakeLogEntryImage();
 				entities[i] = toLogEntryImage(fakes[i], friendsOnlyLogEntry.id);
@@ -88,8 +113,6 @@ describe('Log Entry Images', () => {
 		});
 
 		after(async () => {
-			imageStub.restore();
-			thumbnailStub.restore();
 			await LogEntryImage.deleteMany({});
 		});
 
@@ -102,12 +125,7 @@ describe('Log Entry Images', () => {
 			expect(body).to.be.an('array').and.to.have.a.lengthOf(70);
 
 			body.forEach(img => {
-				expect(img.imageId).to.match(/^[0-9a-f]{24}$/);
-				expect(img.title).to.exist;
-				expect(img.description).to.exist;
-				expect(moment(img.timestamp).isValid()).to.be.true;
-				expect(img.location.lon).to.be.a('number');
-				expect(img.location.lat).to.be.a('number');
+				validateImageMetadata(img);
 			});
 		});
 
@@ -184,16 +202,13 @@ describe('Log Entry Images', () => {
 			// Image metadata saved to database.
 			const saved = await LogEntryImage.findById(body.imageId);
 			expect(saved).to.exist;
-			expect(saved.checksum).to.exist;
+			expect(saved.contentType).to.equal('image/jpeg');
 			expect(saved.logEntry.toString()).to.equal(friendsOnlyLogEntry.id);
 
 			// Image and thumbnail stored in S3.
-			const imageKey = `images/${ friendsOnlyAccount.user.username }/${ saved.checksum }${ saved.extension }`;
-			const thumbnailKey
-				= `images/${ friendsOnlyAccount.user.username }/${ saved.checksum }-thumb${ saved.extension }`;
 			const [ image, thumbnail ] = await Promise.all([
-				storage.headObject({ Bucket: config.mediaBucket, Key: imageKey }).promise(),
-				storage.headObject({ Bucket: config.mediaBucket, Key: thumbnailKey }).promise()
+				storage.headObject({ Bucket: config.mediaBucket, Key: saved.awsS3Key }).promise(),
+				storage.headObject({ Bucket: config.mediaBucket, Key: saved.awsS3ThumbKey }).promise()
 			]);
 
 			expect(image).to.exist;
@@ -266,24 +281,65 @@ describe('Log Entry Images', () => {
 	});
 
 	describe('GET /users/:userName/logs/:logId/images/:imageId', () => {
-		it('Will return image metadata', async () => {
+		let imageMetadata = null;
 
+		before(async () => {
+			imageMetadata = toLogEntryImage(fakeLogEntryImage(), friendsOnlyLogEntry.id);
+			await imageMetadata.save();
+		});
+
+		after(async () => {
+			await imageMetadata.remove();
+		});
+
+		it('Will return image metadata', async () => {
+			const { body } = await request(App)
+				.get(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(200);
+
+			expect(body).to.eql(imageMetadata.toCleanJSON());
 		});
 
 		it('Will return 404 if the user cannot be found', async () => {
+			const { body } = await request(App)
+				.get(`/users/not_a_user/logs/${ friendsOnlyLogEntry.id }/images/${ imageMetadata.id }`)
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(404);
 
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 404 if the log entry cannot be found', async () => {
+			const fakeId = fakeMongoId();
+			const { body } = await request(App)
+				.get(`/users/${ friendsOnlyAccount.user.username }/logs/${ fakeId }/images/${ imageMetadata.id }`)
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(404);
 
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 404 if the image cannot be found', async () => {
+			const fakeId = fakeMongoId();
+			const { body } = await request(App)
+				.get(`/users/${ friendsOnlyAccount.user.username }/logs/${ friendsOnlyLogEntry.id }/images/${ fakeId }`)
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(404);
 
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 500 if a server error occurs', async () => {
+			stub = sinon.stub(LogEntryImage, 'findOne');
+			stub.rejects(new Error('nope'));
 
+			const { body } = await request(App)
+				.get(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(500);
+
+			expect(body).to.be.a.serverErrorResponse;
 		});
 	});
 
@@ -297,18 +353,6 @@ describe('Log Entry Images', () => {
 		});
 
 		it('Will return 400 if the request body is missing', async () => {
-
-		});
-
-		it('Will return 401 if the user is not authenticated', async () => {
-
-		});
-
-		it('Will return 403 if the user does not own the log entry', async () => {
-
-		});
-
-		it('Will allow administrators to update other users\' image metadata', async () => {
 
 		});
 
@@ -330,40 +374,169 @@ describe('Log Entry Images', () => {
 	});
 
 	describe('DELETE /users/:userName/logs/:logId/images/:imageId', () => {
-		it('Will delete the entry, image, and thumbnail image', async () => {
+		let imageMetadata = null;
 
+		beforeEach(async () => {
+			imageMetadata = toLogEntryImage(fakeLogEntryImage(), friendsOnlyLogEntry.id);
+
+			await Promise.all([
+				imageMetadata.save(),
+				storage.upload({
+					Bucket: config.mediaBucket,
+					Key: imageMetadata.awsS3Key,
+					Body: fs.createReadStream(ImagePaths[0]),
+					ContentType: 'image/jpeg'
+				}).promise(),
+				storage.upload({
+					Bucket: config.mediaBucket,
+					Key: imageMetadata.awsS3ThumbKey,
+					Body: fs.createReadStream(ImagePaths[1]),
+					ContentType: 'image/jpeg'
+				}).promise()
+			]);
 		});
 
-		it('Will not delete an image if another one exists with the same checksum', async () => {
+		afterEach(async () => {
+			if (stub) {
+				stub.restore();
+				stub = null;
+			}
 
+			await Promise.all([
+				imageMetadata.remove(),
+				storage.deleteObject({
+					Bucket: config.mediaBucket,
+					Key: imageMetadata.awsS3Key
+				}).promise(),
+				storage.deleteObject({
+					Bucket: config.mediaBucket,
+					Key: imageMetadata.awsS3ThumbKey
+				}).promise()
+			]);
+		});
+
+		it('Will delete the entry, image, and thumbnail image', async () => {
+			await request(App)
+				.delete(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(200);
+
+			const [ metadata, image, thumbnail ] = await Promise.all([
+				LogEntryImage.findById(imageMetadata.id),
+				headObject(imageMetadata.awsS3Key),
+				headObject(imageMetadata.awsS3ThumbKey)
+			]);
+			expect(metadata).to.be.null;
+			expect(image).to.be.null;
+			expect(thumbnail).to.be.null;
 		});
 
 		it('Will return 401 if the user is not authenticated', async () => {
+			const { body } = await request(App)
+				.delete(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.expect(401);
 
+			expect(body).to.be.a.unauthorizedResponse;
 		});
 
 		it('Will return 403 if the user does not own the log entry', async () => {
+			const { body } = await request(App)
+				.delete(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.set(...publicAccount.authHeader)
+				.expect(403);
 
+			expect(body).to.be.a.forbiddenResponse;
 		});
 
 		it('Will allow administrators to delete other users\' images', async () => {
+			await request(App)
+				.delete(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.set(...adminAccount.authHeader)
+				.expect(200);
 
+			const [ metadata, image, thumbnail ] = await Promise.all([
+				LogEntryImage.findById(imageMetadata.id),
+				headObject(imageMetadata.awsS3Key),
+				headObject(imageMetadata.awsS3ThumbKey)
+			]);
+			expect(metadata).to.be.null;
+			expect(image).to.be.null;
+			expect(thumbnail).to.be.null;
 		});
 
 		it('Will return 404 if the user cannot be found', async () => {
+			const { body } = await request(App)
+				.delete(`/users/not_a_user/logs/${ friendsOnlyLogEntry.id }/images/${ imageMetadata.id }`)
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(404);
 
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 404 if the log entry cannot be found', async () => {
+			const fakeId = fakeMongoId();
+			const { body } = await request(App)
+				.delete(`/users/${ friendsOnlyAccount.user.username }/logs/${ fakeId }/images/${ imageMetadata.id }`)
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(404);
 
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 404 if the image cannot be found', async () => {
+			const fakeId = fakeMongoId();
+			const { body } = await request(App)
+				.delete(`/users/${ publicAccount.user.username }/logs/${ publicLogEntry.id }/images/${ fakeId }`)
+				.set(...publicAccount.authHeader)
+				.expect(404);
 
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Will return 500 if a server error occurs', async () => {
+			stub = sinon.stub(storage, 'deleteObject');
+			stub.returns({
+				promise: () => Promise.reject(new Error('nope'))
+			});
 
+			const { body } = await request(App)
+				.delete(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.set(...friendsOnlyAccount.authHeader)
+				.expect(500);
+
+			expect(body).to.be.a.serverErrorResponse;
+		});
+	});
+
+	[ 'image', 'thumbnail' ].forEach(imageType => {
+		describe(`GET /users/:userName/logs/:logId/images/:imageId/${ imageType }`, () => {
+			it('Will redirect to the correct URL', async () => {
+
+			});
+
+			it('Will return 401 if user is not authenticated and log book is not public', async () => {
+
+			});
+
+			it('Will return 403 if user does not have access to the log book', async () => {
+
+			});
+
+			it('Will return 404 if username is not found', async () => {
+
+			});
+
+			it('Will return 404 if log entry is not found', async () => {
+
+			});
+
+			it('Will return 404 if image ID is not found', async () => {
+
+			});
+
+			it('Will return 500 if a server error occurs', async () => {
+
+			});
 		});
 	});
 });
