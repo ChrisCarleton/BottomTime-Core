@@ -211,3 +211,17 @@ export async function RetrieveLogEntryImage(req, res, next) {
 	}
 }
 
+export async function DownloadImage(req, res) {
+	try {
+		const signedUrl = req.params.imageType === 'image'
+			? await req.imageMetadata.getImageUrl()
+			: await req.imageMetadata.getThumbnailUrl();
+		res.redirect(302, signedUrl);
+	} catch (err) {
+		const logId = req.logError(
+			`Failed to get signed URL for image with ID ${ req.params.imageId }.`,
+			err
+		);
+		serverError(res, logId);
+	}
+}

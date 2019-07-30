@@ -1,6 +1,7 @@
 import {
 	AddImage,
 	DeleteImage,
+	DownloadImage,
 	GetImageDetails,
 	ListImages,
 	RetrieveLogEntryImage,
@@ -55,5 +56,10 @@ module.exports = app => {
 			RetrieveLogEntryImage,
 			DeleteImage);
 
-	app.route(DownloadImageRoute);
+	app.route(DownloadImageRoute).get(
+		RetrieveUserAccount,
+		AssertUserReadPermission,
+		RetrieveLogEntryImage,
+		DownloadImage
+	);
 };

@@ -1,5 +1,7 @@
+import config from '../config';
 import moment from 'moment';
 import mongoose from './database';
+import storage from '../storage';
 
 const logEntryImagesSchema = mongoose.Schema({
 	contentType: {
@@ -72,40 +74,38 @@ logEntryImagesSchema.methods.assign = function (entity) {
 	}
 };
 
-// logEntryImagesSchema.methods.getImageUrl = function () {
-// 	const { checksum, extension } = this;
-// 	return new Promise((resolve, reject) => {
-// 		storage.getSignedUrl(
-// 			'getObject', {
-// 				Bucket: config.mediaBucket,
-// 				Key: `${ checksum }.${ extension }`,
-// 				Expires: 7200
-// 			}, (err, url) => {
-// 				if (err) {
-// 					return reject(err);
-// 				}
+logEntryImagesSchema.methods.getImageUrl = function () {
+	return new Promise((resolve, reject) => {
+		storage.getSignedUrl(
+			'getObject', {
+				Bucket: config.mediaBucket,
+				Key: this.awsS3Key,
+				Expires: 7200
+			}, (err, url) => {
+				if (err) {
+					return reject(err);
+				}
 
-// 				resolve(url);
-// 			});
-// 	});
-// };
+				resolve(url);
+			});
+	});
+};
 
-// logEntryImagesSchema.methods.getThumbnailUrl = function () {
-// 	const { checksum, extension } = this;
-// 	return new Promise((resolve, reject) => {
-// 		storage.getSignedUrl(
-// 			'getObject', {
-// 				Bucket: config.mediaBucket,
-// 				Key: `${ checksum }-thumb.${ extension }`,
-// 				Expires: 7200
-// 			}, (err, url) => {
-// 				if (err) {
-// 					return reject(err);
-// 				}
+logEntryImagesSchema.methods.getThumbnailUrl = function () {
+	return new Promise((resolve, reject) => {
+		storage.getSignedUrl(
+			'getObject', {
+				Bucket: config.mediaBucket,
+				Key: this.awsS3ThumbKey,
+				Expires: 7200
+			}, (err, url) => {
+				if (err) {
+					return reject(err);
+				}
 
-// 				resolve(url);
-// 			});
-// 	});
-// };
+				resolve(url);
+			});
+	});
+};
 
 export default mongoose.model('LogEntryImage', logEntryImagesSchema);

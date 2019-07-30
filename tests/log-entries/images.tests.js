@@ -4,6 +4,7 @@ import createFakeAccount from '../util/create-fake-account';
 import { expect } from 'chai';
 import fakeLogEntry, { toLogEntry } from '../util/fake-log-entry';
 import fakeLogEntryImage, { toLogEntryImage } from '../util/fake-log-entry-image';
+import fakeMongoId from '../util/fake-mongo-id';
 import fs from 'fs';
 import LogEntry from '../../service/data/log-entry';
 import LogEntryImage from '../../service/data/log-entry-images';
@@ -14,19 +15,23 @@ import Session from '../../service/data/session';
 import sinon from 'sinon';
 import storage from '../../service/storage';
 import User from '../../service/data/user';
-import fakeMongoId from '../util/fake-mongo-id';
+import url from 'url';
 
 const ImagePaths = [
 	path.resolve(__dirname, '../assets/diver.jpg'),
 	path.resolve(__dirname, '../assets/diver-thumb.jpg')
 ];
 
-function imagesRoute(user, logEntry) {
-	return `/users/${ user.username }/logs/${ logEntry.id }/images`;
+function imagesRoute(username, logEntryId) {
+	return `/users/${ username }/logs/${ logEntryId }/images`;
 }
 
-function imageRoute(user, logEntry, imageId) {
-	return `/users/${ user.username }/logs/${ logEntry.id }/images/${ imageId }`;
+function imageRoute(username, logEntryId, imageId) {
+	return `${ imagesRoute(username, logEntryId) }/${ imageId }`;
+}
+
+function downloadRoute(username, logEntryId, imageId, thumbnail = false) {
+	return `${ imageRoute(username, logEntryId, imageId) }/${ thumbnail ? 'thumbnail' : 'image' }`;
 }
 
 function validateImageMetadata(img) {
@@ -45,7 +50,6 @@ async function headObject(key) {
 			Key: key
 		}).promise();
 
-		console.log('finished:', result);
 		return result;
 	} catch (err) {
 		if (err.code === 'NotFound') {
@@ -118,7 +122,7 @@ describe('Log Entry Images', () => {
 
 		it('Will retrieve a list of images for the specified log entry', async () => {
 			const { body } = await request(App)
-				.get(imagesRoute(friendsOnlyAccount.user, friendsOnlyLogEntry))
+				.get(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(200);
 
@@ -131,7 +135,7 @@ describe('Log Entry Images', () => {
 
 		it('Will return 404 if username is not found', async () => {
 			const { body } = await request(App)
-				.get(`/users/mystery_user/logs/${ friendsOnlyLogEntry.id }/images`)
+				.get(imagesRoute('mystery_user', friendsOnlyLogEntry.id))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(404);
 
@@ -140,7 +144,7 @@ describe('Log Entry Images', () => {
 
 		it('Will return 404 if log entry is not found', async () => {
 			const { body } = await request(App)
-				.get(`/users/${ friendsOnlyAccount.user.username }/logs/${ fakeMongoId() }/images`)
+				.get(imagesRoute(friendsOnlyAccount.user.username, fakeMongoId()))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(404);
 
@@ -152,7 +156,7 @@ describe('Log Entry Images', () => {
 			stub.throws(new Error('nope'));
 
 			const { body } = await request(App)
-				.get(imagesRoute(friendsOnlyAccount.user, friendsOnlyLogEntry))
+				.get(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(500);
 
@@ -182,7 +186,7 @@ describe('Log Entry Images', () => {
 			const lon = -80.0207417;
 
 			const { body } = await request(App)
-				.post(imagesRoute(friendsOnlyAccount.user, friendsOnlyLogEntry))
+				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
 				.field('title', title)
 				.field('description', description)
 				.field('timestamp', timestamp)
@@ -232,7 +236,7 @@ describe('Log Entry Images', () => {
 
 		it('Will return 400 if the image is missing', async () => {
 			const { body } = await request(App)
-				.post(imagesRoute(friendsOnlyAccount.user, friendsOnlyLogEntry))
+				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
 				.field('title', 'Lol')
 				.expect(400);
 
@@ -241,7 +245,7 @@ describe('Log Entry Images', () => {
 
 		it('Will return 400 if the request body is empty', async () => {
 			const { body } = await request(App)
-				.post(imagesRoute(friendsOnlyAccount.user, friendsOnlyLogEntry))
+				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
 				.expect(400);
 
 			expect(body).to.be.a.badRequestResponse;
@@ -294,7 +298,7 @@ describe('Log Entry Images', () => {
 
 		it('Will return image metadata', async () => {
 			const { body } = await request(App)
-				.get(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.get(imageRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id, imageMetadata.id))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(200);
 
@@ -303,7 +307,7 @@ describe('Log Entry Images', () => {
 
 		it('Will return 404 if the user cannot be found', async () => {
 			const { body } = await request(App)
-				.get(`/users/not_a_user/logs/${ friendsOnlyLogEntry.id }/images/${ imageMetadata.id }`)
+				.get(imageRoute('not_a_user', friendsOnlyLogEntry.id, imageMetadata.id))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(404);
 
@@ -311,9 +315,8 @@ describe('Log Entry Images', () => {
 		});
 
 		it('Will return 404 if the log entry cannot be found', async () => {
-			const fakeId = fakeMongoId();
 			const { body } = await request(App)
-				.get(`/users/${ friendsOnlyAccount.user.username }/logs/${ fakeId }/images/${ imageMetadata.id }`)
+				.get(imageRoute(friendsOnlyAccount.user.username, fakeMongoId(), imageMetadata.id))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(404);
 
@@ -321,9 +324,8 @@ describe('Log Entry Images', () => {
 		});
 
 		it('Will return 404 if the image cannot be found', async () => {
-			const fakeId = fakeMongoId();
 			const { body } = await request(App)
-				.get(`/users/${ friendsOnlyAccount.user.username }/logs/${ friendsOnlyLogEntry.id }/images/${ fakeId }`)
+				.get(imageRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id, fakeMongoId()))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(404);
 
@@ -335,7 +337,7 @@ describe('Log Entry Images', () => {
 			stub.rejects(new Error('nope'));
 
 			const { body } = await request(App)
-				.get(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.get(imageRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id, imageMetadata.id))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(500);
 
@@ -417,7 +419,7 @@ describe('Log Entry Images', () => {
 
 		it('Will delete the entry, image, and thumbnail image', async () => {
 			await request(App)
-				.delete(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.delete(imageRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id, imageMetadata.id))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(200);
 
@@ -433,7 +435,7 @@ describe('Log Entry Images', () => {
 
 		it('Will return 401 if the user is not authenticated', async () => {
 			const { body } = await request(App)
-				.delete(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.delete(imageRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id, imageMetadata.id))
 				.expect(401);
 
 			expect(body).to.be.a.unauthorizedResponse;
@@ -441,7 +443,7 @@ describe('Log Entry Images', () => {
 
 		it('Will return 403 if the user does not own the log entry', async () => {
 			const { body } = await request(App)
-				.delete(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.delete(imageRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id, imageMetadata.id))
 				.set(...publicAccount.authHeader)
 				.expect(403);
 
@@ -450,7 +452,7 @@ describe('Log Entry Images', () => {
 
 		it('Will allow administrators to delete other users\' images', async () => {
 			await request(App)
-				.delete(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.delete(imageRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id, imageMetadata.id))
 				.set(...adminAccount.authHeader)
 				.expect(200);
 
@@ -466,7 +468,7 @@ describe('Log Entry Images', () => {
 
 		it('Will return 404 if the user cannot be found', async () => {
 			const { body } = await request(App)
-				.delete(`/users/not_a_user/logs/${ friendsOnlyLogEntry.id }/images/${ imageMetadata.id }`)
+				.delete(imageRoute('not_a_user', friendsOnlyLogEntry.id, imageMetadata.id))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(404);
 
@@ -474,9 +476,8 @@ describe('Log Entry Images', () => {
 		});
 
 		it('Will return 404 if the log entry cannot be found', async () => {
-			const fakeId = fakeMongoId();
 			const { body } = await request(App)
-				.delete(`/users/${ friendsOnlyAccount.user.username }/logs/${ fakeId }/images/${ imageMetadata.id }`)
+				.delete(imageRoute(friendsOnlyAccount.user.username, fakeMongoId(), imageMetadata.id))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(404);
 
@@ -484,9 +485,8 @@ describe('Log Entry Images', () => {
 		});
 
 		it('Will return 404 if the image cannot be found', async () => {
-			const fakeId = fakeMongoId();
 			const { body } = await request(App)
-				.delete(`/users/${ publicAccount.user.username }/logs/${ publicLogEntry.id }/images/${ fakeId }`)
+				.delete(imageRoute(publicAccount.user.username, publicLogEntry.id, fakeMongoId()))
 				.set(...publicAccount.authHeader)
 				.expect(404);
 
@@ -500,7 +500,7 @@ describe('Log Entry Images', () => {
 			});
 
 			const { body } = await request(App)
-				.delete(imageRoute(friendsOnlyAccount.user, friendsOnlyLogEntry, imageMetadata.id))
+				.delete(imageRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id, imageMetadata.id))
 				.set(...friendsOnlyAccount.authHeader)
 				.expect(500);
 
@@ -510,32 +510,138 @@ describe('Log Entry Images', () => {
 
 	[ 'image', 'thumbnail' ].forEach(imageType => {
 		describe(`GET /users/:userName/logs/:logId/images/:imageId/${ imageType }`, () => {
-			it('Will redirect to the correct URL', async () => {
+			let imageMetadata = null;
+			let route = null;
 
+			before(async () => {
+				imageMetadata = toLogEntryImage(fakeLogEntryImage(), friendsOnlyLogEntry.id);
+				await Promise.all([
+					imageMetadata.save(),
+					storage.upload({
+						Bucket: config.mediaBucket,
+						Key: imageMetadata.awsS3Key,
+						Body: fs.createReadStream(ImagePaths[0]),
+						ContentType: 'image/jpeg'
+					}).promise(),
+					storage.upload({
+						Bucket: config.mediaBucket,
+						Key: imageMetadata.awsS3ThumbKey,
+						Body: fs.createReadStream(ImagePaths[1]),
+						ContentType: 'image/jpeg'
+					}).promise()
+				]);
+				route = downloadRoute(
+					friendsOnlyAccount.user.username,
+					friendsOnlyLogEntry.id,
+					imageMetadata.id,
+					imageType === 'thumbnail'
+				);
 			});
 
-			it('Will return 401 if user is not authenticated and log book is not public', async () => {
+			after(async () => {
+				await Promise.all([
+					imageMetadata.remove(),
+					storage.deleteObject({
+						Bucket: config.mediaBucket,
+						Key: imageMetadata.awsS3Key
+					}).promise(),
+					storage.deleteObject({
+						Bucket: config.mediaBucket,
+						Key: imageMetadata.awsS3ThumbKey
+					}).promise()
+				]);
+			});
 
+			it('Will redirect to the correct URL', async () => {
+				const { header } = await request(App)
+					.get(route)
+					.set(...friendsOnlyAccount.authHeader)
+					.expect(302);
+
+				expect(header.location).to.exist;
+
+				const parsedUrl = url.parse(header.location);
+				expect(parsedUrl.host).to.equal(url.parse(config.s3Endpoint).host);
+				expect(parsedUrl.pathname).to.equal(path.join(
+					'/',
+					config.mediaBucket,
+					imageType === 'image'
+						? imageMetadata.awsS3Key
+						: imageMetadata.awsS3ThumbKey)
+				);
+			});
+
+			it('Will return 403 if user is not authenticated and log book is not public', async () => {
+				const { body } = await request(App)
+					.get(route)
+					.expect(403);
+
+				expect(body).to.be.an.forbiddenResponse;
 			});
 
 			it('Will return 403 if user does not have access to the log book', async () => {
+				const { body } = await request(App)
+					.get(route)
+					.set(...publicAccount.authHeader)
+					.expect(403);
 
+				expect(body).to.be.an.forbiddenResponse;
 			});
 
 			it('Will return 404 if username is not found', async () => {
+				const { body } = await request(App)
+					.get(downloadRoute(
+						'johndoe',
+						friendsOnlyLogEntry.id,
+						imageMetadata.id,
+						imageType === 'thumbnail'
+					))
+					.set(...friendsOnlyAccount.authHeader)
+					.expect(404);
 
+				expect(body).to.be.a.notFoundResponse;
 			});
 
 			it('Will return 404 if log entry is not found', async () => {
+				const { body } = await request(App)
+					.get(downloadRoute(
+						friendsOnlyAccount.user.username,
+						fakeMongoId(),
+						imageMetadata.id,
+						imageType === 'thumbnail'
+					))
+					.set(...friendsOnlyAccount.authHeader)
+					.expect(404);
 
+				expect(body).to.be.a.notFoundResponse;
 			});
 
 			it('Will return 404 if image ID is not found', async () => {
+				const { body } = await request(App)
+					.get(downloadRoute(
+						friendsOnlyAccount.user.username,
+						friendsOnlyLogEntry.id,
+						fakeMongoId(),
+						imageType === 'thumbnail'
+					))
+					.set(...friendsOnlyAccount.authHeader)
+					.expect(404);
 
+				expect(body).to.be.a.notFoundResponse;
 			});
 
 			it('Will return 500 if a server error occurs', async () => {
+				stub = sinon.stub(storage, 'getSignedUrl');
+				stub.callsFake((op, params, cb) => {
+					cb(new Error('nope'));
+				});
 
+				const { body } = await request(App)
+					.get(route)
+					.set(...friendsOnlyAccount.authHeader)
+					.expect(500);
+
+				expect(body).to.be.a.serverErrorResponse;
 			});
 		});
 	});
