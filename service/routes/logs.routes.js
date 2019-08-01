@@ -44,17 +44,24 @@ module.exports = app => {
 
 	app.route(ImagesRoute)
 		.get(RetrieveUserAccount, RetrieveLogEntry, ListImages)
-		.post(RetrieveUserAccount, RetrieveLogEntry, AddImage);
+		.post(RequireUser, RetrieveUserAccount, RetrieveLogEntry, AssertUserWritePermission, AddImage);
 
 	app.route(ImageRoute)
 		.get(RetrieveUserAccount, RetrieveLogEntryImage, GetImageDetails)
-		.put(UpdateImageDetails)
+		.put(
+			RequireUser,
+			RetrieveUserAccount,
+			AssertUserWritePermission,
+			RetrieveLogEntryImage,
+			UpdateImageDetails
+		)
 		.delete(
 			RequireUser,
 			RetrieveUserAccount,
 			AssertUserWritePermission,
 			RetrieveLogEntryImage,
-			DeleteImage);
+			DeleteImage
+		);
 
 	app.route(DownloadImageRoute).get(
 		RetrieveUserAccount,

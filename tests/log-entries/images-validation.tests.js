@@ -15,7 +15,7 @@ function ensureValid(isValid, expectedError) {
 }
 
 const LongString = faker.lorem.sentences(4).substr(0, 101);
-const ExtraLongString = faker.lorem.paragraphs(3).substr(0, 501);
+const ExtraLongString = faker.lorem.paragraphs(6).substr(0, 501);
 
 describe('Log Entry Image Validation Tests', () => {
 	let metadata = null;
@@ -64,7 +64,7 @@ describe('Log Entry Image Validation Tests', () => {
 		validateMetadata();
 	});
 
-	it('Description cannot be longer that 100 characters', () => {
+	it('Description cannot be longer that 500 characters', () => {
 		metadata.description = ExtraLongString;
 		validateMetadata('string.max');
 	});

@@ -1,6 +1,8 @@
 import { badRequest, serverError, notFound } from '../utils/error-response';
 import config from '../config';
 import fs from 'fs';
+import { ImageMetadataSchema } from '../validation/log-entry-image';
+import Joi from 'joi';
 import LogEntryImage from '../data/log-entry-images';
 import mime from 'mime-types';
 import moment from 'moment';
@@ -167,8 +169,25 @@ export function GetImageDetails(req, res) {
 	res.json(req.imageMetadata.toCleanJSON());
 }
 
-export function UpdateImageDetails(req, res) {
-	res.sendStatus(501);
+export async function UpdateImageDetails(req, res) {
+	const isValid = Joi.validate(req.body, ImageMetadataSchema);
+	if (isValid.error) {
+		return badRequest(
+			'Unable to update image metadata because validation failed',
+			isValid.error,
+			res);
+	}
+
+	try {
+		req.imageMetadata.assign(req.body || {});
+		await req.imageMetadata.save();
+		res.json(req.imageMetadata.toCleanJSON());
+	} catch (err) {
+		const logId = req.logError(
+			`Failed to update image metadata for image with ID ${ req.params.imageId }`,
+			err);
+		serverError(res, logId);
+	}
 }
 
 export async function DeleteImage(req, res) {
