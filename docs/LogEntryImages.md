@@ -54,7 +54,8 @@ Unlike most APIs that accept a *JSON-formatted* request body, this one must be a
 * **lat** - Number. The latitude at which the picture was taken.
 * **lon** - Number. The longitude at which the picture was taken.
 
-**NOTES:** 
+**NOTES:** All fields other than `image` are optional. `lat` and `lon` must be provided together. If one
+is missing and the other is supplied the request will fail with a 400 HTTP error.
 
 #### Responses
 HTTP Status Code | Details
