@@ -19,8 +19,13 @@ import url from 'url';
 
 const ImagePaths = [
 	path.resolve(__dirname, '../assets/diver.jpg'),
-	path.resolve(__dirname, '../assets/diver-thumb.jpg')
+	path.resolve(__dirname, '../assets/diver-thumb.jpg'),
+	path.resolve(__dirname, '../assets/turtle.jpg'),
+	path.resolve(__dirname, '../assets/reef.jpg')
 ];
+
+const ImageSize = 122739;
+const ThumbnailSize = 5768;
 
 function imagesRoute(username, logEntryId) {
 	return `/users/${ username }/logs/${ logEntryId }/images`;
@@ -176,12 +181,20 @@ describe('Log Entry Images', () => {
 				.listObjectsV2({ Bucket: config.mediaBucket })
 				.promise();
 
-			await storage.deleteObjects({
-				Bucket: config.mediaBucket,
-				Delete: {
-					Objects: Contents.map(obj => ({ Key: obj.Key }))
-				}
-			});
+			await Promise.all([
+				// TODO: Figure out why the deleteObjects call doesn't work.
+				// storage.deleteObjects({
+				// 	Bucket: config.mediaBucket,
+				// 	Delete: {
+				// 		Objects: Contents.map(obj => ({ Key: obj.Key }))
+				// 	}
+				// }).promise(),
+				...Contents.map(obj => storage.deleteObject({
+					Bucket: config.mediaBucket,
+					Key: obj.Key
+				}).promise()),
+				LogEntryImage.deleteMany({})
+			]);
 		});
 
 		it('Will post a new image to the log entry along with a thumbnail', async () => {
@@ -209,6 +222,11 @@ describe('Log Entry Images', () => {
 			expect(saved).to.exist;
 			expect(saved.contentType).to.equal('image/jpeg');
 			expect(saved.logEntry.toString()).to.equal(friendsOnlyLogEntry.id);
+			expect(saved.title).to.equal(Title);
+			expect(saved.description).to.equal(Description);
+			expect(saved.location).to.eql([ Lon, Lat ]);
+			expect(saved.timestamp.toISOString()).to.equal(Timestamp);
+			expect(saved.logEntry).to.eql(friendsOnlyLogEntry._id);
 
 			// Image and thumbnail stored in S3.
 			const [ image, thumbnail ] = await Promise.all([
@@ -217,18 +235,46 @@ describe('Log Entry Images', () => {
 			]);
 
 			expect(image).to.exist;
-			expect(image.ContentLength).to.equal(445394);
+			expect(image.ContentLength).to.equal(ImageSize);
 
 			expect(thumbnail).to.exist;
-			expect(thumbnail.ContentLength).to.equal(5732);
+			expect(thumbnail.ContentLength).to.equal(ThumbnailSize);
 		});
 
-		it('Will attempt to scrape metadata from the image if form fields are omitted', async () => {
+		it('Will derive title from filename if missing', async () => {
+			const expectedTitle = 'turtle';
+			const { body } = await request(App)
+				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
+				.set(...friendsOnlyAccount.authHeader)
+				.attach('image', ImagePaths[2])
+				.expect(200);
 
+			// Correct response from API.
+			expect(body).to.exist;
+			expect(body.imageId).to.exist;
+			expect(body.title).to.equal(expectedTitle);
+
+			// Image metadata saved to database.
+			const saved = await LogEntryImage.findById(body.imageId);
+			expect(saved).to.exist;
+			expect(saved.contentType).to.equal('image/jpeg');
+			expect(saved.logEntry.toString()).to.equal(friendsOnlyLogEntry.id);
+			expect(saved.title).to.equal(expectedTitle);
 		});
 
 		it('Will return 400 if there is a problem with the request form', async () => {
+			const { body } = await request(App)
+				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
+				.set(...friendsOnlyAccount.authHeader)
+				.field('title', Title)
+				.field('description', Description)
+				.field('timestamp', 'Yesterday')
+				.field('lat', 'north')
+				.field('lon', Lon)
+				.attach('image', ImagePaths[0])
+				.expect(400);
 
+			expect(body).to.be.a.badRequestResponse;
 		});
 
 		it('Will return 400 if the image is missing', async () => {
@@ -251,11 +297,49 @@ describe('Log Entry Images', () => {
 		});
 
 		it('Will return 400 if the image is too large', async () => {
+			const { body } = await request(App)
+				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
+				.set(...friendsOnlyAccount.authHeader)
+				.field('title', Title)
+				.field('description', Description)
+				.field('timestamp', Timestamp)
+				.field('lat', Lat)
+				.field('lon', Lon)
+				.attach('image', ImagePaths[3])
+				.expect(400);
 
+			expect(body).to.be.a.badRequestResponse;
 		});
 
 		it('Will return 400 if the image cannot be read', async () => {
+			const { body } = await request(App)
+				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
+				.set(...friendsOnlyAccount.authHeader)
+				.field('title', Title)
+				.field('description', Description)
+				.field('timestamp', Timestamp)
+				.field('lat', Lat)
+				.field('lon', Lon)
+				.attach('image', path.resolve(__dirname, 'searching.tests.js'))
+				.expect(400);
 
+			expect(body).to.be.a.badRequestResponse;
+		});
+
+		it('Will return 400 if another file is provided under an invalid field name', async () => {
+			const { body } = await request(App)
+				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
+				.set(...friendsOnlyAccount.authHeader)
+				.field('title', Title)
+				.field('description', Description)
+				.field('timestamp', Timestamp)
+				.field('lat', Lat)
+				.field('lon', Lon)
+				.attach('image', ImagePaths[0])
+				.attach('not_image', ImagePaths[1])
+				.expect(400);
+
+			expect(body).to.be.a.badRequestResponse;
 		});
 
 		it('Will return 401 if user is unauthenticated', async () => {
@@ -288,7 +372,47 @@ describe('Log Entry Images', () => {
 		});
 
 		it('Will allow administrators to post images to other users\' log entries', async () => {
+			const { body } = await request(App)
+				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
+				.set(...adminAccount.authHeader)
+				.field('title', Title)
+				.field('description', Description)
+				.field('timestamp', Timestamp)
+				.field('lat', Lat)
+				.field('lon', Lon)
+				.attach('image', ImagePaths[0])
+				.expect(200);
 
+			// Correct response from API.
+			expect(body).to.exist;
+			expect(body.imageId).to.exist;
+			expect(body.title).to.equal(Title);
+			expect(body.description).to.equal(Description);
+			expect(body.timestamp).to.equal(Timestamp);
+			expect(body.location).to.eql({ lat: Lat, lon: Lon });
+
+			// Image metadata saved to database.
+			const saved = await LogEntryImage.findById(body.imageId);
+			expect(saved).to.exist;
+			expect(saved.contentType).to.equal('image/jpeg');
+			expect(saved.logEntry.toString()).to.equal(friendsOnlyLogEntry.id);
+			expect(saved.title).to.equal(Title);
+			expect(saved.description).to.equal(Description);
+			expect(saved.location).to.eql([ Lon, Lat ]);
+			expect(saved.timestamp.toISOString()).to.equal(Timestamp);
+			expect(saved.logEntry).to.eql(friendsOnlyLogEntry._id);
+
+			// Image and thumbnail stored in S3.
+			const [ image, thumbnail ] = await Promise.all([
+				storage.headObject({ Bucket: config.mediaBucket, Key: saved.awsS3Key }).promise(),
+				storage.headObject({ Bucket: config.mediaBucket, Key: saved.awsS3ThumbKey }).promise()
+			]);
+
+			expect(image).to.exist;
+			expect(image.ContentLength).to.equal(ImageSize);
+
+			expect(thumbnail).to.exist;
+			expect(thumbnail.ContentLength).to.equal(ThumbnailSize);
 		});
 
 		it('Will return 404 if user is not found', async () => {
@@ -319,6 +443,32 @@ describe('Log Entry Images', () => {
 				.expect(404);
 
 			expect(body).to.be.a.notFoundResponse;
+		});
+
+		it('Will return 409 if the S3 image key is already in use', async () => {
+			await request(App)
+				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
+				.set(...friendsOnlyAccount.authHeader)
+				.field('title', Title)
+				.field('description', Description)
+				.field('timestamp', Timestamp)
+				.field('lat', Lat)
+				.field('lon', Lon)
+				.attach('image', ImagePaths[0])
+				.expect(200);
+
+			const { body } = await request(App)
+				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
+				.set(...friendsOnlyAccount.authHeader)
+				.field('title', Title)
+				.field('description', Description)
+				.field('timestamp', Timestamp)
+				.field('lat', Lat)
+				.field('lon', Lon)
+				.attach('image', ImagePaths[0])
+				.expect(409);
+
+			expect(body).to.be.a.conflictResponse;
 		});
 
 		it('Will return 500 if a server error occurs', async () => {
@@ -708,7 +858,7 @@ describe('Log Entry Images', () => {
 
 				const parsedUrl = url.parse(header.location);
 				expect(parsedUrl.host).to.equal(url.parse(config.s3Endpoint).host);
-				expect(parsedUrl.pathname).to.equal(path.join(
+				expect(decodeURIComponent(parsedUrl.pathname)).to.equal(path.join(
 					'/',
 					config.mediaBucket,
 					imageType === 'image'

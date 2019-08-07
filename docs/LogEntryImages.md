@@ -47,7 +47,7 @@ Unlike most APIs that accept a *JSON-formatted* request body, this one must be a
 *multi-part form* to allow for the upload of the image file. These are the form fields that are accepted:
 
 * **image** - REQUIRED. The image file being uploaded. Accepted formats are JPEG and PNG. Maximum size is
-6MB.
+set using the `BT_MAX_IMAGE_FILE_SIZE` environment variable. Default is 10Mb.
 * **title** - A brief title for the image. (Max 100 characters.)
 * **description** - A description of the image. (Max 500 characters.)
 * **timestamp** - Time at which the image was taken. Must be a in ISO date format.
@@ -65,6 +65,7 @@ HTTP Status Code | Details
 **401 Not Authorized** | The request was rejected because the current user is not authenticated.
 **403 Forbidden** | The request was rejected because the user does not own the target log book and is not an administrator.
 **404 Not Found** | The request was rejected because either the user or the target log book entry could not be found.
+**409 Conflict** | The request was rejected because the image already exists (or at least one with the same title/S3 key) for the given log entry.
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### GET /users/:userName/logs/:logId/images/:imageId

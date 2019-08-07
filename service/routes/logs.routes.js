@@ -1,3 +1,6 @@
+import busboy from 'connect-busboy';
+import config from '../config';
+
 import {
 	AddImage,
 	DeleteImage,
@@ -44,7 +47,19 @@ module.exports = app => {
 
 	app.route(ImagesRoute)
 		.get(RetrieveUserAccount, RetrieveLogEntry, ListImages)
-		.post(RequireUser, RetrieveUserAccount, RetrieveLogEntry, AssertUserWritePermission, AddImage);
+		.post(
+			busboy({
+				highWaterMark: 2 * 1024 * 1024,
+				limits: {
+					fileSize: config.maxImageFileSize
+				}
+			}),
+			RequireUser,
+			RetrieveUserAccount,
+			RetrieveLogEntry,
+			AssertUserWritePermission,
+			AddImage
+		);
 
 	app.route(ImageRoute)
 		.get(RetrieveUserAccount, RetrieveLogEntryImage, GetImageDetails)

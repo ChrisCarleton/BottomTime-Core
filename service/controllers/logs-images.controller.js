@@ -1,4 +1,4 @@
-import { badRequest, serverError, notFound } from '../utils/error-response';
+import { badRequest, conflict, serverError, notFound } from '../utils/error-response';
 import config from '../config';
 import fs from 'fs';
 import { ImageMetadataSchema } from '../validation/log-entry-image';
@@ -13,8 +13,13 @@ import uuid from 'uuid/v4';
 import storage from '../storage';
 
 const ImageDir = path.resolve(config.tempDir, 'media/images/');
+const ImageMimeTypeRegex = /^image\/(jpeg|png|tiff)$/i;
 
 function safeDeleteFile(filePath, logError) {
+	if (!filePath) {
+		return Promise.resolve();
+	}
+
 	return new Promise(resolve => {
 		fs.unlink(filePath, err => {
 			if (err) {
@@ -24,6 +29,64 @@ function safeDeleteFile(filePath, logError) {
 			resolve();
 		});
 	});
+}
+
+async function headObject(key) {
+	try {
+		const result = await storage.headObject({
+			Bucket: config.mediaBucket,
+			Key: key
+		}).promise();
+
+		return result;
+	} catch (err) {
+		if (err.code === 'NotFound') {
+			return null;
+		}
+
+		throw err;
+	}
+}
+
+function validateImageUpload(res, imagePath, imageInfo) {
+	if (!imagePath) {
+		badRequest(
+			'Missing image file.',
+			'An image file must be provided with this request. See API documentation for details.',
+			res
+		);
+		return false;
+	}
+
+	const isValid = Joi.validate(imageInfo, ImageMetadataSchema);
+	if (isValid.error) {
+		badRequest(
+			'Unable to add image. Metadata validation failed',
+			isValid.error,
+			res
+		);
+		return false;
+	}
+
+	return true;
+}
+
+async function imageUploadHasConflict(res, imageKey, thumbnailKey) {
+	const [ imageHead, thumbHead ] = await Promise.all([
+		headObject(imageKey),
+		headObject(thumbnailKey)
+	]);
+
+	if (imageHead || thumbHead) {
+		conflict(
+			res,
+			'title',
+			'Image key already exists. Please choose another title and try again.'
+		);
+		return true;
+	}
+
+	return false;
 }
 
 export async function ListImages(req, res) {
@@ -56,14 +119,42 @@ export function AddImage(req, res) {
 	let imageExtension = null;
 	let imageFileName = null;
 	let mimeType = null;
+	let failed = false;
 
-	req.busboy.on('file', (fieldname, stream, filename) => {
+	req.log.debug(`Enforcing max file size: ${ config.maxImageFileSize } bytes.`);
+	req.busboy.on('file', (fieldname, stream, filename, encoding, fileType) => {
 		if (fieldname !== 'image') {
+			badRequest(
+				`Invalid file field provided: ${ filename }.`,
+				'The attached image must appear under the field name "image".',
+				res
+			);
+			failed = true;
 			return stream.resume();
 		}
 
+		if (!ImageMimeTypeRegex.test(fileType)) {
+			badRequest(
+				`Invalid file type submitted: ${ fileType }.`,
+				'The attached image file must be in one of the following formats: .JPG, .PNG, or .TIFF.',
+				res
+			);
+			failed = true;
+			return stream.resume();
+		}
+
+		stream.on('limit', () => {
+			// File exceeded size limit. Abort and return an error.
+			badRequest(
+				'Provided image file was too large.',
+				`Maximum file size is ${ config.maxImageFileSize } bytes. `
+					+ 'Try reducing image quality or resizing and then re-attempt the upload.',
+				res
+			);
+			failed = true;
+		});
+
 		try {
-			// We need to split the file stream up across several other streams
 			const parsedPath = path.parse(filename);
 			imageExtension = parsedPath.ext;
 			imageFileName = parsedPath.name;
@@ -74,7 +165,9 @@ export function AddImage(req, res) {
 			const imageFile = fs.createWriteStream(imagePath);
 			stream.pipe(imageFile);
 		} catch (err) {
-			req.logError('An error occured processing the file stream', err);
+			const logId = req.logError('An error occured processing the file stream', err);
+			serverError(res, logId);
+			failed = true;
 		}
 	});
 
@@ -83,19 +176,20 @@ export function AddImage(req, res) {
 	});
 
 	req.busboy.on('field', (key, value) => {
-		imageInfo[key] = value;
+		if (key === 'lat' || key === 'lon') {
+			imageInfo.location = imageInfo.location || {};
+			imageInfo.location[key] = value;
+		} else {
+			imageInfo[key] = value;
+		}
 	});
 
 	req.busboy.on('finish', async () => {
-		if (!imagePath) {
-			return badRequest(
-				'Missing image file.',
-				'An image file must be provided with this request. See API documentation for details.',
-				res
-			);
-		}
-
 		try {
+			if (failed || !validateImageUpload(res, imagePath, imageInfo)) {
+				return;
+			}
+
 			const fileSlug = slug(imageInfo.title || imageFileName, { lower: true });
 			const imageKey = path.join(
 				req.account.username,
@@ -110,6 +204,10 @@ export function AddImage(req, res) {
 				`${ fileSlug }-thumb${ imageExtension }`
 			);
 
+			if (await imageUploadHasConflict(res, imageKey, thumbnailKey)) {
+				return;
+			}
+
 			await sharp(imagePath)
 				.resize(150, 150)
 				.toFile(thumbnailPath);
@@ -119,7 +217,7 @@ export function AddImage(req, res) {
 				awsS3ThumbKey: thumbnailKey,
 				contentType: mimeType,
 				logEntry: req.logEntry._id,
-				title: imageInfo.title,
+				title: imageInfo.title || fileSlug,
 				description: imageInfo.description
 			});
 
@@ -127,10 +225,10 @@ export function AddImage(req, res) {
 				metadata.timestamp = moment(imageInfo.timestamp).toDate();
 			}
 
-			if (imageInfo.lat && imageInfo.lon) {
+			if (imageInfo.location) {
 				metadata.location = [
-					parseFloat(imageInfo.lon),
-					parseFloat(imageInfo.lat)
+					parseFloat(imageInfo.location.lon),
+					parseFloat(imageInfo.location.lat)
 				];
 			}
 
@@ -149,6 +247,7 @@ export function AddImage(req, res) {
 					ContentType: mimeType
 				}).promise()
 			]);
+
 			res.json(metadata.toCleanJSON());
 		} catch (err) {
 			const logId = req.logError('Failed to add image to log entry', err);
@@ -156,8 +255,8 @@ export function AddImage(req, res) {
 		} finally {
 			// Clean up temp files.
 			await Promise.all([
-				safeDeleteFile(imagePath),
-				safeDeleteFile(thumbnailPath)
+				safeDeleteFile(imagePath, req.logError),
+				safeDeleteFile(thumbnailPath, req.logError)
 			]);
 		}
 	});
