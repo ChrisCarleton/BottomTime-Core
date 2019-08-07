@@ -5,16 +5,12 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "snyk-protect": "snyk protect",
-    "prepare": "npm run snyk-protect"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Chris Carleton",
   "license": "ISC",
   "dependencies": {
     "moment": "^2.24.0",
-    "mongoose": "^5.4.21",
-    "snyk": "^1.189.0"
-  },
-  "snyk": true
+    "mongoose": "^5.4.21"
+  }
 }
