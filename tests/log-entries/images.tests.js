@@ -372,10 +372,11 @@ describe('Log Entry Images', () => {
 		});
 
 		it('Will allow administrators to post images to other users\' log entries', async () => {
+			const title = 'An Admin Was Here';
 			const { body } = await request(App)
 				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
 				.set(...adminAccount.authHeader)
-				.field('title', Title)
+				.field('title', title)
 				.field('description', Description)
 				.field('timestamp', Timestamp)
 				.field('lat', Lat)
@@ -386,7 +387,7 @@ describe('Log Entry Images', () => {
 			// Correct response from API.
 			expect(body).to.exist;
 			expect(body.imageId).to.exist;
-			expect(body.title).to.equal(Title);
+			expect(body.title).to.equal(title);
 			expect(body.description).to.equal(Description);
 			expect(body.timestamp).to.equal(Timestamp);
 			expect(body.location).to.eql({ lat: Lat, lon: Lon });
@@ -396,7 +397,7 @@ describe('Log Entry Images', () => {
 			expect(saved).to.exist;
 			expect(saved.contentType).to.equal('image/jpeg');
 			expect(saved.logEntry.toString()).to.equal(friendsOnlyLogEntry.id);
-			expect(saved.title).to.equal(Title);
+			expect(saved.title).to.equal(title);
 			expect(saved.description).to.equal(Description);
 			expect(saved.location).to.eql([ Lon, Lat ]);
 			expect(saved.timestamp.toISOString()).to.equal(Timestamp);
@@ -446,10 +447,11 @@ describe('Log Entry Images', () => {
 		});
 
 		it('Will return 409 if the S3 image key is already in use', async () => {
+			const title = 'Cannot Be Duplicated';
 			await request(App)
 				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
 				.set(...friendsOnlyAccount.authHeader)
-				.field('title', Title)
+				.field('title', title)
 				.field('description', Description)
 				.field('timestamp', Timestamp)
 				.field('lat', Lat)
@@ -460,7 +462,7 @@ describe('Log Entry Images', () => {
 			const { body } = await request(App)
 				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
 				.set(...friendsOnlyAccount.authHeader)
-				.field('title', Title)
+				.field('title', title)
 				.field('description', Description)
 				.field('timestamp', Timestamp)
 				.field('lat', Lat)
@@ -480,7 +482,7 @@ describe('Log Entry Images', () => {
 			const { body } = await request(App)
 				.post(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
 				.set(...friendsOnlyAccount.authHeader)
-				.field('title', Title)
+				.field('title', 'Gonna Fail')
 				.field('description', Description)
 				.field('timestamp', Timestamp)
 				.field('lat', Lat)
