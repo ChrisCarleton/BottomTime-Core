@@ -202,20 +202,19 @@ describe('Log Entry Images', () => {
 				.listObjectsV2({ Bucket: config.mediaBucket })
 				.promise();
 
-			await Promise.all([
-				// TODO: Figure out why the deleteObjects call doesn't work.
-				// storage.deleteObjects({
-				// 	Bucket: config.mediaBucket,
-				// 	Delete: {
-				// 		Objects: Contents.map(obj => ({ Key: obj.Key }))
-				// 	}
-				// }).promise(),
-				...Contents.map(obj => storage.deleteObject({
-					Bucket: config.mediaBucket,
-					Key: obj.Key
-				}).promise()),
-				LogEntryImage.deleteMany({})
-			]);
+			// For some reason deleteObjects fails (at least against Fake S3) so each object needs
+			// to be deleted in a separate operation. :(
+			if (Contents.length === 0) {
+				await LogEntryImage.deleteMany({});
+			} else {
+				await Promise.all([
+					...Contents.map(obj => storage.deleteObject({
+						Bucket: config.mediaBucket,
+						Key: obj.Key
+					}).promise()),
+					LogEntryImage.deleteMany({})
+				]);
+			}
 		});
 
 		it('Will post a new image to the log entry along with a thumbnail', async () => {
