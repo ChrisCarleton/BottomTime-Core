@@ -46,7 +46,7 @@ module.exports = app => {
 		.delete(RetrieveUserAccount, RetrieveLogEntry, AssertUserWritePermission, DeleteLog);
 
 	app.route(ImagesRoute)
-		.get(RetrieveUserAccount, RetrieveLogEntry, ListImages)
+		.get(RetrieveUserAccount, RetrieveLogEntry, AssertUserReadPermission, ListImages)
 		.post(
 			busboy({
 				highWaterMark: 2 * 1024 * 1024,
@@ -62,7 +62,7 @@ module.exports = app => {
 		);
 
 	app.route(ImageRoute)
-		.get(RetrieveUserAccount, RetrieveLogEntryImage, GetImageDetails)
+		.get(RetrieveUserAccount, RetrieveLogEntryImage, AssertUserReadPermission, GetImageDetails)
 		.put(
 			RequireUser,
 			RetrieveUserAccount,

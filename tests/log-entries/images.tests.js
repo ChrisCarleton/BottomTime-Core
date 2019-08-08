@@ -73,6 +73,7 @@ describe('Log Entry Images', () => {
 
 	let publicLogEntry = null;
 	let friendsOnlyLogEntry = null;
+	let adminLogEntry = null;
 
 	let stub = null;
 
@@ -85,7 +86,8 @@ describe('Log Entry Images', () => {
 
 		publicLogEntry = toLogEntry(fakeLogEntry(publicAccount.user.id));
 		friendsOnlyLogEntry = toLogEntry(fakeLogEntry(friendsOnlyAccount.user.id));
-		await LogEntry.insertMany([ publicLogEntry, friendsOnlyLogEntry ]);
+		adminLogEntry = toLogEntry(fakeLogEntry(adminAccount.user.id));
+		await LogEntry.insertMany([ publicLogEntry, friendsOnlyLogEntry, adminLogEntry ]);
 	});
 
 	afterEach(() => {
@@ -137,6 +139,24 @@ describe('Log Entry Images', () => {
 			body.forEach(img => {
 				validateImageMetadata(img);
 			});
+		});
+
+		it('Will return an empty array if no images are found', async () => {
+			const { body } = await request(App)
+				.get(imagesRoute(adminAccount.user.username, adminLogEntry.id))
+				.set(...adminAccount.authHeader)
+				.expect(200);
+
+			expect(body).to.be.an('array').and.to.be.empty;
+		});
+
+		it('Will return 403 if user is not authorised to list the images', async () => {
+			const { body } = await request(App)
+				.get(imagesRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id))
+				.set(...publicAccount.authHeader)
+				.expect(403);
+
+			expect(body).to.be.a.forbiddenResponse;
 		});
 
 		it('Will return 404 if username is not found', async () => {
@@ -514,6 +534,15 @@ describe('Log Entry Images', () => {
 				.expect(200);
 
 			expect(body).to.eql(imageMetadata.toCleanJSON());
+		});
+
+		it('Will return 403 if the user is not authorised to view the image metadata', async () => {
+			const { body } = await request(App)
+				.get(imageRoute(friendsOnlyAccount.user.username, friendsOnlyLogEntry.id, imageMetadata.id))
+				.set(...publicAccount.authHeader)
+				.expect(403);
+
+			expect(body).to.be.a.forbiddenResponse;
 		});
 
 		it('Will return 404 if the user cannot be found', async () => {
