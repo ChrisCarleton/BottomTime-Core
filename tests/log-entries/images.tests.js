@@ -26,6 +26,7 @@ const ImagePaths = [
 
 const ImageSize = 122739;
 const ThumbnailSize = 5768;
+const MimeType = 'image/jpeg';
 
 function imagesRoute(username, logEntryId) {
 	return `/users/${ username }/logs/${ logEntryId }/images`;
@@ -220,7 +221,7 @@ describe('Log Entry Images', () => {
 			// Image metadata saved to database.
 			const saved = await LogEntryImage.findById(body.imageId);
 			expect(saved).to.exist;
-			expect(saved.contentType).to.equal('image/jpeg');
+			expect(saved.contentType).to.equal(MimeType);
 			expect(saved.logEntry.toString()).to.equal(friendsOnlyLogEntry.id);
 			expect(saved.title).to.equal(Title);
 			expect(saved.description).to.equal(Description);
@@ -230,8 +231,8 @@ describe('Log Entry Images', () => {
 
 			// Image and thumbnail stored in S3.
 			const [ image, thumbnail ] = await Promise.all([
-				storage.headObject({ Bucket: config.mediaBucket, Key: saved.awsS3Key }).promise(),
-				storage.headObject({ Bucket: config.mediaBucket, Key: saved.awsS3ThumbKey }).promise()
+				headObject(saved.awsS3Key),
+				headObject(saved.awsS3ThumbKey)
 			]);
 
 			expect(image).to.exist;
@@ -257,7 +258,7 @@ describe('Log Entry Images', () => {
 			// Image metadata saved to database.
 			const saved = await LogEntryImage.findById(body.imageId);
 			expect(saved).to.exist;
-			expect(saved.contentType).to.equal('image/jpeg');
+			expect(saved.contentType).to.equal(MimeType);
 			expect(saved.logEntry.toString()).to.equal(friendsOnlyLogEntry.id);
 			expect(saved.title).to.equal(expectedTitle);
 		});
@@ -395,7 +396,7 @@ describe('Log Entry Images', () => {
 			// Image metadata saved to database.
 			const saved = await LogEntryImage.findById(body.imageId);
 			expect(saved).to.exist;
-			expect(saved.contentType).to.equal('image/jpeg');
+			expect(saved.contentType).to.equal(MimeType);
 			expect(saved.logEntry.toString()).to.equal(friendsOnlyLogEntry.id);
 			expect(saved.title).to.equal(title);
 			expect(saved.description).to.equal(Description);
@@ -405,8 +406,8 @@ describe('Log Entry Images', () => {
 
 			// Image and thumbnail stored in S3.
 			const [ image, thumbnail ] = await Promise.all([
-				storage.headObject({ Bucket: config.mediaBucket, Key: saved.awsS3Key }).promise(),
-				storage.headObject({ Bucket: config.mediaBucket, Key: saved.awsS3ThumbKey }).promise()
+				headObject(saved.awsS3Key),
+				headObject(saved.awsS3ThumbKey)
 			]);
 
 			expect(image).to.exist;
@@ -685,13 +686,13 @@ describe('Log Entry Images', () => {
 					Bucket: config.mediaBucket,
 					Key: imageMetadata.awsS3Key,
 					Body: fs.createReadStream(ImagePaths[0]),
-					ContentType: 'image/jpeg'
+					ContentType: MimeType
 				}).promise(),
 				storage.upload({
 					Bucket: config.mediaBucket,
 					Key: imageMetadata.awsS3ThumbKey,
 					Body: fs.createReadStream(ImagePaths[1]),
-					ContentType: 'image/jpeg'
+					ContentType: MimeType
 				}).promise()
 			]);
 		});
@@ -819,13 +820,13 @@ describe('Log Entry Images', () => {
 						Bucket: config.mediaBucket,
 						Key: imageMetadata.awsS3Key,
 						Body: fs.createReadStream(ImagePaths[0]),
-						ContentType: 'image/jpeg'
+						ContentType: MimeType
 					}).promise(),
 					storage.upload({
 						Bucket: config.mediaBucket,
 						Key: imageMetadata.awsS3ThumbKey,
 						Body: fs.createReadStream(ImagePaths[1]),
-						ContentType: 'image/jpeg'
+						ContentType: MimeType
 					}).promise()
 				]);
 				route = downloadRoute(

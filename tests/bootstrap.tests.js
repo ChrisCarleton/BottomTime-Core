@@ -11,7 +11,7 @@ chai.use(chaiSorted);
 chai.use(errorResponseAssertions);
 
 before(done => {
-	mkdirp(path.resolve(__dirname, '../temp/media/images'), '0770');
+	mkdirp.sync(path.resolve(__dirname, '../temp/media/images'), '0770');
 
 	// Make sure the MongoDB connection is open before running any tests.
 	database.connection.once('open', async err => {

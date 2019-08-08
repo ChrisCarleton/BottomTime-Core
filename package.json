@@ -83,7 +83,6 @@
     "joi": "^14.0.0",
     "jsonwebtoken": "^8.4.0",
     "lodash": "^4.17.14",
-    "mime-types": "^2.1.24",
     "moment": "^2.22.2",
     "mongoose": "^5.3.1",
     "mongoose-elasticsearch-xp": "^5.8.0",

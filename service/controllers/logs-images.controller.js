@@ -1,19 +1,19 @@
-import { badRequest, conflict, serverError, notFound } from '../utils/error-response';
+import { badRequest, conflict, notFound, serverError } from '../utils/error-response';
 import config from '../config';
 import fs from 'fs';
 import { ImageMetadataSchema } from '../validation/log-entry-image';
 import Joi from 'joi';
 import LogEntryImage from '../data/log-entry-images';
-import mime from 'mime-types';
 import moment from 'moment';
 import path from 'path';
-import slug from 'slug';
 import sharp from 'sharp';
-import uuid from 'uuid/v4';
+import slug from 'slug';
 import storage from '../storage';
+import uuid from 'uuid/v4';
 
 const ImageDir = path.resolve(config.tempDir, 'media/images/');
 const ImageMimeTypeRegex = /^image\/(jpeg|png|tiff)$/i;
+const DefaultStorageClass = 'STANDARD';
 
 function safeDeleteFile(filePath, logError) {
 	if (!filePath) {
@@ -58,11 +58,11 @@ function validateImageUpload(res, imagePath, imageInfo) {
 		return false;
 	}
 
-	const isValid = Joi.validate(imageInfo, ImageMetadataSchema);
-	if (isValid.error) {
+	const { error } = Joi.validate(imageInfo, ImageMetadataSchema);
+	if (error) {
 		badRequest(
 			'Unable to add image. Metadata validation failed',
-			isValid.error,
+			error,
 			res
 		);
 		return false;
@@ -145,6 +145,7 @@ export function AddImage(req, res) {
 
 		stream.on('limit', () => {
 			// File exceeded size limit. Abort and return an error.
+			req.log.info('Uploaded image was rejected because the file was too large.');
 			badRequest(
 				'Provided image file was too large.',
 				`Maximum file size is ${ config.maxImageFileSize } bytes. `
@@ -158,7 +159,7 @@ export function AddImage(req, res) {
 			const parsedPath = path.parse(filename);
 			imageExtension = parsedPath.ext;
 			imageFileName = parsedPath.name;
-			mimeType = mime.lookup(imageExtension);
+			mimeType = fileType;
 			imagePath = path.resolve(ImageDir, `${ uploadId }${ parsedPath.ext }`);
 			thumbnailPath = path.resolve(ImageDir, `${ uploadId }-thumb${ parsedPath.ext }`);
 
@@ -172,7 +173,9 @@ export function AddImage(req, res) {
 	});
 
 	req.busboy.on('error', err => {
-		req.logError('An error occured processing the file stream', err);
+		const logId = req.logError('An error occured processing the file stream', err);
+		serverError(res, logId);
+		failed = true;
 	});
 
 	req.busboy.on('field', (key, value) => {
@@ -233,20 +236,22 @@ export function AddImage(req, res) {
 			}
 
 			await Promise.all([
-				metadata.save(),
 				storage.upload({
 					Bucket: config.mediaBucket,
 					Key: imageKey,
 					Body: fs.createReadStream(imagePath),
-					ContentType: mimeType
+					ContentType: mimeType,
+					StorageClass: DefaultStorageClass
 				}).promise(),
 				storage.upload({
 					Bucket: config.mediaBucket,
 					Key: thumbnailKey,
 					Body: fs.createReadStream(thumbnailPath),
-					ContentType: mimeType
+					ContentType: mimeType,
+					StorageClass: DefaultStorageClass
 				}).promise()
 			]);
+			await metadata.save();
 
 			res.json(metadata.toCleanJSON());
 		} catch (err) {
@@ -269,11 +274,11 @@ export function GetImageDetails(req, res) {
 }
 
 export async function UpdateImageDetails(req, res) {
-	const isValid = Joi.validate(req.body, ImageMetadataSchema);
-	if (isValid.error) {
+	const { error } = Joi.validate(req.body, ImageMetadataSchema);
+	if (error) {
 		return badRequest(
 			'Unable to update image metadata because validation failed',
-			isValid.error,
+			error,
 			res);
 	}
 
@@ -309,6 +314,21 @@ export async function DeleteImage(req, res) {
 	}
 }
 
+export async function DownloadImage(req, res) {
+	try {
+		const signedUrl = req.params.imageType === 'image'
+			? await req.imageMetadata.getImageUrl()
+			: await req.imageMetadata.getThumbnailUrl();
+		res.redirect(302, signedUrl);
+	} catch (err) {
+		const logId = req.logError(
+			`Failed to get signed URL for image with ID ${ req.params.imageId }.`,
+			err
+		);
+		serverError(res, logId);
+	}
+}
+
 export async function RetrieveLogEntryImage(req, res, next) {
 	try {
 		req.imageMetadata = await LogEntryImage.findOne({
@@ -326,20 +346,5 @@ export async function RetrieveLogEntryImage(req, res, next) {
 			`Failed to retrieve image metadata for image with ID ${ req.params.imageId }`,
 			err);
 		return serverError(res, logId);
-	}
-}
-
-export async function DownloadImage(req, res) {
-	try {
-		const signedUrl = req.params.imageType === 'image'
-			? await req.imageMetadata.getImageUrl()
-			: await req.imageMetadata.getThumbnailUrl();
-		res.redirect(302, signedUrl);
-	} catch (err) {
-		const logId = req.logError(
-			`Failed to get signed URL for image with ID ${ req.params.imageId }.`,
-			err
-		);
-		serverError(res, logId);
 	}
 }

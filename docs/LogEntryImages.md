@@ -46,11 +46,11 @@ Posts a new image to the log entry.
 Unlike most APIs that accept a *JSON-formatted* request body, this one must be a
 *multi-part form* to allow for the upload of the image file. These are the form fields that are accepted:
 
-* **image** - REQUIRED. The image file being uploaded. Accepted formats are JPEG and PNG. Maximum size is
-set using the `BT_MAX_IMAGE_FILE_SIZE` environment variable. Default is 10Mb.
+* **image** - REQUIRED. The image file being uploaded. Accepted formats are JPEG, PNG, and TIFF. Maximum
+size is set using the `BT_MAX_IMAGE_FILE_SIZE` environment variable. Default is 10Mb.
 * **title** - A brief title for the image. (Max 100 characters.)
 * **description** - A description of the image. (Max 500 characters.)
-* **timestamp** - Time at which the image was taken. Must be a in ISO date format.
+* **timestamp** - Time at which the image was taken. Must be in ISO date format.
 * **lat** - Number. The latitude at which the picture was taken.
 * **lon** - Number. The longitude at which the picture was taken.
 
@@ -60,7 +60,7 @@ is missing and the other is supplied the request will fail with a 400 HTTP error
 #### Responses
 HTTP Status Code | Details
 ----- | -----
-**200 Ok** | The call succeeded and the response body will contain a [DiveLogImageInfo](#divelogimageinfo-object) object with the `imageId`, `imageUrl` and `thumbnailUrl` properties filled in.
+**200 Ok** | The call succeeded and the response body will contain a [DiveLogImageInfo](#divelogimageinfo-object) object with the `imageId` property filled in.
 **400 Bad Request** | The request was rejected because the request body was invalid or there was a problem with the image file.
 **401 Not Authorized** | The request was rejected because the current user is not authenticated.
 **403 Forbidden** | The request was rejected because the user does not own the target log book and is not an administrator.
@@ -69,17 +69,17 @@ HTTP Status Code | Details
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### GET /users/:userName/logs/:logId/images/:imageId
-Retrieves info on a specific image.
+Retrieves the metadata for a specific image.
 
 #### Route Parameters
 * **userName** - The username of the user to whom the log entry belongs.
 * **logId** - The ID of the log entry to which the image belongs.
-* **imageId** - The ID of the image for which info should be retrieved.
+* **imageId** - The ID of the image for which metadata should be retrieved.
 
 #### Responses
 HTTP Status Code | Details
 ----- | -----
-**200 Ok** | The call succeeded and the response body will contain a [DiveLogImageInfo](#divelogimageinfo-object) object with info on the desired image.
+**200 Ok** | The call succeeded and the response body will contain a [DiveLogImageInfo](#divelogimageinfo-object) object with the metadata for the desired image.
 **401 Unauthorized** | The request was rejected because the user is not authenticated and the log book is not publicly-viewable.
 **403 Forbidden** | The request was rejected because the user does not have access to view the log book.
 **404 Not Found** | Either the user, the log entry, or the image specified in the route could not be found.
@@ -107,7 +107,7 @@ HTTP Status Code | Details
 **500 Server Error** | An internal server error occurred. Log information will be provided in the [Error](General.md#error-object) object for troubleshooting.
 
 ### DELETE /users/:userName/logs/:logId/images/:imageId
-Deletes a specific image from a log entry.
+Deletes a specific image from a log entry. The metadata and image files will be removed.
 
 #### Route Parameters
 * **userName** - The username of the user to whom the log entry belongs.
