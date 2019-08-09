@@ -22,19 +22,24 @@ is `bottomtime_dev`.
 * **BT_FRIEND_LIMIT** Sets the maximum number of friends users are limitted to. The default is 1000.
 * **BT_LOG_FILE** Setting this to a file name will force the application to write its logs to the file
 rather than `stdout`.
-* **BT_LOG_LEVEL** Sets the level of verbosity of the log output. Valid values are `trace`, `debug`, `info`,
-`warn`, `error`, and `fatal`. The default is `debug`.
-* **BT_MEDIA_BUCKET** The name of the S3 bucket where dive media (videos and pictures) are stored for users.
+* **BT_LOG_LEVEL** Sets the level of verbosity of the log output. Valid values are `trace`, `debug`,
+`info`, `warn`, `error`, and `fatal`. The default is `debug`.
+* **BT_MEDIA_BUCKET** The name of the S3 bucket where dive media (videos and pictures) are stored for
+users.
+* **BT_TEMP_DIR** The absolute path to the directory where the application can create temp files.
+(Defaults to `${__dirname}/../temp`.)
+* **BT_MAX_IMAGE_FILE_SIZE** Sets the maximum file size for images uploaded to the application in bytes.
+Default is `10485760` (10Mb.)
 * **BT_MONGO_ENDPOINT** Sets the connection string for the MongoDB database. The default is
 `mongodb://localhost/dev`.
 * **BT_PORT** Can be set to override the default port the application listens for requests on. The default
-is 29201.
+is `29201`.
 * **BT_S3_ENDPOINT** Can be set to override the default endpoint used to reach the AWS S3 APIs. (E.g.
 `http://localhost:4569/`)
 * **BT_SESSION_SECRET** Sets the secret used to encrypt/decrypt session cookies. This doesn't really matter
 for testing but should definitely be set to a secure value in production to prevent session hijacking.
 * **BT_SITE_URL** Tells the application the base URL of the site. E.g. `https://www.bottomtime.ca/`. This
-is important for some components of the application that need to return or provide URLs.
+is important for some components of the application that need to return or provide absolute URLs.
 * **BT_SMTP_HOST** The hostname of the SMTP server used for sending out e-mails. Default is `localhost`.
 * **BT_SMTP_PASSWORD** The password used to authenticate with the SMTP server.
 * **BT_SMTP_PORT** The port number on which the SMTP server should be contacted. The default is `15025`.

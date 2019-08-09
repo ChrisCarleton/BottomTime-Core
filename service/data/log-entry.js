@@ -5,6 +5,7 @@ import mongoose from './database';
 const logEntrySchema = mongoose.Schema({
 	userId: {
 		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User',
 		required: true,
 		index: true
 	},
@@ -91,34 +92,6 @@ const logEntrySchema = mongoose.Schema({
 			},
 			agency: String,
 			certNumber: String
-		}
-	],
-	images: [
-		{
-			key: {
-				type: String,
-				required: true
-			},
-			name: {
-				type: String,
-				required: true,
-				index: true
-			},
-			uploaded: Boolean
-		}
-	],
-	videos: [
-		{
-			key: {
-				type: String,
-				required: true
-			},
-			name: {
-				type: String,
-				required: true,
-				index: true
-			},
-			uploaded: Boolean
 		}
 	]
 	// facility: {}
