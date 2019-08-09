@@ -55,6 +55,11 @@ variable "instance_type" {
 	default = "t3.small"
 }
 
+variable "kms_key_id" {
+	type = "string"
+	default = ""
+}
+
 variable "latency_low_threshold" {
 	type = "string"
 	default = 200
