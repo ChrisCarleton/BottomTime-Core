@@ -64,3 +64,37 @@ resource "aws_route_table_association" "az2" {
 	subnet_id = "${aws_subnet.az2.id}"
 	route_table_id = "${aws_route_table.internet.id}"
 }
+
+resource "aws_vpc_endpoint" "s3" {
+	vpc_id = "${aws_vpc.main.id}"
+	service_name = "com.amazonaws.${var.region}.s3"
+	vpc_endpoint_type = "Gateway"
+	policy = <<EOF
+{
+    "Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "Access-to-media-bucket",
+			"Principal": "*",
+			"Action": [
+				"s3:ListBucket",
+				"s3:GetObject",
+				"s3:PutObject",
+				"s3:PutObjectAcl",
+				"s3:DeleteObject"
+			],
+			"Effect": "Allow",
+			"Resource": [
+				"${aws_s3_bucket.media_bucket.arn}",
+				"${aws_s3_bucket.media_bucket.arn}/*"
+			]
+		}
+	]
+}
+EOF
+}
+
+resource "aws_vpc_endpoint_route_table_association" "s3rt" {
+	vpc_endpoint_id = "${aws_vpc_endpoint.s3.id}"
+	route_table_id = "${aws_route_table.internet.id}"
+}
