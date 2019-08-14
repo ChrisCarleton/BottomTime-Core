@@ -1,4 +1,3 @@
-import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import ExpectedProfile from './google-profile.json';
 import fakeUser from '../util/fake-user';
