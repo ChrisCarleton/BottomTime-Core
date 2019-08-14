@@ -29,11 +29,11 @@ function sleep(duration) {
 		log('Buckets have been created.');
 
 		log('Attempting to connect to ElasticSearch...');
-		for (let i = 0; i < 5; i++) {
+		for (let i = 0; i < 10; i++) {
 			try {
 				await request(config.elasticSearchEndpoint).get('/').expect(200);
 			} catch (err) {
-				log(`Connection unavailable. Attempting ${ chalk.bold(4 - i) } more times...`);
+				log(`Connection unavailable. Attempting ${ chalk.bold(9 - i) } more times...`);
 				if (i === 4) {
 					return process.exit(5);
 				}

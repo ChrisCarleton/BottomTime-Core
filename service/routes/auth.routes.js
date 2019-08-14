@@ -1,8 +1,8 @@
 import {
 	AuthenticateUser,
+	GetCurrentUser,
 	Login,
-	Logout,
-	GetCurrentUser
+	Logout
 } from '../controllers/auth.controller';
 import passport from 'passport';
 

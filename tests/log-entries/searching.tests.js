@@ -9,7 +9,6 @@ import Friend from '../../service/data/friend';
 import LogEntry from '../../service/data/log-entry';
 import mongoose from '../../service/data/database';
 import request from 'supertest';
-import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
@@ -56,8 +55,7 @@ describe('Log Entry Searching', () => {
 	after(async () => {
 		await Promise.all([
 			LogEntry.deleteMany({}),
-			User.deleteMany({}),
-			Session.deleteMany({})
+			User.deleteMany({})
 		]);
 	});
 

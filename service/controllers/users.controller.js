@@ -10,7 +10,6 @@ import {
 import Joi from 'joi';
 import mailer from '../mail/mailer';
 import moment from 'moment';
-import sessionManager from '../utils/session-manager';
 import templates from '../mail/templates';
 import User from '../data/user';
 import { UsernameRegex, UsernameSchema } from '../validation/common';
@@ -101,10 +100,6 @@ export async function AdminGetUsers(req, res) {
 }
 
 export async function RequireAccountPermission(req, res, next) {
-	if (!req.user) {
-		return forbidden(res, 'You must be authenticated to perform this action');
-	}
-
 	if (req.user.role !== 'admin' && req.user.usernameLower !== req.params.username.toLowerCase()) {
 		return forbidden(
 			res,
@@ -210,11 +205,16 @@ export async function CreateUserAccount(req, res) {
 		}
 
 		req.log.info('Created account for and logged in user ', entity.username);
-		res.status(201).json({
-			user: User.cleanUpUser(entity),
-			token: await sessionManager.createSessionToken(entity.username)
+		req.login(user, err => {
+			if (err) {
+				const logId = req.logError(
+					`Failed to log in new user ${ user.username }`,
+					err
+				);
+				return serverError(res, logId);
+			}
+			res.status(201).json(user.getAccountJSON());
 		});
-
 	} catch (err) {
 		const logId = req.logError('Failed to create user account due to server error', err);
 		serverError(res, logId);

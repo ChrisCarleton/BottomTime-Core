@@ -83,12 +83,14 @@ export function serverErrorMiddleware(req, res, next) {
 		return logId;
 	};
 
-	try {
-		return next();
-	} catch (err) {
-		const logId = req.logError(
-			'An unexpected server error has occurred.',
-			err);
-		return serverError(res, logId);
-	}
+	return next();
 }
+
+/* eslint-disable no-unused-vars */
+// The 'next' parameter is required. Express looks for a function with four parameters to treat it
+// as an error handler.
+export function handleServerError(err, req, res, next) {
+	const logId = req.logError('An unhandled server error has occured', err);
+	serverError(res, logId);
+}
+/* eslint-enable no-unused-vars */

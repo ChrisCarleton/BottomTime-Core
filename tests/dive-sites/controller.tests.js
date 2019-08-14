@@ -6,7 +6,6 @@ import fakeDiveSite, { toDiveSite } from '../util/fake-dive-site';
 import fakeMongoId from '../util/fake-mongo-id';
 import DiveSite from '../../service/data/sites';
 import request from 'supertest';
-import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
@@ -30,7 +29,6 @@ describe('Dive sites controller', () => {
 	after(async () => {
 		await Promise.all([
 			DiveSite.deleteMany({}),
-			Session.deleteMany({}),
 			User.deleteMany({})
 		]);
 	});

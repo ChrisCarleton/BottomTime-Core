@@ -7,7 +7,6 @@ import fakeLogEntry, { toLogEntry } from '../util/fake-log-entry';
 import fakeMongoId from '../util/fake-mongo-id';
 import LogEntry from '../../service/data/log-entry';
 import request from 'supertest';
-import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 import { ErrorIds } from '../../service/utils/error-response';
@@ -23,7 +22,6 @@ describe('Logs Controller', () => {
 
 	after(async () => {
 		await User.deleteMany({});
-		await Session.deleteMany({});
 	});
 
 	afterEach(async () => {

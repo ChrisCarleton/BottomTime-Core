@@ -8,7 +8,6 @@ import fakeMongoId from '../util/fake-mongo-id';
 import Friend from '../../service/data/friend';
 import LogEntry from '../../service/data/log-entry';
 import request from 'supertest';
-import Session from '../../service/data/session';
 import User from '../../service/data/user';
 
 describe('Log Entry Security', () => {
@@ -28,7 +27,6 @@ describe('Log Entry Security', () => {
 
 	after(async () => {
 		await User.deleteMany({});
-		await Session.deleteMany({});
 	});
 
 	afterEach(async () => {

@@ -11,7 +11,6 @@ import LogEntryImage from '../../service/data/log-entry-images';
 import moment from 'moment';
 import path from 'path';
 import request from 'supertest';
-import Session from '../../service/data/session';
 import sinon from 'sinon';
 import storage from '../../service/storage';
 import User from '../../service/data/user';
@@ -101,8 +100,7 @@ describe('Log Entry Images', () => {
 		await Promise.all([
 			LogEntry.deleteMany({}),
 			LogEntryImage.deleteMany({}),
-			User.deleteMany({}),
-			Session.deleteMany({})
+			User.deleteMany({})
 		]);
 	});
 

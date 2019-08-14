@@ -9,7 +9,6 @@ import LogEntry from '../../service/data/log-entry';
 import moment from 'moment';
 import mongoose from 'mongoose';
 import request from 'supertest';
-import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
@@ -94,11 +93,7 @@ describe('Profiles Controller', () => {
 	});
 
 	after(async () => {
-		await Promise.all([
-			User.deleteMany({}),
-			Session.deleteMany({}),
-			Session.deleteMany({})
-		]);
+		await User.deleteMany({});
 	});
 
 	describe('GET /users/:username/profile', () => {

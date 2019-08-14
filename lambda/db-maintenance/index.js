@@ -3,17 +3,6 @@
 const moment = require('moment');
 const mongoose = require('mongoose');
 
-const sessionsSchema = new mongoose.Schema({
-	username: {
-		type: String,
-		index: true
-	},
-	expires: {
-		type: Date,
-		index: true
-	}
-});
-
 const friendsSchema = new mongoose.Schema({
 	user: {
 		type: String,
@@ -35,7 +24,6 @@ const friendsSchema = new mongoose.Schema({
 	}
 });
 
-const Session = mongoose.model('Session', sessionsSchema);
 const Friend = mongoose.model('Friend', friendsSchema);
 
 exports.handler = async () => {
@@ -52,15 +40,10 @@ exports.handler = async () => {
 		'h'
 	).toDate();
 
-	await Promise.all([
-		Session.deleteMany({
-			expires: { $lte: moment().utc().toDate() }
-		}),
-		Friend.deleteMany({
-			approved: false,
-			evaluatedOn: { $lte: friendRequestExpiration }
-		})
-	]);
+	await Friend.deleteMany({
+		approved: false,
+		evaluatedOn: { $lte: friendRequestExpiration }
+	});
 
 	await mongoose.connection.close();
 };

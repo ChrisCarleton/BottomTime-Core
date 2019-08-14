@@ -1,6 +1,11 @@
-import sessionManager from '../../service/utils/session-manager';
+import { App } from '../../service/server';
+import request from 'supertest';
 
-export default async function (username) {
-	const token = await sessionManager.createSessionToken(username, 'chrome');
-	return [ 'Authorization', `Bearer ${ token }` ];
+export default async function (username, password) {
+	const { header } = await request(App)
+		.post('/auth/login')
+		.send({ username, password })
+		.expect(200);
+
+	return [ 'Cookie', header['set-cookie'] ];
 }

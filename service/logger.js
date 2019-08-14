@@ -4,34 +4,38 @@ import containerMetadata from './utils/container-metadata';
 import expressLogger from 'express-bunyan-logger';
 import uuid from 'uuid/v4';
 
-let stream = null;
+const streams = [];
 
 if (config.logFileName) {
-	stream = {
+	streams.push({
 		path: config.logFileName
-	};
+	});
+	streams.push({
+		stream: process.stdout,
+		level: 'fatal'
+	});
 } else {
-	stream = {
+	streams.push({
 		stream: process.stdout
-	};
+	});
 }
 
 const logger = bunyan.createLogger({
 	name: 'bt_log_main',
 	level: config.logLevel,
-	streams: [ stream ]
+	streams
 });
 
 export const esLogger = bunyan.createLogger({
 	name: 'bt_log_elasticsearch',
 	level: config.logLevel,
-	streams: [ stream ]
+	streams
 });
 
 export const requestLogger = expressLogger({
 	name: 'bt_log_request',
 	level: config.logLevel,
-	streams: [ stream ],
+	streams,
 	excludes: [
 		'req-headers',
 		'res-headers',
