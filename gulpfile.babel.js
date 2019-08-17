@@ -21,8 +21,7 @@ function lint() {
 			'gulpfile.babel.js',
 			'service/**/*.js',
 			'tests/**/*.js',
-			'admin/**/*.js',
-			'lambda/db-maintenance/index.js'
+			'admin/**/*.js'
 		])
 		.pipe(eslint())
 		.pipe(eslint.format())
