@@ -21,10 +21,11 @@ troubleshoot the problem.
 
 `logId` is provided in the case of server errors (HTTP 5xx). A log entry in the application's system log
 will have a corresponding logID field that matches this value. This is to allow administrators to quickly
-look up the details of an error, without reporting those potentially sensitive details to be returned to the
-API caller.
+look up the details of an error, without reporting those potentially sensitive details to be returned to
+the API caller.
 
-For Conflict errors (e.g. username already taken) the `field` property will indicate what is in conflict.
+For Conflict errors (e.g. username already taken) the `field` property will indicate which field is in
+conflict.
 
 ### ComponentHealthStatus Object
 ```json
@@ -62,8 +63,8 @@ The `status` property will match the lowest health status found in all of the co
 
 ## Routes
 ### GET /
-Returns a [Version](#version-object) representing the current application and API versions. The HTTP
-response code will be a 200 OK.
+Returns a [Version](#version-object) object representing the current application and API versions. The HTTP
+response code will be a **200 OK**.
 
 ### GET /health
 Gets the health of the application node. This route is mainly used to provide a pass/fail report on the
