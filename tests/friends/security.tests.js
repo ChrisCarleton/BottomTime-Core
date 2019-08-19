@@ -6,7 +6,6 @@ import faker from 'faker';
 import fakeUser from '../util/fake-user';
 import Friend from '../../service/data/friend';
 import request from 'supertest';
-import Session from '../../service/data/session';
 import User from '../../service/data/user';
 
 function expect403Response(response) {
@@ -62,7 +61,6 @@ describe('Friends API Security', () => {
 	after(async () => {
 		await Promise.all([
 			Friend.deleteMany({}),
-			Session.deleteMany({}),
 			User.deleteMany({})
 		]);
 	});

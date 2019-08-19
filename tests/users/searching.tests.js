@@ -7,7 +7,6 @@ import fakeUser from '../util/fake-user';
 import moment from 'moment';
 import request from 'supertest';
 import searchUtils from '../../service/utils/search-utils';
-import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
@@ -36,6 +35,8 @@ describe('User searching', () => {
 
 	before(async () => {
 		await User.deleteMany({});
+		await User.esSynchronize();
+
 		[ adminUser, regularUser ] = await Promise.all([
 			createFakeAccount('admin'),
 			createFakeAccount()
@@ -60,10 +61,7 @@ describe('User searching', () => {
 	});
 
 	after(async () => {
-		await Promise.all([
-			Session.deleteMany({}),
-			User.deleteMany({})
-		]);
+		await User.deleteMany({});
 	});
 
 	describe('As the Anonymous User', () => {

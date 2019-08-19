@@ -16,22 +16,12 @@ The authentication domain deals with access to user accounts.
 	"isLockedOut": "Boolean: True if the account is locked out (not allowed to log in.)",
 	"distanceUnit": "String: The user's preferred unit for distance. (Valid values are 'm' and 'ft'.)",
 	"weightUnit": "String: The user's preferred unit for weight. (Valid values are 'kg' and 'lb'.)",
+	"pressureUnit": "String: The user's preferred unit for pressure. (Valid values are 'psi' and 'bar'.)",
 	"temperatureUnit": "String: The user's preferred unit for temperature. (Valid values are 'c' and 'f'.)"
 }
 ```
 Some user accounts may not have a password set on them because the user opted to sign up using one of the
 OAuth providers and so authentication is provided by a third party.
-
-### LoginSucceeded Object
-```json
-{
-	"user": { },
-	"token": "String: the JWT bearer token that can be used to authenticate future requests."
-}
-```
-
-The **user** field will be a [UserAccount](#useraccount-object) representing the user that was logged
-in. See above for details on that object's fields.
 
 ### Authentication Object
 ```json
@@ -44,7 +34,7 @@ in. See above for details on that object's fields.
 ## Routes
 ### GET /auth/me
 Returns a [UserAccount](#useraccount-object) containing information for the currently signed in user. If
-the user is not authenticated then the object is populated with "dummy" information for the anonymous user.
+the user is not authenticated then the object is populated with information on the Anonymous User.
 
 #### Responses
 HTTP Status Code | Details
@@ -62,17 +52,17 @@ and password.
 #### Responses
 HTTP Status Code | Details
 ----- | -----
-**200 OK** | The call succeeded and the user is authenticated. A [LoginSucceeded](#loginsucceeded-object) will be returned containing information on the user that was signed in as well as a JWT bearer token that can be used to authenticate future requests.
+**200 OK** | The call succeeded and the user was authenticated. A [UserAccount](#useraccount-object) will be returned containing information on the user that was signed in. A session cookie will also be provided in the response. This cookie should be included in future requests made as the authenticated user.
 **400 Bad Request** | The request was rejected because the provided [Authentication](#authentication-object) object was invalid or missing.
 **401 Unauthorized** | Authentication failed. Either the user account does not exist, does not have a password set, is locked out, or the supplied password was incorrect.
 **500 Server Error** | Something went wrong accessing the database. An [Error](General.md#error-object) object will be provided in the response with more details.
 
 ### POST /auth/logout
-Logs out a user and terminates their session. This will invalidate the JWT bearer token that the user was
-using to sign in.
+Logs out a user and terminates their session. This will invalidate the user's session cookie. Attempts to
+use it in future requests will result in a **401 Unauthorized** error.
 
 #### Responses
 HTTP Status Code | Details
 ----- | -----
-**204 No Content** | The call succeeded and the user's session has been invalidated. Their bearer token will no longer be accepted. The response body will be empty.
+**204 No Content** | The call succeeded and the user's session has been invalidated. The session cookie will be removed. The response body will be empty.
 **500 Server Error** | Something went wrong accessing the database. An [Error](General.md#error-object) object will be provided in the response with more details.

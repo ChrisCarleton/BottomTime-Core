@@ -7,7 +7,6 @@ import fakeMongoId from '../util/fake-mongo-id';
 import fakeTank from '../util/fake-tank';
 import mongoose from 'mongoose';
 import request from 'supertest';
-import Session from '../../service/data/session';
 import sinon from 'sinon';
 import Tank from '../../service/data/tanks';
 import tankProperties from '../../service/utils/tank-properties';
@@ -37,10 +36,7 @@ describe('Tanks Controller', () => {
 	});
 
 	after(async () => {
-		await Promise.all([
-			Session.deleteMany({}),
-			User.deleteMany({})
-		]);
+		await User.deleteMany({});
 	});
 
 	describe('GET /tanks', () => {

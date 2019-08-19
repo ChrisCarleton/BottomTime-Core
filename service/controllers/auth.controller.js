@@ -2,25 +2,25 @@ import { badRequest, conflict, serverError, unauthorized } from '../utils/error-
 import Joi from 'joi';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
-import Session from '../data/session';
-import sessionManager from '../utils/session-manager';
 import User from '../data/user';
 
 export function AuthenticateUser(req, res, next) {
-	passport.authenticate('local', { session: false }, (err, user) => {
+	const { error } = Joi.validate(req.body, LoginSchema);
+	if (error) {
+		return badRequest(
+			'Could not authenticate user: request was invalid.',
+			error,
+			res
+		);
+	}
+
+	passport.authenticate('local', (err, user) => {
 		if (err) {
 			const logId = req.logError(
-				'An error occurred while trying to authenticate a user.',
-				err);
+				'Failed to authenticate user',
+				err
+			);
 			return serverError(res, logId);
-		}
-
-		const isValid = Joi.validate(req.body, LoginSchema);
-		if (isValid.error) {
-			return badRequest(
-				'Could not authenticate user: request was invalid.',
-				isValid.error,
-				res);
 		}
 
 		if (!user) {
@@ -30,7 +30,7 @@ export function AuthenticateUser(req, res, next) {
 				'Check the username and password to verify that they are correct.');
 		}
 
-		req.login(user, { session: false }, loginErr => {
+		req.login(user, loginErr => {
 			if (loginErr) {
 				const logId = req.logError(
 					'An error occurred while trying to authenticate a user.',
@@ -43,7 +43,7 @@ export function AuthenticateUser(req, res, next) {
 	})(req, res, next);
 }
 
-export async function Login(req, res) {
+export function Login(req, res) {
 	if (req.user === 'email-taken') {
 		return conflict(
 			res,
@@ -51,41 +51,14 @@ export async function Login(req, res) {
 			'Unable to create account. The e-mail address is already associated with another user account.');
 	}
 
-	try {
-		const token = await sessionManager.createSessionToken(
-			req.user.username,
-			`${ req.useragent.platform } / ${ req.useragent.os } / ${ req.useragent.browser }`
-		);
-		res.json({
-			user: User.cleanUpUser(req.user),
-			token
-		});
-	} catch (err) {
-		const logId = req.logError('Unable to login user', err);
-		serverError(res, logId);
-	}
+	res.json(req.user.getAccountJSON());
 }
 
-export async function Logout(req, res) {
-	if (!req.sessionId) {
-		return res.sendStatus(204);
-	}
-
-	try {
-		await Session.deleteOne({ _id: req.sessionId });
-		req.logout();
-		return res.sendStatus(204);
-	} catch (err) {
-		const logId = req.logError('Unable to log out user', err);
-		return serverError(res, logId);
-	}
+export function Logout(req, res) {
+	req.logout();
+	return res.sendStatus(204);
 }
 
 export function GetCurrentUser(req, res) {
 	res.json(User.cleanUpUser(req.user));
-}
-
-export function GoogleCallback(req, res) {
-	// Authenticated! Create session token.
-	res.sendStatus(501);
 }

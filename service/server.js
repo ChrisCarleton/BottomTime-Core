@@ -2,16 +2,19 @@
 
 import applyAuth from './auth';
 import bodyParser from 'body-parser';
-import containerMetadata from './utils/container-metadata';
 import compression from 'compression';
+import containerMetadata from './utils/container-metadata';
 import config from './config';
+import cookieParser from 'cookie-parser';
+import database from './data/database';
 import express from 'express';
 import glob from 'glob';
 import http from 'http';
 import log, { requestLogger } from './logger';
 import modRewrite from 'connect-modrewrite';
-import { notFound, serverErrorMiddleware } from './utils/error-response';
+import { handleServerError, notFound, serverErrorMiddleware } from './utils/error-response';
 import path from 'path';
+import session from 'express-session';
 import useragent from 'express-useragent';
 
 // Wire up process-wide event handlers.
@@ -38,15 +41,26 @@ process.on('uncaughtException', err => {
 	process.exit(187);
 });
 
+const MongoStore = require('connect-mongo')(session);
+
 // Express middleware
 const app = express();
 app.use(compression());
 app.use(useragent.express());
 app.use(modRewrite([ '^/api/(.*) /$1' ]));
-applyAuth(app);
+app.use(bodyParser.json());
+app.use(cookieParser());
+app.use(session({
+	secret: config.sessionSecret,
+	resave: true,
+	saveUninitialized: true,
+	store: new MongoStore({
+		mongooseConnection: database.connection
+	})
+}));
 app.use(requestLogger);
 app.use(serverErrorMiddleware);
-app.use(bodyParser.json());
+applyAuth(app);
 
 // Load routes
 glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {
@@ -58,6 +72,9 @@ glob.sync(path.join(__dirname, 'routes/*.routes.js')).forEach(loader => {
 app.all('*', (req, res) => {
 	notFound(req, res);
 });
+
+// Error handler
+app.use(handleServerError);
 
 // Launch server
 const server = http.createServer(app);

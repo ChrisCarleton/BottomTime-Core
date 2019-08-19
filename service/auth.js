@@ -1,27 +1,13 @@
 import bcrypt from 'bcrypt';
 import config from './config';
-import { ErrorIds } from './utils/error-response';
-import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as LocalStrategy } from 'passport-local';
-import log, { logError } from './logger';
+import log from './logger';
 import moment from 'moment';
 import passport from 'passport';
 import randomUsername from './utils/random-username';
-import sessionManager from './utils/session-manager';
 import url from 'url';
 import User from './data/user';
-
-function generateServerError(err) {
-	const logId = logError(err);
-	return {
-		errorId: ErrorIds.authError,
-		logId,
-		status: 500,
-		message: 'A server error occurred.',
-		details: 'Your request could not be completed at this time. Please try again later.'
-	};
-}
 
 passport.use(new LocalStrategy(async (username, password, done) => {
 	try {
@@ -36,30 +22,6 @@ passport.use(new LocalStrategy(async (username, password, done) => {
 		return done(err);
 	}
 }));
-
-passport.use(new JwtStrategy(
-	{
-		jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-		secretOrKey: config.sessionSecret,
-		passReqToCallback: true
-	},
-	async (req, payload, done) => {
-		try {
-			const user = await sessionManager.getSessionFromToken(payload);
-
-			if (user) {
-				req.sessionId = payload.sessionId;
-			}
-
-			return done(null, user);
-		} catch (err) {
-			return done(
-				null,
-				generateServerError(err)
-			);
-		}
-	}
-));
 
 export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
 	try {
@@ -103,10 +65,8 @@ export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
 		log.info('Created new user account based on Google Sign In:', user.username);
 		return cb(null, user);
 	} catch (err) {
-		return cb(
-			null,
-			generateServerError(err)
-		);
+		log.error('An error occurred while attempting a Google authentication', err);
+		return cb(err);
 	}
 }
 
@@ -119,27 +79,20 @@ passport.use(
 	SignInWithGoogle)
 );
 
+passport.serializeUser((user, done) => {
+	done(null, user.username);
+});
+
+passport.deserializeUser(async (username, done) => {
+	try {
+		const user = await User.findByUsername(username);
+		return done(null, user);
+	} catch (err) {
+		return done(err);
+	}
+});
+
 export default app => {
 	app.use(passport.initialize());
-	app.use((req, res, next) => {
-		if (req.headers.authorization) {
-			passport.authenticate('jwt', { session: false })(req, res, next);
-		} else {
-			return next();
-		}
-	});
-
-	// Passport likes to do its own thing when errors occur. It does not conform to the
-	// conventions of the application as documented in the API documentation.
-	//
-	// To avoid this, errors that occur during authentication are passed back to Passport as
-	// "users" rather than errors. This additional piece of middleware captures those errors
-	// and handles them properly.
-	app.use((req, res, next) => {
-		if (req.user && req.user.errorId) {
-			return res.status(500).json(req.user);
-		}
-
-		return next();
-	});
+	app.use(passport.session());
 };

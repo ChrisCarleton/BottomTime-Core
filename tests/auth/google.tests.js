@@ -1,4 +1,3 @@
-import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import ExpectedProfile from './google-profile.json';
 import fakeUser from '../util/fake-user';
@@ -110,18 +109,16 @@ describe('Sign-In With Google', () => {
 	});
 
 	it('Will fail gracefully if there is a server error', async () => {
+		const error = new Error('Nope!');
 		const spy = sinon.spy();
 		const stub = sinon.stub(User, 'findByUsername');
-		stub.rejects('nope');
+		stub.rejects(error);
 
 		try {
 			await SignInWithGoogle(null, null, ExpectedProfile, spy);
-			const [ error, account ] = spy.firstCall.args;
-			expect(account).to.exist;
-			expect(account.errorId).to.equal(ErrorIds.authError);
-			expect(account.status).to.equal(500);
-			expect(account.logId).to.exist;
-			expect(error).to.not.exist;
+			const [ err, account ] = spy.firstCall.args;
+			expect(account).to.not.exist;
+			expect(err).to.eql(error);
 		} finally {
 			stub.restore();
 		}

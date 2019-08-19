@@ -1,6 +1,6 @@
 import { App } from '../../service/server';
 import bcrypt from 'bcrypt';
-import createAccount from '../util/create-fake-account';
+import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import faker from 'faker';
@@ -15,7 +15,7 @@ import sinon from 'sinon';
 import User from '../../service/data/user';
 import uuid from 'uuid/v4';
 
-function fakeCreateAccount() {
+function createNewAccountRequest() {
 	const firstName = faker.name.firstName();
 	const lastName = faker.name.lastName();
 	return {
@@ -35,8 +35,8 @@ describe('Users Controller', () => {
 	let regularUser = null;
 
 	before(async () => {
-		admin = await createAccount('admin');
-		regularUser = await createAccount();
+		admin = await createFakeAccount('admin');
+		regularUser = await createFakeAccount();
 	});
 
 	after(async () => {
@@ -52,34 +52,34 @@ describe('Users Controller', () => {
 
 	describe('PUT /users/:username', () => {
 		it('Anonymous users can create accounts and will receive an auth token', async () => {
-			const fake = fakeCreateAccount();
+			const fake = createNewAccountRequest();
 
-			let res = await request(App)
+			const response = await request(App)
 				.put(`/users/${ fake.username }`)
 				.send(fake.body)
 				.expect(201);
+			expect(response.header['set-cookie']).to.exist;
 
-			const { user, token } = res.body;
-			expect(token).to.exist;
+			const user = response.body;
 			expect(user.isAnonymous).to.be.false;
 			expect(user.isLockedOut).to.be.false;
 			expect(user.username).to.equal(fake.username);
 			expect(user.email).to.equal(fake.body.email);
 			expect(user.role).to.equal('user');
 
-			res = await request(App)
+			const { body } = await request(App)
 				.get('/auth/me')
-				.set('Authorization', `Bearer ${ token }`)
+				.set('Cookie', response.header['set-cookie'])
 				.expect(200);
-			expect(res.body.isAnonymous).to.be.false;
-			expect(res.body.isLockedOut).to.be.false;
-			expect(res.body.username).to.equal(fake.username);
-			expect(res.body.email).to.equal(fake.body.email);
-			expect(res.body.role).to.equal('user');
+			expect(body.isAnonymous).to.be.false;
+			expect(body.isLockedOut).to.be.false;
+			expect(body.username).to.equal(fake.username);
+			expect(body.email).to.equal(fake.body.email);
+			expect(body.role).to.equal('user');
 		});
 
 		it('Anonymous users cannot create admin accounts', async () => {
-			const fake = fakeCreateAccount();
+			const fake = createNewAccountRequest();
 			fake.body.role = 'admin';
 
 			const res = await request(App)
@@ -92,18 +92,32 @@ describe('Users Controller', () => {
 		});
 
 		it('Admins can create admin accounts', async () => {
-			const fake = fakeCreateAccount();
+			const fake = createNewAccountRequest();
 			fake.body.role = 'admin';
 
-			await request(App)
+			const response = await request(App)
 				.put(`/users/${ fake.username }`)
 				.set(...admin.authHeader)
 				.send(fake.body)
 				.expect(201);
+
+			// Make sure the admin's auth cookie is not overwritten!
+			expect(response.header['set-cookie']).to.not.exist;
+
+			const { body } = response;
+			expect(body.isAnonymous).to.be.false;
+			expect(body.isLockedOut).to.be.false;
+			expect(body.username).to.equal(fake.username);
+			expect(body.email).to.equal(fake.body.email);
+			expect(body.role).to.equal('admin');
+
+			const user = await User.findByUsername(fake.username);
+			expect(user).to.exist;
+			expect(user.getAccountJSON()).to.eql(body);
 		});
 
 		it('Other authenticated users cannot create new accounts', async () => {
-			const fake = fakeCreateAccount();
+			const fake = createNewAccountRequest();
 
 			const res = await request(App)
 				.put(`/users/${ fake.username }`)
@@ -115,7 +129,7 @@ describe('Users Controller', () => {
 		});
 
 		it('Will return Conflict if username is taken', async () => {
-			const fake = fakeCreateAccount();
+			const fake = createNewAccountRequest();
 			fake.username = regularUser.user.username;
 
 			const res = await request(App)
@@ -128,7 +142,7 @@ describe('Users Controller', () => {
 		});
 
 		it('Will return Conflict if email is taken', async () => {
-			const fake = fakeCreateAccount();
+			const fake = createNewAccountRequest();
 			fake.body.email = regularUser.user.email;
 
 			const res = await request(App)
@@ -141,7 +155,7 @@ describe('Users Controller', () => {
 		});
 
 		it('Will return Bad Request if username is invalid', async () => {
-			const fake = fakeCreateAccount();
+			const fake = createNewAccountRequest();
 			fake.username = 'Whoa! Totally not valid';
 
 			const res = await request(App)
@@ -153,7 +167,7 @@ describe('Users Controller', () => {
 		});
 
 		it('Will return Bad Request if request body is invalid', async () => {
-			const fake = fakeCreateAccount();
+			const fake = createNewAccountRequest();
 			fake.body.notCool = true;
 
 			const res = await request(App)
@@ -173,7 +187,7 @@ describe('Users Controller', () => {
 		});
 
 		it('Will return Server Error if something goes wrong with the database', async () => {
-			const fake = fakeCreateAccount();
+			const fake = createNewAccountRequest();
 			stub = sinon.stub(mongoose.Model.prototype, 'save');
 			stub.rejects('nope');
 
@@ -192,9 +206,9 @@ describe('Users Controller', () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 			const user = new User(fakeUser(oldPassword));
-			const authHeader = await generateAuthHeader(user.username);
-
 			await user.save();
+
+			const authHeader = await generateAuthHeader(user.username, oldPassword);
 			await request(App)
 				.post(`/users/${ user.username }/changePassword`)
 				.send({
@@ -208,20 +222,20 @@ describe('Users Controller', () => {
 			expect(bcrypt.compareSync(newPassword, entity.passwordHash)).to.be.true;
 		});
 
-		it('Will return Forbidden if user is not authenticated', async () => {
+		it('Will return Not Authorized if user is not authenticated', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 			const user = new User(fakeUser(oldPassword));
-
 			await user.save();
-			const res = await request(App)
+
+			const { body } = await request(App)
 				.post(`/users/${ user.username }/changePassword`)
 				.send({
 					oldPassword,
 					newPassword
 				})
-				.expect(403);
-			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+				.expect(401);
+			expect(body).to.be.a.unauthorizedResponse;
 
 			const entity = await User.findByUsername(user.username);
 			expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
@@ -230,17 +244,16 @@ describe('Users Controller', () => {
 		it('Will return Forbidden if requested user account canot be found', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
-			const user = new User(fakeUser(oldPassword));
 
-			const res = await request(App)
-				.post(`/users/${ user.username }/changePassword`)
+			const { body } = await request(App)
+				.post('/users/made_up_user/changePassword')
 				.set(...admin.authHeader)
 				.send({
 					oldPassword,
 					newPassword
 				})
 				.expect(403);
-			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+			expect(body).to.be.a.forbiddenResponse;
 		});
 
 		it('Will return Forbidden if user tries to change another user\'s password', async () => {
@@ -268,10 +281,10 @@ describe('Users Controller', () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 			const user = new User(fakeUser(oldPassword));
-			const authHeader = await generateAuthHeader(user.username);
-
 			await user.save();
-			const res = await request(App)
+
+			const authHeader = await generateAuthHeader(user.username, oldPassword);
+			const { body } = await request(App)
 				.post(`/users/${ user.username }/changePassword`)
 				.set(...authHeader)
 				.send({
@@ -279,7 +292,7 @@ describe('Users Controller', () => {
 					newPassword
 				})
 				.expect(403);
-			expect(res.body.errorId).to.equal(ErrorIds.forbidden);
+			expect(body).to.be.a.forbiddenResponse;
 
 			const entity = await User.findByUsername(user.username);
 			expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
@@ -302,13 +315,15 @@ describe('Users Controller', () => {
 		});
 
 		it('Old password is not required if no password is set', async () => {
+			const oldPassword = faker.internet.password(18, false, null, '@1a_Z');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
-			const user = new User(fakeUser());
+			const user = new User(fakeUser(oldPassword));
+			await user.save();
+			const authHeader = await generateAuthHeader(user.username, oldPassword);
 
 			user.passwordHash = null;
 			await user.save();
 
-			const authHeader = await generateAuthHeader(user.username);
 			await request(App)
 				.post(`/users/${ user.username }/changePassword`)
 				.set(...authHeader)
@@ -323,9 +338,9 @@ describe('Users Controller', () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = 'too_weak';
 			const user = new User(fakeUser(oldPassword));
-			const authHeader = await generateAuthHeader(user.username);
-
 			await user.save();
+
+			const authHeader = await generateAuthHeader(user.username, oldPassword);
 			const res = await request(App)
 				.post(`/users/${ user.username }/changePassword`)
 				.set(...authHeader)
@@ -343,9 +358,9 @@ describe('Users Controller', () => {
 		it('Will return Bad Request if request body is malformed', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const user = new User(fakeUser(oldPassword));
-			const authHeader = await generateAuthHeader(user.username);
-
 			await user.save();
+
+			const authHeader = await generateAuthHeader(user.username, oldPassword);
 			const res = await request(App)
 				.post(`/users/${ user.username }/changePassword`)
 				.set(...authHeader)
@@ -363,9 +378,9 @@ describe('Users Controller', () => {
 		it('Will return Bad Request if request body is missing', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const user = new User(fakeUser(oldPassword));
-			const authHeader = await generateAuthHeader(user.username);
-
 			await user.save();
+
+			const authHeader = await generateAuthHeader(user.username, oldPassword);
 			const res = await request(App)
 				.post(`/users/${ user.username }/changePassword`)
 				.set(...authHeader)
@@ -412,9 +427,9 @@ describe('Users Controller', () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 			const user = new User(fakeUser(oldPassword));
-			const authHeader = await generateAuthHeader(user.username);
-
 			await user.save();
+
+			const authHeader = await generateAuthHeader(user.username, oldPassword);
 			stub = sinon.stub(mongoose.Model.prototype, 'save');
 			stub.rejects('nope');
 

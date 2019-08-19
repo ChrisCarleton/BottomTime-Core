@@ -12,20 +12,20 @@ import mailer from '../../service/mail/mailer';
 import moment from 'moment';
 import mongoose from 'mongoose';
 import request from 'supertest';
-import Session from '../../service/data/session';
 import sinon from 'sinon';
 import templates from '../../service/mail/templates';
 import User from '../../service/data/user';
 
 describe('Friends controller', () => {
+	const friendPassword = faker.internet.password(11, false, null, 'Ax*7');
 	const friends = _.sortBy(
 		[
-			new User(fakeUser()),
-			new User(fakeUser()),
-			new User(fakeUser()),
-			new User(fakeUser()),
-			new User(fakeUser()),
-			new User(fakeUser())
+			new User(fakeUser(friendPassword)),
+			new User(fakeUser(friendPassword)),
+			new User(fakeUser(friendPassword)),
+			new User(fakeUser(friendPassword)),
+			new User(fakeUser(friendPassword)),
+			new User(fakeUser(friendPassword))
 		],
 		u => u.username
 	);
@@ -73,10 +73,7 @@ describe('Friends controller', () => {
 	});
 
 	after(async () => {
-		await Promise.all([
-			Session.deleteMany({}),
-			User.deleteMany({})
-		]);
+		await User.deleteMany({});
 	});
 
 	describe('GET /users/:username/friends', () => {
@@ -483,7 +480,7 @@ describe('Friends controller', () => {
 		let friendAuthHeader = null;
 
 		before(async () => {
-			friendAuthHeader = await generateAuthHeader(friends[0].username);
+			friendAuthHeader = await generateAuthHeader(friends[0].username, friendPassword);
 		});
 
 		it('Will approve a friend request and send a notification email', async () => {
@@ -730,7 +727,7 @@ describe('Friends controller', () => {
 		let friendAuthHeader = null;
 
 		before(async () => {
-			friendAuthHeader = await generateAuthHeader(friends[0].username);
+			friendAuthHeader = await generateAuthHeader(friends[0].username, friendPassword);
 		});
 
 		it('Will reject a friend request and send a notification email', async () => {

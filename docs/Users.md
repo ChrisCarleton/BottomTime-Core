@@ -12,11 +12,11 @@ Usernames are used to uniquely identify users in the system. They conform to sev
 
 ## A Note on Units
 The back-end application works exclusively in **metric**. All of the APIs below that accept or return data
-related to temperature, depth/distance, or weight will use/take values in degrees celcius, meters, and
-kilograms, respectively. Though user profiles support the `temperatureUnit`, `distanceUnit`, and
-`weightUnit` properties, these units are not checked when saving/retrieving log entry information. It is up
-to the front-end application to consume these properties and make the appropriate conversions... Or just
-stick with **metric** ;)
+related to temperature, depth/distance, pressure or weight will use/take values in degrees celcius, meters,
+bar, and kilograms, respectively. Though user profiles support the `temperatureUnit`, `distanceUnit`,
+`pressureUnit` and `weightUnit` properties, these units are not checked when saving/retrieving log entry
+information. It is up to the front-end application to consume these properties and make the appropriate
+conversions... Or just stick with **metric** ;)
 
 ## Classes
 ### UserResult Object
@@ -51,8 +51,7 @@ This object gets passed in when creating new user accounts. (Sign up.)
 #### Notes
 E-mail addresses must be unique per user account. No two accounts can have the same e-mail address.
 
-Role must be one of `user` or `admin`. However, only administrators can create other `admin` accounts. If
-unauthenticated users try this the request will be rejected.
+Role must be one of `user` or `admin`. However, only administrators can create other `admin` accounts.
 
 Passwords must meet several strength requirements. All passwords must:
 * Be at least 7 characters long.
@@ -160,7 +159,7 @@ The message body must contain a valid [NewUserAccount](#newuseraccount-object) o
 #### Responses
 HTTP Status Code | Details
 ----- | -----
-**201 Created** | The call succeeded and the new user account has been created. A [LoginSucceeded](Authentication.md#loginsucceeded-object) will be returned containing information on the user that was signed in as well as a JWT bearer token that can be used to authenticate future requests as the new user.
+**201 Created** | The call succeeded and the new user account has been created. A [UserAccount](Authentication.md#useraccount-object) object will be returned containing information on the user that was signed in. For anonymous users who have just created themselves a new account, a session cookie will also be returned. This session cookie should be provided in future requests to continue using the site as the new user.
 **400 Bad Request** | The request was rejected because the request body was empty or the [NewUserAccount](#newuseraccount-object) object was invalid, or because the username route parameter was not valid.
 **403 Forbidden** | This is returned if the action being taken is not allowed. See above for details.
 **409 Conflict** | A Conflict error is returned if either the requested username or e-mail address is already taken by another user. Check the `field` property of the [Error](General.md#error-object) to see which one is problematic. It will be set to one of `email` or `username`.
@@ -204,7 +203,7 @@ HTTP Status Code | Details
 **500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
 
 ### POST /users/:username/resetPassword
-Requests that a forgotten password be reset. This API call does not require an Authorization token. A
+Requests that a forgotten password be reset. This API call does not require an active session. A
 confirmation token will be sent by e-mail to the account owner's email address. The token must be posted
 to `POST /users/:username/confirmPasswordReset` within 24 hours to complete the password reset.
 

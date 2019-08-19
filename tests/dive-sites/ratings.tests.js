@@ -8,7 +8,6 @@ import fakeDiveSiteRating, { toDiveSiteRating } from '../util/fake-dive-site-rat
 import fakeMongoId from '../util/fake-mongo-id';
 import moment from 'moment';
 import request from 'supertest';
-import Session from '../../service/data/session';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 import { UsernameRegex } from '../../service/validation/common';
@@ -53,7 +52,6 @@ describe('Dive Site Ratings', () => {
 		await Promise.all([
 			DiveSite.deleteMany({}),
 			DiveSiteRating.deleteMany({}),
-			Session.deleteMany({}),
 			User.deleteMany({})
 		]);
 	});
