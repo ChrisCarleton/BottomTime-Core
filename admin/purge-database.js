@@ -10,8 +10,8 @@ import database from '../service/data/database';
 import Friend from '../service/data/friend';
 import log from 'fancy-log';
 import LogEntry from '../service/data/log-entry';
+import LogEntryImage from '../service/data/log-entry-images';
 import readline from 'readline-sync';
-import Session from '../service/data/session';
 import Site from '../service/data/sites';
 import SiteRating from '../service/data/site-ratings';
 import Tank from '../service/data/tanks';
@@ -31,8 +31,8 @@ import User from '../service/data/user';
 		await Promise.all([
 			Tank.deleteMany({}),
 			Friend.deleteMany({}),
-			Session.deleteMany({}),
 			LogEntry.deleteMany({}),
+			LogEntryImage.deleteMany({}),
 			Site.deleteMany({}),
 			SiteRating.deleteMany({}),
 			User.deleteMany({})
