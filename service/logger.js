@@ -2,7 +2,6 @@ import bunyan from 'bunyan';
 import config from './config';
 import containerMetadata from './utils/container-metadata';
 import expressLogger from 'express-bunyan-logger';
-import uuid from 'uuid/v4';
 
 const streams = [];
 
@@ -55,15 +54,3 @@ export const requestLogger = expressLogger({
 });
 
 export default logger;
-
-export function logError(message, details) {
-	const logId = uuid();
-	logger.error({
-		logId,
-		message,
-		details,
-		ecsInstanceId: containerMetadata.ContainerInstanceARN,
-		ecsTaskId: containerMetadata.TaskARN
-	});
-	return logId;
-}
