@@ -13,5 +13,5 @@ module.exports = app => {
 	app.post('/auth/logout', Logout);
 
 	app.get('/auth/google', passport.authenticate('google', { scope: [ 'email' ] }));
-	app.get('/auth/google/callback', passport.authenticate('google', { session: false }), Login);
+	app.get('/auth/google/callback', passport.authenticate('google'), Login);
 };

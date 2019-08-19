@@ -55,20 +55,10 @@ export function Login(req, res) {
 }
 
 export function Logout(req, res) {
-	try {
-		req.logout();
-		return res.sendStatus(204);
-	} catch (err) {
-		const logId = req.logError('Unable to log out user', err);
-		return serverError(res, logId);
-	}
+	req.logout();
+	return res.sendStatus(204);
 }
 
 export function GetCurrentUser(req, res) {
 	res.json(User.cleanUpUser(req.user));
-}
-
-export function GoogleCallback(req, res) {
-	// TODO: Authenticated! Create session.
-	res.sendStatus(501);
 }

@@ -39,12 +39,12 @@ describe('Auth Controller', () => {
 					password
 				})
 				.expect(200);
-			expect(res.body).to.eql(User.cleanUpUser(user));
+			expect(res.body).to.eql(user.getAccountJSON());
 
 			res = await agent
 				.get('/auth/me')
 				.expect(200);
-			expect(res.body).to.eql(User.cleanUpUser(user));
+			expect(res.body).to.eql(user.getAccountJSON());
 		});
 
 		it('Fails when user cannot be found', async () => {
@@ -194,16 +194,6 @@ describe('Auth Controller', () => {
 			await request(App)
 				.post('/auth/logout')
 				.expect(204);
-		});
-
-		it.skip('Returns Server Error if something goes wrong', async () => {
-			// TODO: Not sure how to test this right now.
-			const account = await createFakeAccount();
-
-			await request(App)
-				.post('/auth/logout')
-				.set(...account.authHeader)
-				.expect(500);
 		});
 	});
 });

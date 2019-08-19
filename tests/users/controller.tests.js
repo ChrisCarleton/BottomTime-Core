@@ -95,11 +95,25 @@ describe('Users Controller', () => {
 			const fake = createNewAccountRequest();
 			fake.body.role = 'admin';
 
-			await request(App)
+			const response = await request(App)
 				.put(`/users/${ fake.username }`)
 				.set(...admin.authHeader)
 				.send(fake.body)
 				.expect(201);
+
+			// Make sure the admin's auth cookie is not overwritten!
+			expect(response.header['set-cookie']).to.not.exist;
+
+			const { body } = response;
+			expect(body.isAnonymous).to.be.false;
+			expect(body.isLockedOut).to.be.false;
+			expect(body.username).to.equal(fake.username);
+			expect(body.email).to.equal(fake.body.email);
+			expect(body.role).to.equal('admin');
+
+			const user = await User.findByUsername(fake.username);
+			expect(user).to.exist;
+			expect(user.getAccountJSON()).to.eql(body);
 		});
 
 		it('Other authenticated users cannot create new accounts', async () => {

@@ -196,15 +196,13 @@ export async function CreateUserAccount(req, res) {
 				'The account could not be created because the specified email address is already taken.');
 		}
 
-		const entity = await user.save();
+		await user.save();
 
 		if (req.user && req.user.role === 'admin') {
-			return res.status(201).json({
-				user: User.cleanUpUser(req.user)
-			});
+			return res.status(201).json(user.getAccountJSON());
 		}
 
-		req.log.info('Created account for and logged in user ', entity.username);
+		req.log.info('Created account for and logged in user ', user.username);
 		req.login(user, err => {
 			if (err) {
 				const logId = req.logError(

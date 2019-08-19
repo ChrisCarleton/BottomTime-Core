@@ -10,5 +10,6 @@ to the APIs that do not contain a valid and current session cookie will be treat
 Anonymous users are allowed access to certain APIs (see the relevant documentation) but usually with
 greatly reduced permissions.
 
-Attempting to make calls with an invalid or expired session cookie will result in a **401 Unauthorized**
-error. App developers should redirect users back to the login page/screen.
+If an API call that requires authentication returns a 401 when a cookie is supplied, then it is possible
+that the session has expired. App developers should redirect the user back to the login page/screen to
+re-authenticate.
