@@ -204,6 +204,16 @@ describe('Dive Site Validation', () => {
 			validateDiveSite('string.max');
 		});
 
+		it('Tags is optional', () => {
+			delete diveSite.tags;
+			validateDiveSite();
+		});
+
+		it('Tags can be empty', () => {
+			diveSite.tags = [];
+			validateDiveSite();
+		});
+
 		it('Tags must be an array', () => {
 			diveSite.tags = 'tag1, tag2';
 			validateDiveSite('array.base');

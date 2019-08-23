@@ -13,5 +13,5 @@ export const UsernameSchema = Joi
 	.max(50);
 
 export const TagsArraySchema = Joi.array().items(
-	Joi.string().regex(/^[a-z0-9 ]+$/i).max(25).required()
+	Joi.string().regex(/^[a-z0-9 ]+$/i).max(25)
 ).max(50);
