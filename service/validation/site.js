@@ -10,7 +10,7 @@ export const DiveSiteSchema = Joi.object().keys({
 	entryFee: Joi.boolean().allow(null),
 	difficulty: Joi.number().min(1.0).max(5.0).allow(null),
 	description: Joi.string().max(1000).allow(null),
-	tags: TagsArraySchema,
+	tags: TagsArraySchema.allow(null),
 	gps: Joi.object().keys({
 		lat: Joi.number().min(-90.0).max(90.0).required(),
 		lon: Joi.number().min(-180.0).max(180.0).required()
