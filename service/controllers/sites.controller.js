@@ -172,6 +172,7 @@ export async function createSites(req, res) {
 		});
 
 		await DiveSite.insertMany(diveSites);
+		await DiveSite.esSynchronize();
 		res.json(diveSites.map(s => s.toCleanJSON()));
 	} catch (err) {
 		const logId = req.logError('Failed to create dive sites', err);
@@ -192,6 +193,7 @@ export async function updateSite(req, res) {
 	try {
 		req.diveSite.assign(req.body);
 		await req.diveSite.save();
+		await DiveSite.esSynchronize();
 		res.sendStatus(204);
 	} catch (err) {
 		const logId = req.logError('Failed to update dive site info', err);

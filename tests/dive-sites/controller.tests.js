@@ -31,6 +31,10 @@ describe('Dive sites controller', () => {
 			DiveSite.deleteMany({}),
 			User.deleteMany({})
 		]);
+		await Promise.all([
+			DiveSite.esSynchronize(),
+			User.esSynchronize()
+		]);
 	});
 
 	describe('POST /diveSites', () => {

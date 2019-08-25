@@ -73,6 +73,7 @@ describe('Searching Dive Sites', () => {
 
 	after(async () => {
 		await DiveSite.deleteMany({});
+		await DiveSite.esSynchronize();
 	});
 
 	it('Full text search returns results', async () => {

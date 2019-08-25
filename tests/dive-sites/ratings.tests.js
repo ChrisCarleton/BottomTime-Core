@@ -54,6 +54,10 @@ describe('Dive Site Ratings', () => {
 			DiveSiteRating.deleteMany({}),
 			User.deleteMany({})
 		]);
+		await Promise.all([
+			DiveSite.esSynchronize(),
+			User.esSynchronize()
+		]);
 	});
 
 	describe('GET /diveSites/:siteId/ratings', () => {
