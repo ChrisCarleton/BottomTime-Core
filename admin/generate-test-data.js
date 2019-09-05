@@ -35,7 +35,7 @@ import User from '../service/data/user';
 			adminUser.role = 'admin';
 			adminUser.isLockedOut = false;
 		} else {
-			adminUser = new User(fakeUser());
+			adminUser = new User(fakeUser('bottomtime'));
 			adminUser.username = 'Chris';
 			adminUser.usernameLower = 'chris';
 			adminUser.role = 'admin';
