@@ -41,6 +41,7 @@ import User from '../service/data/user';
 			adminUser.role = 'admin';
 		}
 		await adminUser.save();
+		await User.esSynchronize();
 		log(`Admin user ${ chalk.bold.green(adminUser.username) } exists.`);
 
 		log('Creating dive sites...');
@@ -68,6 +69,7 @@ import User from '../service/data/user';
 			ratingsCount += ratings.length;
 		}
 		await Site.insertMany(diveSites);
+		await Site.esSynchronize();
 		log(`Generated ${ chalk.bold(diveSites.length) } dive sites`);
 		log(`and ${ chalk.bold(ratingsCount) } dive site ratings.`);
 
