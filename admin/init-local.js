@@ -34,7 +34,7 @@ function sleep(duration) {
 				await request(config.elasticSearchEndpoint).get('/').expect(200);
 			} catch (err) {
 				log(`Connection unavailable. Attempting ${ chalk.bold(9 - i) } more times...`);
-				if (i === 4) {
+				if (i === 9) {
 					return process.exit(5);
 				}
 				await sleep(2000);
