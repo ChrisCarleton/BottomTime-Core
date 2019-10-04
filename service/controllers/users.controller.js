@@ -219,6 +219,10 @@ export async function CreateUserAccount(req, res) {
 	}
 }
 
+export function CompleteRegistration(req, res) {
+	res.sendStatus(501);
+}
+
 export function ChangeEmail(req, res) {
 	res.sendStatus(501);
 }

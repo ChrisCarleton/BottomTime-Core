@@ -4,13 +4,17 @@ import Joi from 'joi';
 import {
 	AdminUserQuerySchema,
 	ChangePasswordSchema,
+	CompleteRegistrationSchema,
 	ConfirmResetPasswordSchema,
 	UserAccountSchema,
 	UserQuerySchema
 } from '../../service/validation/user';
 import { UsernameSchema } from '../../service/validation/common';
 
+const LongString = faker.lorem.sentences(7).substr(0, 51);
+
 let account = null;
+let registration = null;
 let changePassword = null;
 let resetPassword = null;
 let adminUserQuery = null;
@@ -32,6 +36,11 @@ function validateUsername(expectedError, username) {
 
 function validateAccount(expectedError) {
 	const err = Joi.validate(account, UserAccountSchema);
+	testExpectedError(err, expectedError);
+}
+
+function validateCompleteRegistration(expectedError) {
+	const err = Joi.validate(registration, CompleteRegistrationSchema);
 	testExpectedError(err, expectedError);
 }
 
@@ -138,6 +147,160 @@ describe('Account Details Validation', () => {
 	it('Password must contain a special character', () => {
 		account.password = 'aCCssdf3838';
 		validateAccount('string.regex.base');
+	});
+});
+
+describe('Complete Registration Validation', () => {
+	beforeEach(() => {
+		const firstName = faker.name.firstName();
+		const lastName = faker.name.lastName();
+
+		registration = {
+			username: faker.internet.userName(firstName, lastName),
+			email: faker.internet.email(firstName, lastName),
+			firstName,
+			lastName,
+			logsVisibility: faker.random.arrayElement([ 'private', 'public', 'friends-only' ]),
+			weightUnit: faker.random.arrayElement([ 'kg', 'lbs' ]),
+			temperatureUnit: faker.random.arrayElement([ 'c', 'f' ]),
+			distanceUnit: faker.random.arrayElement([ 'm', 'ft' ]),
+			pressureUnit: faker.random.arrayElement([ 'bar', 'psi' ])
+		};
+	});
+
+	it('Username is required', () => {
+		delete registration.username;
+		validateCompleteRegistration('any.required');
+	});
+
+	it('Username must be valid', () => {
+		registration.username = 'not valid';
+		validateCompleteRegistration('string.regex.base');
+	});
+
+	it('Email is required', () => {
+		delete registration.email;
+		validateCompleteRegistration('any.required');
+	});
+
+	it('Email must be valid', () => {
+		registration.email = 'not valid @ wherever';
+		validateCompleteRegistration('string.email');
+	});
+
+	it('First name is optional', () => {
+		delete registration.firstName;
+		validateCompleteRegistration();
+	});
+
+	it('First name must be a string', () => {
+		registration.firstName = 77;
+		validateCompleteRegistration('string.base');
+	});
+
+	it('First name cannot exceed 50 characters', () => {
+		registration.firstName = LongString;
+		validateCompleteRegistration('string.max');
+	});
+
+	it('Last name is optional', () => {
+		delete registration.lastName;
+		validateCompleteRegistration();
+	});
+
+	it('Last name must be a string', () => {
+		registration.lastName = true;
+		validateCompleteRegistration('string.base');
+	});
+
+	it('Last name cannot exceed 50 characters', () => {
+		registration.lastName = LongString;
+		validateCompleteRegistration('string.max');
+	});
+
+	it('Logs visibility is optional', () => {
+		delete registration.logsVisibility;
+		validateCompleteRegistration();
+	});
+
+	[ 'private', 'public', 'friends-only' ].forEach(v => {
+		it(`Logs visibility can be set to ${ v }`, () => {
+			registration.logsVisibility = v;
+			validateCompleteRegistration();
+		});
+	});
+
+	it('Logs visibility cannot be set to another value', () => {
+		registration.logsVisibility = 'just my neighbour, Steve';
+		validateCompleteRegistration('any.allowOnly');
+	});
+
+	it('Weight unit is optional', () => {
+		delete registration.weightUnit;
+		validateCompleteRegistration();
+	});
+
+	[ 'kg', 'lbs' ].forEach(w => {
+		it(`Weight unit can be set to ${ w }`, () => {
+			registration.weightUnit = w;
+			validateCompleteRegistration();
+		});
+	});
+
+	it('Weight unit cannot be set to another value', () => {
+		registration.weightUnit = 'stone';
+		validateCompleteRegistration('any.allowOnly');
+	});
+
+	it('Temperature unit is optional', () => {
+		delete registration.temperatureUnit;
+		validateCompleteRegistration();
+	});
+
+	[ 'c', 'f' ].forEach(t => {
+		it(`Temperature unit can be set to ${ t }`, () => {
+			registration.temperatureUnit = t;
+			validateCompleteRegistration();
+		});
+	});
+
+	it('Temperature unit cannot be set to another value', () => {
+		registration.temperatureUnit = 'K';
+		validateCompleteRegistration('any.allowOnly');
+	});
+
+	it('Distance unit is optional', () => {
+		delete registration.distanceUnit;
+		validateCompleteRegistration();
+	});
+
+	[ 'm', 'ft' ].forEach(d => {
+		it(`Distance unit can be set to ${ d }`, () => {
+			registration.distanceUnit = d;
+			validateCompleteRegistration();
+		});
+	});
+
+	it('Distance unit cannot be set to another value', () => {
+		registration.distanceUnit = 'km';
+		validateCompleteRegistration('any.allowOnly');
+	});
+
+	it('Pressure unit is optional', () => {
+		delete registration.pressureUnit;
+		validateCompleteRegistration();
+	});
+
+	[ 'bar', 'psi' ].forEach(p => {
+		it(`Pressure unit can be set to ${ p }`, () => {
+			registration.pressureUnit = p;
+			validateCompleteRegistration();
+		});
+	});
+
+	it('Pressure unit cannot be set to another value', () => {
+		registration.pressureUnit = 'kpa';
+		validateCompleteRegistration('any.allowOnly');
 	});
 });
 
