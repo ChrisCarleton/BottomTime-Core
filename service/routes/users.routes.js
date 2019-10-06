@@ -16,5 +16,5 @@ module.exports = app => {
 	app.post('/users/:username/changePassword', RequireUser, RequireAccountPermission, ChangePassword);
 	app.post('/users/:username/resetPassword', RequestPasswordReset);
 	app.post('/users/:username/confirmResetPassword', ConfirmPasswordReset);
-	app.post('/users/:username/completeRegistration', CompleteRegistration);
+	app.post('/users/:username/completeRegistration', RequireUser, RequireAccountPermission, CompleteRegistration);
 };

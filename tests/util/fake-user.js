@@ -5,7 +5,7 @@ import fakeProfile from './fake-profile';
 export default (password, logsVisibility = 'friends-only') => {
 	const firstName = faker.name.firstName();
 	const lastName = faker.name.lastName();
-	const username = faker.internet.userName(firstName, lastName);
+	const username = faker.internet.userName(firstName, lastName).padEnd(6, '3');
 	const email = faker.internet.email(firstName, lastName);
 	password = password || faker.internet.password(18, false, null, '*@1Az');
 

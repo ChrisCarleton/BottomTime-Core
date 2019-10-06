@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { badRequest, conflict, forbidden, serverError } from '../utils/error-response';
 import {
 	AdminUserQuerySchema,
+	CompleteRegistrationSchema,
 	ConfirmResetPasswordSchema,
 	ChangePasswordSchema,
 	UserAccountSchema,
@@ -219,8 +220,64 @@ export async function CreateUserAccount(req, res) {
 	}
 }
 
-export function CompleteRegistration(req, res) {
-	res.sendStatus(501);
+export async function CompleteRegistration(req, res) {
+	const { error } = Joi.validate(req.body, CompleteRegistrationSchema);
+	if (error) {
+		return badRequest(
+			'There was a problem with the request to complete the user\'s registration',
+			error,
+			res
+		);
+	}
+
+	if (!req.account.isRegistrationIncomplete) {
+		return forbidden(
+			res,
+			'Operation if forbidden! Registration has already been completed for this account'
+		);
+	}
+
+	try {
+		const [ usernameConflict, emailConflict ] = await Promise.all([
+			User.findByUsername(req.body.username),
+			User.findByEmail(req.body.email)
+		]);
+
+		if (usernameConflict) {
+			return conflict(
+				res,
+				'username',
+				'Username is already taken'
+			);
+		}
+
+		if (emailConflict) {
+			return conflict(
+				res,
+				'email',
+				'Email is already taken'
+			);
+		}
+
+		req.account.username = req.body.username;
+		req.account.usernameLower = req.body.username.toLowerCase();
+		req.account.email = req.body.email;
+		req.account.emailLower = req.body.email.toLowerCase();
+		req.account.firstName = req.body.firstName;
+		req.account.lastName = req.body.lastName;
+		req.account.logsVisibility = req.body.logsVisibility;
+		req.account.distanceUnit = req.body.distanceUnit;
+		req.account.pressureUnit = req.body.pressureUnit;
+		req.account.temperatureUnit = req.body.temperatureUnit;
+		req.account.weightUnit = req.body.weightUnit;
+		req.account.isRegistrationIncomplete = false;
+		await req.account.save();
+
+		res.send(req.account.getAccountJSON());
+	} catch (err) {
+		const logId = req.logError('Failed to complete registration for user.', err);
+		serverError(res, logId);
+	}
 }
 
 export function ChangeEmail(req, res) {

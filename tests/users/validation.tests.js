@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import fakeCompleteRegistration from '../util/fake-complete-registration';
 import faker from 'faker';
 import Joi from 'joi';
 import {
@@ -152,20 +153,7 @@ describe('Account Details Validation', () => {
 
 describe('Complete Registration Validation', () => {
 	beforeEach(() => {
-		const firstName = faker.name.firstName();
-		const lastName = faker.name.lastName();
-
-		registration = {
-			username: faker.internet.userName(firstName, lastName),
-			email: faker.internet.email(firstName, lastName),
-			firstName,
-			lastName,
-			logsVisibility: faker.random.arrayElement([ 'private', 'public', 'friends-only' ]),
-			weightUnit: faker.random.arrayElement([ 'kg', 'lbs' ]),
-			temperatureUnit: faker.random.arrayElement([ 'c', 'f' ]),
-			distanceUnit: faker.random.arrayElement([ 'm', 'ft' ]),
-			pressureUnit: faker.random.arrayElement([ 'bar', 'psi' ])
-		};
+		registration = fakeCompleteRegistration();
 	});
 
 	it('Username is required', () => {

@@ -209,7 +209,7 @@ HTTP Status Code | Details
 ----- | -----
 **200 Ok** | The call succeeded and the new user account has been created. A [UserAccount](Authentication.md#useraccount-object) object will be returned containing the newly updated user account information. The account can now be used normally on other APIs.
 **400 Bad Request** | The request was rejected because the request body was empty or the [CompleteRegistration](#completeregistration-object) object was invalid.
-**403 Forbidden** | This is returned if the action being taken is not allowed. The user must be authenticated and signed in as the user whose account registration is being completed. Additionally, this operation will not be permitted if the account's `isRegistrationIncomplete` flag is already set to `false.
+**403 Forbidden** | This is returned if the action being taken is not allowed. The user must be authenticated and signed in as the user whose account registration is being completed. Additionally, this operation will not be permitted if the account's `isRegistrationIncomplete` flag is already set to `false`. And, finally, this response will be returned if the user account does not exist. (This is done in place of a 404 for privacy/security reasons.)
 **409 Conflict** | A Conflict error is returned if either the requested username or e-mail address is already taken by another user. Check the `field` property of the [Error](General.md#error-object) to see which one is problematic. It will be set to one of `email` or `username`.
 **500 Server Error** | The request could not be completed because something went wrong on the server-side.
 
