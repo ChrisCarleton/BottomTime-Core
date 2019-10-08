@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { badRequest, conflict, forbidden, serverError } from '../utils/error-response';
+import { badRequest, conflict, forbidden, serverError, unauthorized } from '../utils/error-response';
 import {
 	AdminUserQuerySchema,
 	CompleteRegistrationSchema,
@@ -123,6 +123,14 @@ export async function RequireAccountPermission(req, res, next) {
 	}
 }
 
+export function RequireUserForRegistration(req, res, next) {
+	if (!req.user) {
+		return unauthorized(res);
+	}
+
+	next();
+}
+
 function validateCreateUserAccount(req, res) {
 	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema.required());
 	const isBodyValid = Joi.validate(req.body, UserAccountSchema);
@@ -221,6 +229,13 @@ export async function CreateUserAccount(req, res) {
 }
 
 export async function CompleteRegistration(req, res) {
+	if (!req.account.isRegistrationIncomplete) {
+		return forbidden(
+			res,
+			'Operation Forbidden: Registration for this account has already been completed.'
+		);
+	}
+
 	const { error } = Joi.validate(req.body, CompleteRegistrationSchema);
 	if (error) {
 		return badRequest(
@@ -272,6 +287,8 @@ export async function CompleteRegistration(req, res) {
 		req.account.weightUnit = req.body.weightUnit;
 		req.account.isRegistrationIncomplete = false;
 		await req.account.save();
+
+		req.log.info(`User ${ req.body.username } has completed registration`);
 
 		res.send(req.account.getAccountJSON());
 	} catch (err) {
