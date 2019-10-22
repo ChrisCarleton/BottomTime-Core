@@ -207,15 +207,15 @@ describe('Users Controller', () => {
 		const PasswordHash = bcrypt.hashSync(Password, 3);
 
 		let registration = null;
-		let tempUsername = null;
 		let tempUser = null;
+		let conflictUser = null;
 		let registrationAgent = null;
 
 		beforeEach(async () => {
 			registration = fakeCompleteRegistration();
 
 			const tempEmail = faker.internet.email();
-			tempUsername = uuid();
+			const tempUsername = uuid();
 			tempUser = {
 				username: tempUsername,
 				usernameLower: tempUsername,
@@ -244,11 +244,16 @@ describe('Users Controller', () => {
 				await User.deleteOne({ _id: tempUser._id });
 				tempUser = null;
 			}
+
+			if (conflictUser) {
+				await User.deleteOne({ _id: conflictUser._id });
+				conflictUser = null;
+			}
 		});
 
 		it('Will complete the registration for the target account', async () => {
 			const { body } = await registrationAgent
-				.post(`/users/${ tempUsername }/completeRegistration`)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.send(registration)
 				.expect(200);
 
@@ -276,7 +281,7 @@ describe('Users Controller', () => {
 
 		it('Auth token will still work after account registration has been completed', async () => {
 			await registrationAgent
-				.post(`/users/${ tempUsername }/completeRegistration`)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.send(registration)
 				.expect(200);
 
@@ -306,7 +311,7 @@ describe('Users Controller', () => {
 			registration.username = 'lol. Not valid';
 
 			const { body } = await registrationAgent
-				.post(`/users/${ tempUsername }/completeRegistration`)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.send(registration)
 				.expect(400);
 
@@ -315,7 +320,7 @@ describe('Users Controller', () => {
 
 		it('Returns 400 if message body is missing', async () => {
 			const { body } = await registrationAgent
-				.post(`/users/${ tempUsername }/completeRegistration`)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.expect(400);
 
 			expect(body).to.be.a.badRequestResponse;
@@ -323,7 +328,7 @@ describe('Users Controller', () => {
 
 		it('Returns 401 if user is not authenticated', async () => {
 			const { body } = await request(App)
-				.post(`/users/${ tempUsername }/completeRegistration`)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.send(registration)
 				.expect(401);
 
@@ -337,7 +342,7 @@ describe('Users Controller', () => {
 			);
 
 			const { body } = await registrationAgent
-				.post(`/users/${ tempUsername }/completeRegistration`)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.send(registration)
 				.expect(403);
 
@@ -346,7 +351,7 @@ describe('Users Controller', () => {
 
 		it('Returns 403 if user is not authorized to complete registration', async () => {
 			const { body } = await request(App)
-				.post(`/users/${ tempUsername }/completeRegistration`)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.send(registration)
 				.set(...regularUser.authHeader)
 				.expect(403);
@@ -356,7 +361,7 @@ describe('Users Controller', () => {
 
 		it('Admins can complete registration on behalf of other users', async () => {
 			const { body } = await registrationAgent
-				.post(`/users/${ tempUsername }/completeRegistration`)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.set(...admin.authHeader)
 				.send(registration)
 				.expect(200);
@@ -394,13 +399,13 @@ describe('Users Controller', () => {
 		});
 
 		it('Returns 409 if username is already taken', async () => {
-			const conflictUser = fakeUser();
+			conflictUser = fakeUser();
 			conflictUser.username = registration.username;
 			conflictUser.usernameLower = registration.username.toLowerCase();
 			await new User(conflictUser).save();
 
 			const { body } = await registrationAgent
-				.post(`/users/${ tempUsername }/completeRegistration`)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.send(registration)
 				.expect(409);
 
@@ -409,13 +414,13 @@ describe('Users Controller', () => {
 		});
 
 		it('Returns 409 if email address is already taken', async () => {
-			const conflictUser = fakeUser();
+			conflictUser = fakeUser();
 			conflictUser.email = registration.email;
 			conflictUser.emailLower = registration.email.toLowerCase();
 			await new User(conflictUser).save();
 
 			const { body } = await registrationAgent
-				.post(`/users/${ tempUsername }/completeRegistration`)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.send(registration)
 				.expect(409);
 
@@ -428,7 +433,7 @@ describe('Users Controller', () => {
 			stub.rejects(new Error('nope'));
 
 			const { body } = await registrationAgent
-				.post(`/users/${ tempUsername }/completeRegistration`)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.send(registration)
 				.expect(500);
 

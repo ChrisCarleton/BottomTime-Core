@@ -22,7 +22,8 @@ conversions... Or just stick with **metric** ;)
 User accounts have a boolean `isRegistrationIncomplete` flag on them. This is set to true when a new user
 account is created by signing in with a third party authentication provider. The account will have a
 temporary user name assigned to it and will not be allowed to make most API calls until the registration
-process has been completed. Completing the registration requires a call to 
+process has been completed. Completing the registration requires a call to
+[POST /users/:username/completeRegistration](#POST-/users/:username/completeRegistration).
 
 ## Classes
 ### UserResult Object
@@ -76,7 +77,7 @@ a third party auth provider.
 	"username": "REQUIRED String: The new username to assign to the user account.",
 	"email": "REQUIRED String: The e-mail address to assign to the user account.",
 	"firstName": "String: User's first name. Max 50 characters.",
-	"lastName": "String User's last name. Max 50 characters.",
+	"lastName": "String: User's last name. Max 50 characters.",
 	"logsVisibility": "String: One of 'private', 'public', or 'friends-only'. Default is 'friends-only'.",
 	"weightUnit": "String: User's preferred weight unit. One of 'kg' or 'lbs'. Default is 'kg'.",
 	"distanceUnit": "String: User's preferred distance unit. One of 'm' or 'ft'. Default is 'm'.",
@@ -194,7 +195,7 @@ HTTP Status Code | Details
 For user accounts that were created as a result of signing in using a third party authentication service,
 this API allows the completion of the registration process. This API is only allowed for user accounts that
 still have the `isRegistrationIncomplete` flag set to `true`. Attempts to use it with other user accounts
-will result in a *405 Method Not Allowed* response.
+will result in a *403 Forbidden* response.
 
 #### Route Parameters
 * **username** - The temporary username assigned to the account for which registration needs to be
@@ -209,7 +210,8 @@ HTTP Status Code | Details
 ----- | -----
 **200 Ok** | The call succeeded and the new user account has been created. A [UserAccount](Authentication.md#useraccount-object) object will be returned containing the newly updated user account information. The account can now be used normally on other APIs.
 **400 Bad Request** | The request was rejected because the request body was empty or the [CompleteRegistration](#completeregistration-object) object was invalid.
-**403 Forbidden** | This is returned if the action being taken is not allowed. The user must be authenticated and signed in as the user whose account registration is being completed. Additionally, this operation will not be permitted if the account's `isRegistrationIncomplete` flag is already set to `false`. And, finally, this response will be returned if the user account does not exist. (This is done in place of a 404 for privacy/security reasons.)
+**403 Forbidden** | This is returned if the action being taken is not allowed. The user must be authenticated and signed in as the user whose account registration is being completed. Additionally, this operation will not be permitted if the account's `isRegistrationIncomplete` flag is already set to `false`.
+**404 Not Found** | This is returned if the user indicated in the `username` route parameter cannot be found.
 **409 Conflict** | A Conflict error is returned if either the requested username or e-mail address is already taken by another user. Check the `field` property of the [Error](General.md#error-object) to see which one is problematic. It will be set to one of `email` or `username`.
 **500 Server Error** | The request could not be completed because something went wrong on the server-side.
 

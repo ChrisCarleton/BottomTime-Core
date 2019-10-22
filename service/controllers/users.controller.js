@@ -245,13 +245,6 @@ export async function CompleteRegistration(req, res) {
 		);
 	}
 
-	if (!req.account.isRegistrationIncomplete) {
-		return forbidden(
-			res,
-			'Operation if forbidden! Registration has already been completed for this account'
-		);
-	}
-
 	try {
 		const [ usernameConflict, emailConflict ] = await Promise.all([
 			User.findByUsername(req.body.username),

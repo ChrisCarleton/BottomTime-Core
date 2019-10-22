@@ -46,6 +46,11 @@ export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
 			isRegistrationIncomplete: true
 		};
 
+		if (profile.name) {
+			user.firstName = profile.name.givenName;
+			user.lastName = profile.name.familyName;
+		}
+
 		user = new User(user);
 		await user.save();
 
