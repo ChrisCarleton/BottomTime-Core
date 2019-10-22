@@ -56,6 +56,11 @@ const userSchema = mongoose.Schema({
 	passwordHash: String,
 	passwordResetToken: String,
 	passwordResetExpiration: Date,
+	isRegistrationIncomplete: {
+		type: Boolean,
+		default: false,
+		required: true
+	},
 	isLockedOut: {
 		type: Boolean,
 		required: true,
@@ -173,6 +178,7 @@ userSchema.statics.cleanUpUser = function (user) {
 			createdAt: null,
 			role: 'user',
 			isAnonymous: true,
+			isRegistrationIncomplete: false,
 			isLockedOut: false
 		};
 	}
@@ -181,10 +187,7 @@ userSchema.statics.cleanUpUser = function (user) {
 };
 
 userSchema.methods.getAccountJSON = function () {
-	let hasPassword = false;
-	if (this.passwordHash) {
-		hasPassword = true;
-	}
+	const hasPassword = typeof this.passwordHash === 'string';
 
 	const clean = {
 		..._.pick(
@@ -194,6 +197,7 @@ userSchema.methods.getAccountJSON = function () {
 				'email',
 				'role',
 				'isLockedOut',
+				'isRegistrationIncomplete',
 				'weightUnit',
 				'distanceUnit',
 				'pressureUnit',

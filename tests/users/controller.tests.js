@@ -4,6 +4,7 @@ import createFakeAccount from '../util/create-fake-account';
 import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import faker from 'faker';
+import fakeCompleteRegistration from '../util/fake-complete-registration';
 import fakeUser from '../util/fake-user';
 import generateAuthHeader from '../util/generate-auth-header';
 import mailer from '../../service/mail/mailer';
@@ -198,6 +199,245 @@ describe('Users Controller', () => {
 			expect(res.body.status).to.equal(500);
 			expect(res.body.logId).to.exist;
 			expect(res.body.errorId).to.equal(ErrorIds.serverError);
+		});
+	});
+
+	describe('POST /users/:username/completeRegistration', () => {
+		const Password = 'wow23_!!';
+		const PasswordHash = bcrypt.hashSync(Password, 3);
+
+		let registration = null;
+		let tempUser = null;
+		let conflictUser = null;
+		let registrationAgent = null;
+
+		beforeEach(async () => {
+			registration = fakeCompleteRegistration();
+
+			const tempEmail = faker.internet.email();
+			const tempUsername = uuid();
+			tempUser = {
+				username: tempUsername,
+				usernameLower: tempUsername,
+				email: tempEmail,
+				emailLower: tempEmail.toLowerCase(),
+				passwordHash: PasswordHash,
+				role: 'user',
+				createdAt: new Date(),
+				googleId: uuid(),
+				isRegistrationIncomplete: true
+			};
+			await new User(tempUser).save();
+
+			registrationAgent = request.agent(App);
+			await registrationAgent
+				.post('/auth/login')
+				.send({
+					username: tempUsername,
+					password: Password
+				})
+				.expect(200);
+		});
+
+		afterEach(async () => {
+			if (tempUser) {
+				await User.deleteOne({ _id: tempUser._id });
+				tempUser = null;
+			}
+
+			if (conflictUser) {
+				await User.deleteOne({ _id: conflictUser._id });
+				conflictUser = null;
+			}
+		});
+
+		it('Will complete the registration for the target account', async () => {
+			const { body } = await registrationAgent
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.send(registration)
+				.expect(200);
+
+			const expectedJSON = {
+				createdAt: moment(tempUser.createdAt).toISOString(),
+				distanceUnit: registration.distanceUnit,
+				email: registration.email,
+				hasPassword: true,
+				isAnonymous: false,
+				isLockedOut: false,
+				isRegistrationIncomplete: false,
+				pressureUnit: registration.pressureUnit,
+				role: 'user',
+				temperatureUnit: registration.temperatureUnit,
+				username: registration.username,
+				weightUnit: registration.weightUnit
+			};
+
+			expect(body).to.eql(expectedJSON);
+
+			tempUser = await User.findByUsername(registration.username);
+			expect(tempUser).to.exist;
+			expect(tempUser.getAccountJSON()).to.eql(expectedJSON);
+		});
+
+		it('Auth token will still work after account registration has been completed', async () => {
+			await registrationAgent
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.send(registration)
+				.expect(200);
+
+			const expectedJSON = {
+				createdAt: moment(tempUser.createdAt).toISOString(),
+				distanceUnit: registration.distanceUnit,
+				email: registration.email,
+				hasPassword: true,
+				isAnonymous: false,
+				isLockedOut: false,
+				isRegistrationIncomplete: false,
+				pressureUnit: registration.pressureUnit,
+				role: 'user',
+				temperatureUnit: registration.temperatureUnit,
+				username: registration.username,
+				weightUnit: registration.weightUnit
+			};
+
+			const { body } = await registrationAgent
+				.get('/auth/me')
+				.expect(200);
+			expect(body).to.eql(expectedJSON);
+		});
+
+		it('Returns 400 if message body is bad', async () => {
+			registration.invalid = 'yup';
+			registration.username = 'lol. Not valid';
+
+			const { body } = await registrationAgent
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.send(registration)
+				.expect(400);
+
+			expect(body).to.be.a.badRequestResponse;
+		});
+
+		it('Returns 400 if message body is missing', async () => {
+			const { body } = await registrationAgent
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.expect(400);
+
+			expect(body).to.be.a.badRequestResponse;
+		});
+
+		it('Returns 401 if user is not authenticated', async () => {
+			const { body } = await request(App)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.send(registration)
+				.expect(401);
+
+			expect(body).to.be.a.unauthorizedResponse;
+		});
+
+		it('Returns 403 if isRegistrationIncomplete is false', async () => {
+			await User.updateOne(
+				{ usernameLower: tempUser.usernameLower },
+				{ isRegistrationIncomplete: false }
+			);
+
+			const { body } = await registrationAgent
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.send(registration)
+				.expect(403);
+
+			expect(body).to.be.a.forbiddenResponse;
+		});
+
+		it('Returns 403 if user is not authorized to complete registration', async () => {
+			const { body } = await request(App)
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.send(registration)
+				.set(...regularUser.authHeader)
+				.expect(403);
+
+			expect(body).to.be.a.forbiddenResponse;
+		});
+
+		it('Admins can complete registration on behalf of other users', async () => {
+			const { body } = await registrationAgent
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.set(...admin.authHeader)
+				.send(registration)
+				.expect(200);
+
+			const expectedJSON = {
+				createdAt: moment(tempUser.createdAt).toISOString(),
+				distanceUnit: registration.distanceUnit,
+				email: registration.email,
+				hasPassword: true,
+				isAnonymous: false,
+				isLockedOut: false,
+				isRegistrationIncomplete: false,
+				pressureUnit: registration.pressureUnit,
+				role: 'user',
+				temperatureUnit: registration.temperatureUnit,
+				username: registration.username,
+				weightUnit: registration.weightUnit
+			};
+
+			expect(body).to.eql(expectedJSON);
+
+			tempUser = await User.findByUsername(registration.username);
+			expect(tempUser).to.exist;
+			expect(tempUser.getAccountJSON()).to.eql(expectedJSON);
+		});
+
+		it('Returns 404 if requested user account does not exist', async () => {
+			const { body } = await request(App)
+				.post(`/users/${ uuid() }/completeRegistration`)
+				.send(registration)
+				.set(...admin.authHeader)
+				.expect(403);
+
+			expect(body).to.be.a.forbiddenResponse;
+		});
+
+		it('Returns 409 if username is already taken', async () => {
+			conflictUser = fakeUser();
+			conflictUser.username = registration.username;
+			conflictUser.usernameLower = registration.username.toLowerCase();
+			await new User(conflictUser).save();
+
+			const { body } = await registrationAgent
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.send(registration)
+				.expect(409);
+
+			expect(body).to.be.a.conflictResponse;
+			expect(body.fieldName).to.equal('username');
+		});
+
+		it('Returns 409 if email address is already taken', async () => {
+			conflictUser = fakeUser();
+			conflictUser.email = registration.email;
+			conflictUser.emailLower = registration.email.toLowerCase();
+			await new User(conflictUser).save();
+
+			const { body } = await registrationAgent
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.send(registration)
+				.expect(409);
+
+			expect(body).to.be.a.conflictResponse;
+			expect(body.fieldName).to.equal('email');
+		});
+
+		it('Returns 500 if server error occurs', async () => {
+			stub = sinon.stub(mongoose.Model.prototype, 'save');
+			stub.rejects(new Error('nope'));
+
+			const { body } = await registrationAgent
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.send(registration)
+				.expect(500);
+
+			expect(body).to.be.a.serverErrorResponse;
 		});
 	});
 

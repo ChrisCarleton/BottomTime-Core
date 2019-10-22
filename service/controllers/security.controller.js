@@ -7,6 +7,14 @@ export function RequireUser(req, res, next) {
 		return unauthorized(res);
 	}
 
+	if (req.user.isRegistrationIncomplete) {
+		return forbidden(
+			res,
+			'This user is not yet registered to use the system. '
+				+ 'Use POST /users/:username/completeRegistration to finalize the user\'s registration'
+		);
+	}
+
 	next();
 }
 
@@ -15,7 +23,7 @@ export function RequireAdminUser(req, res, next) {
 		return unauthorized(res);
 	}
 
-	if (req.user.role !== 'admin') {
+	if (req.user.role !== 'admin' || req.user.isRegistrationIncomplete) {
 		return forbidden(res, 'You do not have sufficient privileges to perform this action.');
 	}
 
@@ -25,7 +33,7 @@ export function RequireAdminUser(req, res, next) {
 export async function RetrieveUserAccount(req, res, next) {
 	try {
 		const user = await User.findByUsername(req.params.username);
-		if (!user) {
+		if (!user || user.isRegistrationIncomplete) {
 			return notFound(req, res);
 		}
 

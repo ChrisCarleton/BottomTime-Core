@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
-import { badRequest, conflict, forbidden, serverError } from '../utils/error-response';
+import { badRequest, conflict, forbidden, serverError, unauthorized } from '../utils/error-response';
 import {
 	AdminUserQuerySchema,
+	CompleteRegistrationSchema,
 	ConfirmResetPasswordSchema,
 	ChangePasswordSchema,
 	UserAccountSchema,
@@ -122,6 +123,14 @@ export async function RequireAccountPermission(req, res, next) {
 	}
 }
 
+export function RequireUserForRegistration(req, res, next) {
+	if (!req.user) {
+		return unauthorized(res);
+	}
+
+	next();
+}
+
 function validateCreateUserAccount(req, res) {
 	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema.required());
 	const isBodyValid = Joi.validate(req.body, UserAccountSchema);
@@ -215,6 +224,68 @@ export async function CreateUserAccount(req, res) {
 		});
 	} catch (err) {
 		const logId = req.logError('Failed to create user account due to server error', err);
+		serverError(res, logId);
+	}
+}
+
+export async function CompleteRegistration(req, res) {
+	if (!req.account.isRegistrationIncomplete) {
+		return forbidden(
+			res,
+			'Operation Forbidden: Registration for this account has already been completed.'
+		);
+	}
+
+	const { error } = Joi.validate(req.body, CompleteRegistrationSchema);
+	if (error) {
+		return badRequest(
+			'There was a problem with the request to complete the user\'s registration',
+			error,
+			res
+		);
+	}
+
+	try {
+		const [ usernameConflict, emailConflict ] = await Promise.all([
+			User.findByUsername(req.body.username),
+			User.findByEmail(req.body.email)
+		]);
+
+		if (usernameConflict) {
+			return conflict(
+				res,
+				'username',
+				'Username is already taken'
+			);
+		}
+
+		if (emailConflict) {
+			return conflict(
+				res,
+				'email',
+				'Email is already taken'
+			);
+		}
+
+		req.account.username = req.body.username;
+		req.account.usernameLower = req.body.username.toLowerCase();
+		req.account.email = req.body.email;
+		req.account.emailLower = req.body.email.toLowerCase();
+		req.account.firstName = req.body.firstName;
+		req.account.lastName = req.body.lastName;
+		req.account.logsVisibility = req.body.logsVisibility;
+		req.account.distanceUnit = req.body.distanceUnit;
+		req.account.pressureUnit = req.body.pressureUnit;
+		req.account.temperatureUnit = req.body.temperatureUnit;
+		req.account.weightUnit = req.body.weightUnit;
+		req.account.isRegistrationIncomplete = false;
+		await req.account.save();
+
+		req.log.info(`User ${ req.body.username } has completed registration`);
+
+		res.send(req.account.getAccountJSON());
+	} catch (err) {
+		const logId = req.logError('Failed to complete registration for user.', err);
 		serverError(res, logId);
 	}
 }

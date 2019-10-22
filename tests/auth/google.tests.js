@@ -46,14 +46,16 @@ describe('Sign-In With Google', () => {
 			hasPassword: false,
 			isAnonymous: false,
 			isLockedOut: false,
+			isRegistrationIncomplete: true,
 			role: 'user',
-			username: ExpectedProfile.emails[0].value.substr(0, ExpectedProfile.emails[0].value.indexOf('@')),
+			username: account.username,
 			distanceUnit: 'm',
 			temperatureUnit: 'c',
 			pressureUnit: 'bar',
 			weightUnit: 'kg'
 		};
 		expect(account.getAccountJSON()).to.eql(expectedUser);
+		expect(account.username).to.match(/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/);
 	});
 
 	it('Will indicate if the e-mail address is already taken', async () => {
@@ -73,45 +75,10 @@ describe('Sign-In With Google', () => {
 		expect(account).to.equal('email-taken');
 	});
 
-	it('Will generate a random username if the username is already taken', async () => {
-		const username = ExpectedProfile.emails[0].value.substr(
-			0, ExpectedProfile.emails[0].value.indexOf('@')
-		);
-		const user = new User({
-			...fakeUser(),
-			username,
-			usernameLower: username
-		});
-		const spy = sinon.spy();
-
-		await user.save();
-		await SignInWithGoogle(null, null, ExpectedProfile, spy);
-		expect(spy.calledOnce).to.be.true;
-
-		const [ error, account ] = spy.firstCall.args;
-		expect(error).to.not.exist;
-
-		const expectedUser = {
-			createdAt: moment(account.createdAt).toISOString(),
-			email: ExpectedProfile.emails[0].value,
-			hasPassword: false,
-			isAnonymous: false,
-			isLockedOut: false,
-			role: 'user',
-			username: account.username,
-			temperatureUnit: 'c',
-			distanceUnit: 'm',
-			weightUnit: 'kg',
-			pressureUnit: 'bar'
-		};
-		expect(account.getAccountJSON()).to.eql(expectedUser);
-		expect(account.username).to.match(/^[a-f0-9]{24}$/i);
-	});
-
 	it('Will fail gracefully if there is a server error', async () => {
 		const error = new Error('Nope!');
 		const spy = sinon.spy();
-		const stub = sinon.stub(User, 'findByUsername');
+		const stub = sinon.stub(User, 'findByEmail');
 		stub.rejects(error);
 
 		try {

@@ -5,9 +5,9 @@ import { Strategy as LocalStrategy } from 'passport-local';
 import log from './logger';
 import moment from 'moment';
 import passport from 'passport';
-import randomUsername from './utils/random-username';
 import url from 'url';
 import User from './data/user';
+import uuid from 'uuid/v4';
 
 passport.use(new LocalStrategy(async (username, password, done) => {
 	try {
@@ -30,28 +30,20 @@ export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
 			return cb(null, user);
 		}
 
-		let username = profile.emails[0].value.substr(0, profile.emails[0].value.indexOf('@'));
-
-		const [ usernameTaken, emailTaken ] = await Promise.all([
-			User.findByUsername(username),
-			User.findByEmail(profile.emails[0].value)
-		]);
-
-		if (emailTaken) {
+		user = await User.findByEmail(profile.emails[0].value);
+		if (user) {
 			return cb(null, 'email-taken');
 		}
 
-		if (usernameTaken) {
-			username = randomUsername();
-		}
-
+		const username = uuid();
 		user = {
 			username,
-			usernameLower: username.toLowerCase(),
+			usernameLower: username,
 			email: profile.emails[0].value,
 			emailLower: profile.emails[0].value.toLowerCase(),
 			createdAt: moment().utc().toDate(),
-			googleId: profile.id
+			googleId: profile.id,
+			isRegistrationIncomplete: true
 		};
 
 		if (profile.name) {
@@ -80,12 +72,12 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-	done(null, user.username);
+	done(null, user._id);
 });
 
-passport.deserializeUser(async (username, done) => {
+passport.deserializeUser(async (id, done) => {
 	try {
-		const user = await User.findByUsername(username);
+		const user = await User.findById(id);
 		return done(null, user);
 	} catch (err) {
 		return done(err);

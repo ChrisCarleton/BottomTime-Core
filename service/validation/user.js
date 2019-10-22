@@ -12,6 +12,18 @@ export const UserAccountSchema = Joi.object().keys({
 	role: Joi.string().valid([ 'user', 'admin' ]).required()
 }).required();
 
+export const CompleteRegistrationSchema = Joi.object().keys({
+	username: UsernameSchema.required(),
+	email: Joi.string().email().required(),
+	firstName: Joi.string().max(50),
+	lastName: Joi.string().max(50),
+	logsVisibility: Joi.string().only([ 'private', 'public', 'friends-only' ]),
+	weightUnit: Joi.string().only([ 'kg', 'lbs' ]),
+	temperatureUnit: Joi.string().only([ 'c', 'f' ]),
+	distanceUnit: Joi.string().only([ 'm', 'ft' ]),
+	pressureUnit: Joi.string().only([ 'bar', 'psi' ])
+});
+
 export const ChangePasswordSchema = Joi.object().keys({
 	oldPassword: Joi.string(),
 	newPassword: PasswordValidation
