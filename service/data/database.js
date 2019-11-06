@@ -12,7 +12,8 @@ import mongoose from 'mongoose';
 				useNewUrlParser: true,
 				useCreateIndex: true,
 				keepAlive: true,
-				keepAliveInitialDelay: 300000
+				keepAliveInitialDelay: 300000,
+				useUnifiedTopology: true
 			});
 	} catch (err) {
 		log.fatal('Failed to connect to MongoDB database:', err);
