@@ -66,7 +66,7 @@ passport.use(
 	new GoogleStrategy({
 		clientID: config.auth.googleClientId,
 		clientSecret: config.auth.googleClientSecret,
-		callbackURL: url.resolve(config.siteUrl, '/auth/google/callback')
+		callbackURL: url.resolve(config.siteUrl, '/api/auth/google/callback')
 	},
 	SignInWithGoogle)
 );

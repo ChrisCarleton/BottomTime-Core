@@ -43,7 +43,7 @@ export function AuthenticateUser(req, res, next) {
 	})(req, res, next);
 }
 
-export function Login(req, res) {
+export function CheckForEmailConflict(req, res, next) {
 	if (req.user === 'email-taken') {
 		return conflict(
 			res,
@@ -51,6 +51,14 @@ export function Login(req, res) {
 			'Unable to create account. The e-mail address is already associated with another user account.');
 	}
 
+	next();
+}
+
+export function RedirectToHome(req, res) {
+	res.redirect('/');
+}
+
+export function Login(req, res) {
 	res.json(req.user.getAccountJSON());
 }
 
