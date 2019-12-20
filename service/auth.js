@@ -9,6 +9,8 @@ import url from 'url';
 import User from './data/user';
 import uuid from 'uuid/v4';
 
+export const EmailTakenError = new Error('email-taken');
+
 passport.use(new LocalStrategy(async (username, password, done) => {
 	try {
 		const user = await User.findByUsername(username);
@@ -32,7 +34,7 @@ export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
 
 		user = await User.findByEmail(profile.emails[0].value);
 		if (user) {
-			return cb(null, 'email-taken');
+			return cb(EmailTakenError);
 		}
 
 		const username = uuid();

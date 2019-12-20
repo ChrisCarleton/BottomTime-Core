@@ -1,8 +1,8 @@
+import { EmailTakenError, SignInWithGoogle } from '../../service/auth';
 import { expect } from 'chai';
 import ExpectedProfile from './google-profile.json';
 import fakeUser from '../util/fake-user';
 import moment from 'moment';
-import { SignInWithGoogle } from '../../service/auth';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
@@ -71,8 +71,8 @@ describe('Sign-In With Google', () => {
 		expect(spy.calledOnce).to.be.true;
 
 		const [ error, account ] = spy.firstCall.args;
-		expect(error).to.not.exist;
-		expect(account).to.equal('email-taken');
+		expect(error).to.eql(EmailTakenError);
+		expect(account).to.not.exist;
 	});
 
 	it('Will fail gracefully if there is a server error', async () => {

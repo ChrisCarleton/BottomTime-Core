@@ -1,7 +1,7 @@
 import {
 	AuthenticateUser,
-	CheckForEmailConflict,
 	GetCurrentUser,
+	HandleAuthError,
 	Login,
 	Logout,
 	RedirectToHome
@@ -18,7 +18,7 @@ module.exports = app => {
 	app.get(
 		'/auth/google/callback',
 		passport.authenticate('google'),
-		CheckForEmailConflict,
-		RedirectToHome
+		RedirectToHome,
+		HandleAuthError
 	);
 };

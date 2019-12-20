@@ -1,4 +1,5 @@
-import { badRequest, conflict, serverError, unauthorized } from '../utils/error-response';
+import { badRequest, serverError, unauthorized } from '../utils/error-response';
+import { EmailTakenError } from '../auth';
 import Joi from 'joi';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
@@ -43,15 +44,12 @@ export function AuthenticateUser(req, res, next) {
 	})(req, res, next);
 }
 
-export function CheckForEmailConflict(req, res, next) {
-	if (req.user === 'email-taken') {
-		return conflict(
-			res,
-			'email',
-			'Unable to create account. The e-mail address is already associated with another user account.');
+export function HandleAuthError(err, req, res, next) { // eslint-disable-line no-unused-vars
+	if (err === EmailTakenError) {
+		res.redirect('/emailTaken');
+	} else {
+		res.redirect('/serverError');
 	}
-
-	next();
 }
 
 export function RedirectToHome(req, res) {
