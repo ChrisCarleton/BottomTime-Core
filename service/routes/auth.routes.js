@@ -1,10 +1,8 @@
 import {
 	AuthenticateUser,
 	GetCurrentUser,
-	HandleAuthError,
 	Login,
-	Logout,
-	RedirectToHome
+	Logout
 } from '../controllers/auth.controller';
 import passport from 'passport';
 
@@ -17,8 +15,11 @@ module.exports = app => {
 	app.get('/auth/google', passport.authenticate('google', { scope: [ 'email' ] }));
 	app.get(
 		'/auth/google/callback',
+		(req, res, next) => {
+			req.authProvider = 'google';
+			next();
+		},
 		passport.authenticate('google'),
-		RedirectToHome,
-		HandleAuthError
+		(req, res) => res.redirect('/')
 	);
 };

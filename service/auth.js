@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import config from './config';
+import { EmailTakenError, SsoError } from './utils/errors';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as LocalStrategy } from 'passport-local';
 import log from './logger';
@@ -8,8 +9,6 @@ import passport from 'passport';
 import url from 'url';
 import User from './data/user';
 import uuid from 'uuid/v4';
-
-export const EmailTakenError = new Error('email-taken');
 
 passport.use(new LocalStrategy(async (username, password, done) => {
 	try {
@@ -21,7 +20,7 @@ passport.use(new LocalStrategy(async (username, password, done) => {
 
 		return done(null, user);
 	} catch (err) {
-		return done(err);
+		return done(new SsoError('An error occurred while trying to authenticate user', err));
 	}
 }));
 
@@ -34,7 +33,7 @@ export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
 
 		user = await User.findByEmail(profile.emails[0].value);
 		if (user) {
-			return cb(EmailTakenError);
+			return cb(new EmailTakenError());
 		}
 
 		const username = uuid();
@@ -59,8 +58,9 @@ export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
 		log.info('Created new user account based on Google Sign In:', user.username);
 		return cb(null, user);
 	} catch (err) {
-		log.error('An error occurred while attempting a Google authentication', err);
-		return cb(err);
+		return cb(
+			new SsoError('Error occurred while attempting to authenticate using Google strategy.', err)
+		);
 	}
 }
 

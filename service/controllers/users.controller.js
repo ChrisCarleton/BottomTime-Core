@@ -248,7 +248,11 @@ export async function CompleteRegistration(req, res) {
 	try {
 		const [ usernameConflict, emailConflict ] = await Promise.all([
 			User.findByUsername(req.body.username),
-			User.findByEmail(req.body.email)
+			// TODO: Write a test for this bug fix.
+			User.findOne({
+				emailLower: req.body.email.toLowerCase(),
+				usernameLower: { $ne: req.params.username.toLowerCase() }
+			})
 		]);
 
 		if (usernameConflict) {

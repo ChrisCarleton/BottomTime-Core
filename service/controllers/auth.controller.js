@@ -1,5 +1,4 @@
 import { badRequest, serverError, unauthorized } from '../utils/error-response';
-import { EmailTakenError } from '../auth';
 import Joi from 'joi';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
@@ -42,14 +41,6 @@ export function AuthenticateUser(req, res, next) {
 			next();
 		});
 	})(req, res, next);
-}
-
-export function HandleAuthError(err, req, res, next) { // eslint-disable-line no-unused-vars
-	if (err === EmailTakenError) {
-		res.redirect('/emailTaken');
-	} else {
-		res.redirect('/serverError');
-	}
 }
 
 export function RedirectToHome(req, res) {

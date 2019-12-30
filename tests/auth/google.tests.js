@@ -1,8 +1,9 @@
-import { EmailTakenError, SignInWithGoogle } from '../../service/auth';
+import { EmailTakenError, SsoError } from '../../service/utils/errors';
 import { expect } from 'chai';
 import ExpectedProfile from './google-profile.json';
 import fakeUser from '../util/fake-user';
 import moment from 'moment';
+import { SignInWithGoogle } from '../../service/auth';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
@@ -71,7 +72,7 @@ describe('Sign-In With Google', () => {
 		expect(spy.calledOnce).to.be.true;
 
 		const [ error, account ] = spy.firstCall.args;
-		expect(error).to.eql(EmailTakenError);
+		expect(error).to.be.an.instanceOf(EmailTakenError);
 		expect(account).to.not.exist;
 	});
 
@@ -84,8 +85,9 @@ describe('Sign-In With Google', () => {
 		try {
 			await SignInWithGoogle(null, null, ExpectedProfile, spy);
 			const [ err, account ] = spy.firstCall.args;
+			expect(err).to.be.an.instanceOf(SsoError);
+			expect(err.internalError).to.eql(error);
 			expect(account).to.not.exist;
-			expect(err).to.eql(error);
 		} finally {
 			stub.restore();
 		}

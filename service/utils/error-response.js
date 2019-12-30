@@ -1,3 +1,4 @@
+import { EmailTakenError, SsoError } from './errors';
 import containerMetadata from '../utils/container-metadata';
 import uuid from 'uuid/v4';
 
@@ -90,7 +91,14 @@ export function serverErrorMiddleware(req, res, next) {
 // The 'next' parameter is required. Express looks for a function with four parameters to treat it
 // as an error handler.
 export function handleServerError(err, req, res, next) {
-	const logId = req.logError('An unhandled server error has occured', err);
-	serverError(res, logId);
+	// Errors relating to failed 3rd party sign-in are not handled like normal API calls.
+	if (err instanceof EmailTakenError) {
+		res.redirect(`/emailTaken/${ req.authProvider }`);
+	} else if (err instanceof SsoError) {
+		res.redirect('/serverError');
+	} else {
+		const logId = req.logError('An unhandled server error has occured', err);
+		serverError(res, logId);
+	}
 }
 /* eslint-enable no-unused-vars */
