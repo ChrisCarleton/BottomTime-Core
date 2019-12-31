@@ -1,3 +1,4 @@
+import { EmailTakenError, SsoError } from '../../service/utils/errors';
 import { expect } from 'chai';
 import ExpectedProfile from './google-profile.json';
 import fakeUser from '../util/fake-user';
@@ -71,8 +72,8 @@ describe('Sign-In With Google', () => {
 		expect(spy.calledOnce).to.be.true;
 
 		const [ error, account ] = spy.firstCall.args;
-		expect(error).to.not.exist;
-		expect(account).to.equal('email-taken');
+		expect(error).to.be.an.instanceOf(EmailTakenError);
+		expect(account).to.not.exist;
 	});
 
 	it('Will fail gracefully if there is a server error', async () => {
@@ -84,8 +85,9 @@ describe('Sign-In With Google', () => {
 		try {
 			await SignInWithGoogle(null, null, ExpectedProfile, spy);
 			const [ err, account ] = spy.firstCall.args;
+			expect(err).to.be.an.instanceOf(SsoError);
+			expect(err.internalError).to.eql(error);
 			expect(account).to.not.exist;
-			expect(err).to.eql(error);
 		} finally {
 			stub.restore();
 		}

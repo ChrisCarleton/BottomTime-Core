@@ -1,4 +1,4 @@
-import { badRequest, conflict, serverError, unauthorized } from '../utils/error-response';
+import { badRequest, serverError, unauthorized } from '../utils/error-response';
 import Joi from 'joi';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
@@ -44,13 +44,6 @@ export function AuthenticateUser(req, res, next) {
 }
 
 export function Login(req, res) {
-	if (req.user === 'email-taken') {
-		return conflict(
-			res,
-			'email',
-			'Unable to create account. The e-mail address is already associated with another user account.');
-	}
-
 	res.json(req.user.getAccountJSON());
 }
 

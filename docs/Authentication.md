@@ -66,3 +66,19 @@ HTTP Status Code | Details
 ----- | -----
 **204 No Content** | The call succeeded and the user's session has been invalidated. The session cookie will be removed. The response body will be empty.
 **500 Server Error** | Something went wrong accessing the database. An [Error](General.md#error-object) object will be provided in the response with more details.
+
+### GET /auth/:provider
+This route should be used when using Single Sign-On (SSO) authentication from a third-party auth provider.
+It will redirect to the appropriate provider's website with the necessary OAuth2.0 client ID/secret.
+
+#### Route Parameters
+* **provider** - The name of the 3rd-party SSO provider. The only accepted values are `google`.
+
+### GET /auth/:provider/callback
+This route provides an end-point for third-party SSO providers to call back with authentication details.
+**This route should not be invoked directly!** If authentication was successful then the appropriate auth
+cookie will be set. The route will return an HTTP redirect regardless to allow the user to continue
+browsing the app.
+
+#### Route Parameters
+* **provider** - The name of the 3rd-party SSO provider. The only accepted values are `google`.

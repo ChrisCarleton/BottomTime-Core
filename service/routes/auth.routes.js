@@ -6,6 +6,17 @@ import {
 } from '../controllers/auth.controller';
 import passport from 'passport';
 
+function setSsoProvider(provider) {
+	return (req, res, next) => {
+		req.authProvider = provider;
+		next();
+	};
+}
+
+function redirectToHome(req, res) {
+	res.redirect('/');
+}
+
 module.exports = app => {
 	app.get('/auth/me', GetCurrentUser);
 
@@ -13,5 +24,10 @@ module.exports = app => {
 	app.post('/auth/logout', Logout);
 
 	app.get('/auth/google', passport.authenticate('google', { scope: [ 'email' ] }));
-	app.get('/auth/google/callback', passport.authenticate('google'), Login);
+	app.get(
+		'/auth/google/callback',
+		setSsoProvider('google'),
+		passport.authenticate('google'),
+		redirectToHome
+	);
 };
