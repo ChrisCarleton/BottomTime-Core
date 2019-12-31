@@ -43,10 +43,6 @@ export function AuthenticateUser(req, res, next) {
 	})(req, res, next);
 }
 
-export function RedirectToHome(req, res) {
-	res.redirect('/');
-}
-
 export function Login(req, res) {
 	res.json(req.user.getAccountJSON());
 }

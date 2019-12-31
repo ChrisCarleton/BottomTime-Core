@@ -95,6 +95,7 @@ export function handleServerError(err, req, res, next) {
 	if (err instanceof EmailTakenError) {
 		res.redirect(`/emailTaken/${ req.authProvider }`);
 	} else if (err instanceof SsoError) {
+		req.logError('SSO authentication failed', err);
 		res.redirect('/serverError');
 	} else {
 		const logId = req.logError('An unhandled server error has occured', err);

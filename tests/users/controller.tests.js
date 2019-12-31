@@ -428,6 +428,36 @@ describe('Users Controller', () => {
 			expect(body.fieldName).to.equal('email');
 		});
 
+		it('Will not detect conflict if email address is already associated with temp user', async () => {
+			registration.email = tempUser.email;
+
+			const { body } = await registrationAgent
+				.post(`/users/${ tempUser.username }/completeRegistration`)
+				.send(registration)
+				.expect(200);
+
+			const expectedJSON = {
+				createdAt: moment(tempUser.createdAt).toISOString(),
+				distanceUnit: registration.distanceUnit,
+				email: registration.email,
+				hasPassword: true,
+				isAnonymous: false,
+				isLockedOut: false,
+				isRegistrationIncomplete: false,
+				pressureUnit: registration.pressureUnit,
+				role: 'user',
+				temperatureUnit: registration.temperatureUnit,
+				username: registration.username,
+				weightUnit: registration.weightUnit
+			};
+
+			expect(body).to.eql(expectedJSON);
+
+			tempUser = await User.findByUsername(registration.username);
+			expect(tempUser).to.exist;
+			expect(tempUser.getAccountJSON()).to.eql(expectedJSON);
+		});
+
 		it('Returns 500 if server error occurs', async () => {
 			stub = sinon.stub(mongoose.Model.prototype, 'save');
 			stub.rejects(new Error('nope'));
