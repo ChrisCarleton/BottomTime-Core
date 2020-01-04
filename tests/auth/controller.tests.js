@@ -38,12 +38,12 @@ describe('Auth Controller', () => {
 					password
 				})
 				.expect(200);
-			expect(res.body).to.eql(user.getAccountJSON());
+			expect(res.body).to.eql(user.getFullAccountJSON());
 
 			res = await agent
 				.get('/auth/me')
 				.expect(200);
-			expect(res.body).to.eql(user.getAccountJSON());
+			expect(res.body).to.eql(user.getFullAccountJSON());
 		});
 
 		it('Fails when user cannot be found', async () => {
@@ -122,12 +122,12 @@ describe('Auth Controller', () => {
 		});
 
 		it('Returns user information for authenticated users', async () => {
-			const user = await createFakeAccount();
+			const account = await createFakeAccount();
 			const result = await request(App)
 				.get('/auth/me')
-				.set(...user.authHeader)
+				.set(...account.authHeader)
 				.expect(200);
-			expect(result.body).to.eql(User.cleanUpUser(user.user));
+			expect(result.body).to.eql(account.user.getFullAccountJSON());
 		});
 
 		it('Returns Server Error if there is a problem accessing the database', async () => {

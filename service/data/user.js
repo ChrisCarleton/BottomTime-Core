@@ -170,7 +170,7 @@ userSchema.statics.findByEmail = function (email, done) {
 	return this.findOne({ emailLower: email.toLowerCase() }, done);
 };
 
-userSchema.statics.cleanUpUser = function (user) {
+userSchema.statics.cleanUpUser = function (user, fullProfile) {
 	if (!user) {
 		return {
 			username: 'Anonymous_User',
@@ -183,7 +183,7 @@ userSchema.statics.cleanUpUser = function (user) {
 		};
 	}
 
-	return user.getAccountJSON();
+	return fullProfile ? user.getFullAccountJSON() : user.getAccountJSON();
 };
 
 userSchema.methods.getAccountJSON = function () {
@@ -212,7 +212,7 @@ userSchema.methods.getAccountJSON = function () {
 };
 
 userSchema.methods.getProfileJSON = function () {
-	return {
+	const json = {
 		..._.pick(
 			this.toJSON(),
 			[
@@ -234,8 +234,20 @@ userSchema.methods.getProfileJSON = function () {
 				'pressureUnit'
 			]
 		),
-		memberSince: moment(this.createdAt).toISOString(),
-		birthdate: this.birthdate ? moment(this.birthdate).local().format('YYYY-MM-DD') : null
+		memberSince: moment(this.createdAt).toISOString()
+	};
+
+	if (this.birthdate) {
+		json.birthdate = moment(this.birthdate).format('YYYY-MM-DD');
+	}
+
+	return json;
+};
+
+userSchema.methods.getFullAccountJSON = function () {
+	return {
+		...this.getAccountJSON(),
+		...this.getProfileJSON()
 	};
 };
 

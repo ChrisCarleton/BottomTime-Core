@@ -44,7 +44,7 @@ export function AuthenticateUser(req, res, next) {
 }
 
 export function Login(req, res) {
-	res.json(req.user.getAccountJSON());
+	res.json(req.user.getFullAccountJSON());
 }
 
 export function Logout(req, res) {
@@ -53,5 +53,5 @@ export function Logout(req, res) {
 }
 
 export function GetCurrentUser(req, res) {
-	res.json(User.cleanUpUser(req.user));
+	res.json(User.cleanUpUser(req.user, true));
 }

@@ -269,14 +269,19 @@ describe('Users Controller', () => {
 				role: 'user',
 				temperatureUnit: registration.temperatureUnit,
 				username: registration.username,
-				weightUnit: registration.weightUnit
+				weightUnit: registration.weightUnit,
+				firstName: registration.firstName,
+				lastName: registration.lastName,
+				logsVisibility: registration.logsVisibility,
+				memberSince: body.memberSince
 			};
 
+			expect(body.memberSince).to.match(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
 			expect(body).to.eql(expectedJSON);
 
 			tempUser = await User.findByUsername(registration.username);
 			expect(tempUser).to.exist;
-			expect(tempUser.getAccountJSON()).to.eql(expectedJSON);
+			expect(tempUser.getFullAccountJSON()).to.eql(expectedJSON);
 		});
 
 		it('Auth token will still work after account registration has been completed', async () => {
@@ -285,6 +290,9 @@ describe('Users Controller', () => {
 				.send(registration)
 				.expect(200);
 
+			const { body } = await registrationAgent
+				.get('/auth/me')
+				.expect(200);
 			const expectedJSON = {
 				createdAt: moment(tempUser.createdAt).toISOString(),
 				distanceUnit: registration.distanceUnit,
@@ -297,12 +305,13 @@ describe('Users Controller', () => {
 				role: 'user',
 				temperatureUnit: registration.temperatureUnit,
 				username: registration.username,
-				weightUnit: registration.weightUnit
+				weightUnit: registration.weightUnit,
+				firstName: registration.firstName,
+				lastName: registration.lastName,
+				logsVisibility: registration.logsVisibility,
+				memberSince: body.memberSince
 			};
-
-			const { body } = await registrationAgent
-				.get('/auth/me')
-				.expect(200);
+			expect(body.memberSince).to.match(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
 			expect(body).to.eql(expectedJSON);
 		});
 
@@ -378,14 +387,19 @@ describe('Users Controller', () => {
 				role: 'user',
 				temperatureUnit: registration.temperatureUnit,
 				username: registration.username,
-				weightUnit: registration.weightUnit
+				weightUnit: registration.weightUnit,
+				firstName: registration.firstName,
+				lastName: registration.lastName,
+				logsVisibility: registration.logsVisibility,
+				memberSince: body.memberSince
 			};
 
+			expect(body.memberSince).to.match(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
 			expect(body).to.eql(expectedJSON);
 
 			tempUser = await User.findByUsername(registration.username);
 			expect(tempUser).to.exist;
-			expect(tempUser.getAccountJSON()).to.eql(expectedJSON);
+			expect(tempUser.getFullAccountJSON()).to.eql(expectedJSON);
 		});
 
 		it('Returns 404 if requested user account does not exist', async () => {
@@ -448,14 +462,18 @@ describe('Users Controller', () => {
 				role: 'user',
 				temperatureUnit: registration.temperatureUnit,
 				username: registration.username,
-				weightUnit: registration.weightUnit
+				weightUnit: registration.weightUnit,
+				firstName: registration.firstName,
+				lastName: registration.lastName,
+				logsVisibility: registration.logsVisibility,
+				memberSince: body.memberSince
 			};
 
 			expect(body).to.eql(expectedJSON);
 
 			tempUser = await User.findByUsername(registration.username);
 			expect(tempUser).to.exist;
-			expect(tempUser.getAccountJSON()).to.eql(expectedJSON);
+			expect(tempUser.getFullAccountJSON()).to.eql(expectedJSON);
 		});
 
 		it('Returns 500 if server error occurs', async () => {
