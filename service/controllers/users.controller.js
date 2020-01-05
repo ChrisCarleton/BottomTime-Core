@@ -286,7 +286,7 @@ export async function CompleteRegistration(req, res) {
 
 		req.log.info(`User ${ req.body.username } has completed registration`);
 
-		res.send(req.account.getAccountJSON());
+		res.json(req.account.getFullAccountJSON());
 	} catch (err) {
 		const logId = req.logError('Failed to complete registration for user.', err);
 		serverError(res, logId);

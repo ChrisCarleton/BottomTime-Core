@@ -14,14 +14,32 @@ The authentication domain deals with access to user accounts.
 	"isAnonymous": "Boolean: True if the user is unauthenticated; otherwise, false.",
 	"hasPassword": "Boolean: True if the user has a password set on his/her account.",
 	"isLockedOut": "Boolean: True if the account is locked out (not allowed to log in.)",
+	"isRegistrationIncomplete": "Boolean: True if the account was created via SSO sign in and is missing some key info.",
 	"distanceUnit": "String: The user's preferred unit for distance. (Valid values are 'm' and 'ft'.)",
 	"weightUnit": "String: The user's preferred unit for weight. (Valid values are 'kg' and 'lb'.)",
 	"pressureUnit": "String: The user's preferred unit for pressure. (Valid values are 'psi' and 'bar'.)",
-	"temperatureUnit": "String: The user's preferred unit for temperature. (Valid values are 'c' and 'f'.)"
+	"temperatureUnit": "String: The user's preferred unit for temperature. (Valid values are 'c' and 'f'.)",
+	"memberSince": "String (ISO Date): The date and time at which the user profile was created.",
+	"logsVisibility": "One of 'private', 'friends-only', or 'public'. Indicates how visible the user's profile and logs are.",
+	"firstName": "String: The user's first name.",
+	"lastName": "String: The user's last name.",
+	"location": "String: Where the user is geographically located.",
+	"occupation": "String: The user's occupation.",
+	"gender": "String: One of 'male', or 'female'.",
+	"birthdate": "String: A string representation of the user's birthdate in this format: YYYY-MM-DD",
+	"typeOfDiver": "String: Free-form string describing the type of diver the user is.",
+	"startedDiving": "Number: The four-digit year in which the user began their diving career.",
+	"certificationLevel": "String: The user's certification level (OW, Advanced, Rescue, etc.)",
+	"certificationAgencies": "String: A list of agencies the user has trained with (PADI, SSI, NAUI, etc.)",
+	"specialties": "String: A list of specialty certifications the user has earned.",
+	"about": "String: A free-form paragraph allowing the user to describe their diving background."
 }
 ```
 Some user accounts may not have a password set on them because the user opted to sign up using one of the
-OAuth providers and so authentication is provided by a third party.
+OAuth providers and so authentication is provided by a third party. If `isRegistrationIncomplete` is
+`true` then the user may not be able to call certain APIs that they would normally have access to. The
+user must call `POST /users/:username/completeRegistration` in order to complete their registration and
+clear this flag.
 
 ### Authentication Object
 ```json
