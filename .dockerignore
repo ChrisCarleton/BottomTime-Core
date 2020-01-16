@@ -5,16 +5,17 @@
 admin/
 coverage/
 docs/
-env/
 logs/
 node_modules/
 temp/
 terraform/
 tests/
 
+.env
 .eslintrc.js
 .gitignore
 Dockerfile
 gulpfile.babel.js
 LICENSE
 README.md
+.test-users.json
