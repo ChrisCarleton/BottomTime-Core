@@ -16,7 +16,6 @@ import fakeUser from '../tests/util/fake-user';
 import fs from 'fs';
 import log from 'fancy-log';
 import LogEntry from '../service/data/log-entry';
-import mkdirp from 'mkdirp';
 import path from 'path';
 import search from '../service/search';
 import Site from '../service/data/sites';
@@ -32,25 +31,16 @@ import User from '../service/data/user';
 		const randomUserNames = [ null, ...userNames ];
 		log('Created users: ', userNames);
 
-		const usersFileName = path.resolve(__dirname, '../env/test_users');
-		mkdirp(
-			path.resolve(__dirname, '../env/'),
-			mkdirErr => {
-				if (mkdirErr) {
-					return log.error('Failed to ');
+		const usersFileName = path.resolve(__dirname, '../.test-users.json');
+		fs.writeFile(
+			usersFileName,
+			`${ JSON.stringify(userNames, null, '  ') }\n`,
+			err => {
+				if (err) {
+					return log.error('Failed to save user names file:', err);
 				}
 
-				fs.writeFile(
-					usersFileName,
-					`${ JSON.stringify(userNames, null, '  ') }\n`,
-					err => {
-						if (err) {
-							return log.error('Failed to save user names file:', err);
-						}
-
-						log(`User names saved to ${ chalk.bold(usersFileName) }`);
-					}
-				);
+				log(`User names saved to ${ chalk.bold(usersFileName) }`);
 			}
 		);
 
