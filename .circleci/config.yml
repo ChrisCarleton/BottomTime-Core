@@ -29,12 +29,12 @@ jobs:
       - run:
           name: Test
           command: |
-            npm install -g gulp-cli nyc
-            npm install
+            npm install -g gulp-cli nyc yarn
+            yarn install
             gulp lint
-            npm run init-local
+            yarn init-local
             nyc gulp test
-            npm run coverage
+            yarn coverage
           environment:
             NODE_ENV: test
       - save_cache:
