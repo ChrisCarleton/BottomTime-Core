@@ -59,6 +59,7 @@ You'll need the following installed:
 
 * **[Node.js](https://nodejs.org/en/download/)**
 * **[Docker](https://www.docker.com/)**
+* **[Yarn](https://yarnpkg.com/)** which can be installed via npm: `npm install -g yarn`.
 * **Gulp CLI** which can be installed via npm: `npm install -g gulp-cli`.
 * **Bunyan** (optional) is a nice tool for formatting the application's log output into a human-readable
 form. `npm install -g bunyan`
@@ -120,7 +121,7 @@ A new environment will not have any data defined in the database - and that mean
 for setting things up! To create an initial Admin account run the following command:
 
 ```
-npm run create-admin-user
+yarn create-admin-user
 ```
 
 You'll be prompted for a strong password. Once completed, the command will have created (or updated) a
@@ -132,7 +133,7 @@ This is meant for test and dev environments where it's useful to have a database
 realistic-ish data. Run
 
 ```
-npm run generate-test-data
+yarn generate-test-data
 ```
 
 This will create several users with dozens of dives logged. The generated usernames will be output to
@@ -146,14 +147,14 @@ invalidate all auth tokens associated with the indicated username. If `.` is sup
 then **ALL** sessions will be terminated.
 
 ```
-npm run kill-sessions (username|.)
+yarn kill-sessions (username|.)
 ```
 
 ### Purging the Database
 This command will purge **all** data from the datase. All tables will be emptied.
 
 ```
-npm run purge-database
+yarn purge-database
 ```
 
 Use with extreme caution. **Do not** run this in production!!!!
