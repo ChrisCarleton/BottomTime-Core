@@ -16,6 +16,7 @@ import fakeUser from '../tests/util/fake-user';
 import fs from 'fs';
 import log from 'fancy-log';
 import LogEntry from '../service/data/log-entry';
+import mapLimit from 'async/mapLimit';
 import path from 'path';
 import search from '../service/search';
 import Site from '../service/data/sites';
@@ -24,7 +25,10 @@ import User from '../service/data/user';
 
 (async () => {
 	try {
-		const users = _.map(new Array(12), () => new User(fakeUser('bottomtime')));
+		const users = _.map(
+			new Array(faker.random.number({ min: 200, max: 400 })),
+			() => new User(fakeUser('bottomtime'))
+		);
 
 		await User.insertMany(users);
 		const userNames = _.map(users, u => u.username);
@@ -59,46 +63,76 @@ import User from '../service/data/user';
 		await User.esSynchronize();
 		log(`Admin user ${ chalk.bold.green(adminUser.username) } exists.`);
 
-		log('Creating dive sites...');
-		const diveSites = new Array(faker.random.number({ min: 700, max: 2000 }));
-		let ratingsCount = 0;
-		for (let i = 0; i < diveSites.length; i++) {
-			diveSites[i] = toDiveSite(fakeDiveSite(
-				faker.random.arrayElement(randomUserNames)
-			));
+		log('Creating dive sites and ratings (this could take a while)...');
 
-			let ratings = null;
-			let ratingSum = 0;
-			ratings = new Array(faker.random.number({ min: 1, max: 300 }));
-			for (let j = 0; j < ratings.length; j++) {
-				ratings[j] = toDiveSiteRating(
-					fakeDiveSiteRating(),
-					diveSites[i]._id,
-					faker.random.arrayElement(randomUserNames)
+		let diveSiteRatingsCount = 0;
+		let diveSitesCount = 0;
+
+		await mapLimit(users, 20, async (u, cb) => {
+			const diveSites = _.map(
+				new Array(faker.random.number({ min: 4, max: 40 })),
+				() => toDiveSite(fakeDiveSite(u.username))
+			);
+
+			diveSitesCount += diveSites.length;
+
+			let diveSiteRatingsArray = [];
+			diveSites.forEach(s => {
+				let ratingsSum = 0;
+				const ratings = _.map(
+					new Array(faker.random.number({ min: 1, max: 300 })),
+					() => {
+						const rating = toDiveSiteRating(
+							fakeDiveSiteRating(),
+							s._id,
+							faker.random.arrayElement(randomUserNames)
+						);
+						ratingsSum += rating.rating;
+						return rating;
+					}
 				);
-				ratingSum += ratings[j].rating;
-			}
-			diveSites[i].avgRating = ratingSum / ratings.length;
+				diveSiteRatingsArray = diveSiteRatingsArray.concat(ratings);
+				s.avgRating = ratingsSum / ratings.length;
+				diveSiteRatingsCount += ratings.length;
+			});
 
-			SiteRating.insertMany(ratings);
-			ratingsCount += ratings.length;
-		}
-		await Site.insertMany(diveSites);
+			try {
+				await Promise.all([
+					await Site.insertMany(diveSites),
+					await SiteRating.insertMany(diveSiteRatingsArray)
+				]);
+
+				return cb();
+			} catch (err) {
+				return cb(err);
+			}
+		});
+
+		log(`Generated ${ chalk.bold(diveSitesCount) } dive sites`);
+		log(`and ${ chalk.bold(diveSiteRatingsCount) } dive site ratings.`);
+
+		log('Syncing ES...');
 		await Site.esSynchronize();
-		log(`Generated ${ chalk.bold(diveSites.length) } dive sites`);
-		log(`and ${ chalk.bold(ratingsCount) } dive site ratings.`);
+		log('Done');
 
 		let totalEntries = 0;
 
-		log('Creating a boat-load of log entries...');
+		log('Creating a boat-load of log entries (this could take a while)...');
 		for (let i = 0; i < users.length; i++) {
-			let logEntries = new Array(faker.random.number({ min: 50, max: 500 }));
+			const logEntries = _.map(
+				new Array(faker.random.number({ min: 50, max: 500 })),
+				() => toLogEntry(fakeLogEntry(users[i]._id))
+			);
 			totalEntries += logEntries.length;
-			logEntries = _.map(logEntries, () => toLogEntry(fakeLogEntry(users[i]._id)));
 			await LogEntry.insertMany(logEntries);
 		}
 
 		log(`Created ${ chalk.bold(totalEntries) } log entries.`);
+
+		// Will need this when we start indexing log entries:
+		// log('Syncing ES...');
+		// await LogEntry.esSynchronize();
+		// log('Done');
 	} catch (err) {
 		log.error(chalk.red(err));
 		process.exitCode = 1;
