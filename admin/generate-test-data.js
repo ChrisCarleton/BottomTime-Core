@@ -118,14 +118,20 @@ import User from '../service/data/user';
 		let totalEntries = 0;
 
 		log('Creating a boat-load of log entries (this could take a while)...');
-		for (let i = 0; i < users.length; i++) {
+		await mapLimit(users, 30, async (u, cb) => {
 			const logEntries = _.map(
 				new Array(faker.random.number({ min: 50, max: 500 })),
-				() => toLogEntry(fakeLogEntry(users[i]._id))
+				() => toLogEntry(fakeLogEntry(u._id))
 			);
 			totalEntries += logEntries.length;
-			await LogEntry.insertMany(logEntries);
-		}
+
+			try {
+				await LogEntry.insertMany(logEntries);
+				return cb();
+			} catch (err) {
+				return cb(err);
+			}
+		});
 
 		log(`Created ${ chalk.bold(totalEntries) } log entries.`);
 
@@ -136,8 +142,10 @@ import User from '../service/data/user';
 	} catch (err) {
 		log.error(chalk.red(err));
 		process.exitCode = 1;
+	} finally {
+		log('Closing connections...');
+		search.close();
+		await database.connection.close();
+		log('Task completed.');
 	}
-
-	search.close();
-	await database.connection.close();
 })();
