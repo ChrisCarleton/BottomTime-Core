@@ -14,8 +14,8 @@ tests/
 .env
 .eslintrc.js
 .gitignore
+.test-users.json
 Dockerfile
 gulpfile.babel.js
 LICENSE
 README.md
-.test-users.json

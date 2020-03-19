@@ -31,6 +31,7 @@ function lint() {
 function test() {
 	mkdirp.sync(path.join(__dirname, 'logs/'));
 
+	process.env.NODE_ENV = 'test';
 	process.env.BT_LOG_FILE = path.join(__dirname, 'logs/test.log');
 	process.env.ECS_CONTAINER_METADATA_FILE = path.join(__dirname, 'tests/assets/container-metadata.json');
 	process.env.BT_S3_ENDPOINT = process.env.BT_S3_ENDPOINT || 'http://localhost:4569/';
