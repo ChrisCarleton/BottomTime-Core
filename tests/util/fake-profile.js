@@ -79,6 +79,7 @@ export default (logsVisibility, firstName, lastName) => {
 		weightUnit: faker.random.arrayElement([ 'kg', 'lbs' ]),
 		distanceUnit: faker.random.arrayElement([ 'm', 'ft' ]),
 		temperatureUnit: faker.random.arrayElement([ 'c', 'f' ]),
-		pressureUnit: faker.random.arrayElement([ 'bar', 'psi' ])
+		pressureUnit: faker.random.arrayElement([ 'bar', 'psi' ]),
+		uiComplexity: faker.random.arrayElement([ 'basic', 'advanced', 'technical' ])
 	};
 };

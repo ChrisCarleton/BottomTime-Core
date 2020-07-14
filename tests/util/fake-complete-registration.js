@@ -13,6 +13,7 @@ export default () => {
 		weightUnit: faker.random.arrayElement([ 'kg', 'lbs' ]),
 		temperatureUnit: faker.random.arrayElement([ 'c', 'f' ]),
 		distanceUnit: faker.random.arrayElement([ 'm', 'ft' ]),
-		pressureUnit: faker.random.arrayElement([ 'bar', 'psi' ])
+		pressureUnit: faker.random.arrayElement([ 'bar', 'psi' ]),
+		uiComplexity: faker.random.arrayElement([ 'basic', 'advanced', 'technical' ])
 	};
 };

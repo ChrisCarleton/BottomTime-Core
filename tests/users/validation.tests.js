@@ -290,6 +290,23 @@ describe('Complete Registration Validation', () => {
 		registration.pressureUnit = 'kpa';
 		validateCompleteRegistration('any.allowOnly');
 	});
+
+	it('UI complexity cannot be set to another value', () => {
+		registration.uiComplexity = 'simple';
+		validateCompleteRegistration('any.allowOnly');
+	});
+
+	it('UI complexity is optional', () => {
+		delete registration.uiComplexity;
+		validateCompleteRegistration();
+	});
+
+	[ 'basic', 'advanced', 'technical' ].forEach(c => {
+		it(`UI complexity can be set to ${ c }`, () => {
+			registration.uiComplexity = c;
+			validateCompleteRegistration();
+		});
+	});
 });
 
 describe('Change Password Validation', () => {

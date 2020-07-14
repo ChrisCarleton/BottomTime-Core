@@ -95,6 +95,11 @@ const userSchema = mongoose.Schema({
 		default: 'bar',
 		required: true
 	},
+	uiComplexity: {
+		type: String,
+		default: 'basic',
+		required: true
+	},
 	firstName: {
 		type: String,
 		es_indexed: true,
@@ -201,7 +206,8 @@ userSchema.methods.getAccountJSON = function () {
 				'weightUnit',
 				'distanceUnit',
 				'pressureUnit',
-				'temperatureUnit'
+				'temperatureUnit',
+				'uiComplexity'
 			]),
 		isAnonymous: false,
 		hasPassword,
@@ -231,7 +237,8 @@ userSchema.methods.getProfileJSON = function () {
 				'weightUnit',
 				'distanceUnit',
 				'temperatureUnit',
-				'pressureUnit'
+				'pressureUnit',
+				'uiComplexity'
 			]
 		),
 		memberSince: moment(this.createdAt).toISOString()

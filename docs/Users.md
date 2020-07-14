@@ -82,7 +82,8 @@ a third party auth provider.
 	"weightUnit": "String: User's preferred weight unit. One of 'kg' or 'lbs'. Default is 'kg'.",
 	"distanceUnit": "String: User's preferred distance unit. One of 'm' or 'ft'. Default is 'm'.",
 	"temperatureUnit": "String: User's preferred temperature unit. One of 'c' or 'f'. Default is 'c'.",
-	"pressureUnit": "String: User's preferred pressure unit. One of 'bar' or 'psi'. Default is 'bar'."
+	"pressureUnit": "String: User's preferred pressure unit. One of 'bar' or 'psi'. Default is 'bar'.",
+	"uiComplexity": "String: User's preferred UI complexity. One of 'basic', 'advanced', or 'technical'. Default is 'basic'."
 }
 ```
 
@@ -108,7 +109,8 @@ a third party auth provider.
 	"distanceUnit": "String: The user's preferred unit for distance. (Valid values are 'm' and 'ft'.)",
 	"weightUnit": "String: The user's preferred unit for weight. (Valid values are 'kg' and 'lbs'.)",
 	"temperatureUnit": "String: The user's preferred unit for temperature. (Valid values are 'c' and 'f'.)",
-	"pressureUnit": "String: The user's preferred unit for pressure. (Valid values are 'bar' and 'psi'.)"
+	"pressureUnit": "String: The user's preferred unit for pressure. (Valid values are 'bar' and 'psi'.)",
+	"uiComplexity": "String: How technical the user prefers the UI. (Valid values are 'basic', 'advanced', and 'technical'.)"
 }
 ```
 
@@ -300,10 +302,10 @@ The message body must contain a valid [UserProfile](#userprofile-object) object 
 information. Fields that are set to `null` will be cleared (their values will be removed.) Fields that are
 omitted will be left unchanged.
 
-The `memberSince`, `divesLogged`, and `bottomTimeLogged` fields are considered read-only. Their values
-may be included in the **UserProfile** object but their values will be ignored.
+The `memberSince`, `divesLogged`, and `bottomTimeLogged` fields are computed fields and are considered read-only. Their values
+may be included in the **UserProfile** object but will be ignored.
 
-The `logsVisibility`, `distanceUnit`, `weightUnit`, `pressureUnit`, and `temperatureUnit` fields are
+The `logsVisibility`, `distanceUnit`, `weightUnit`, `pressureUnit`, `temperatureUnit`, and `uiComplexity` fields are
 considered *required* fields and cannot be cleared. That is, a 400 error will be returned if any of them
 are set to `null`.
 

@@ -371,4 +371,26 @@ describe('Update profile validation', () => {
 		delete profile.pressureUnit;
 		validateProfile();
 	});
+
+	[ 'basic', 'advanced', 'technical' ].forEach(c => {
+		it(`UI complexity can be set to ${ c }`, () => {
+			profile.uiComplexity = c;
+			validateProfile();
+		});
+	});
+
+	it('UI complexity cannot be set to an invalid value', () => {
+		profile.uiComplexity = 'simple';
+		validateProfile('any.allowOnly');
+	});
+
+	it('UI complexity cannot be null', () => {
+		profile.uiComplexity = null;
+		validateProfile('string.base');
+	});
+
+	it('UI complexity can be omitted', () => {
+		delete profile.uiComplexity;
+		validateProfile();
+	});
 });
