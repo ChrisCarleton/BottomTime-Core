@@ -33,7 +33,8 @@ const expectedKeys = [
 	'distanceUnit',
 	'temperatureUnit',
 	'pressureUnit',
-	'weightUnit'
+	'weightUnit',
+	'uiComplexity'
 ];
 
 function compareProfiles(result, user) {
@@ -61,6 +62,7 @@ function compareProfiles(result, user) {
 	expect(result.weightUnit).to.equal(user.weightUnit);
 	expect(result.temperatureUnit).to.equal(user.temperatureUnit);
 	expect(result.pressureUnit).to.equal(user.pressureUnit);
+	expect(result.uiComplexity).to.equal(user.uiComplexity);
 }
 
 describe('Profiles Controller', () => {
@@ -422,7 +424,8 @@ describe('Profiles Controller', () => {
 				temperatureUnit: 'f',
 				weightUnit: 'lbs',
 				distanceUnit: 'ft',
-				pressureUnit: 'psi'
+				pressureUnit: 'psi',
+				uiComplexity: 'basic'
 			};
 
 			await request(App)

@@ -281,6 +281,7 @@ export async function CompleteRegistration(req, res) {
 		req.account.pressureUnit = req.body.pressureUnit;
 		req.account.temperatureUnit = req.body.temperatureUnit;
 		req.account.weightUnit = req.body.weightUnit;
+		req.account.uiComplexity = req.body.uiComplexity;
 		req.account.isRegistrationIncomplete = false;
 		await req.account.save();
 

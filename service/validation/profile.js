@@ -20,5 +20,6 @@ export const UpdateProfileSchema = Joi.object().keys({
 	weightUnit: Joi.string().only([ 'kg', 'lbs' ]),
 	temperatureUnit: Joi.string().only([ 'c', 'f' ]),
 	distanceUnit: Joi.string().only([ 'm', 'ft' ]),
-	pressureUnit: Joi.string().only([ 'bar', 'psi' ])
+	pressureUnit: Joi.string().only([ 'bar', 'psi' ]),
+	uiComplexity: Joi.string().only([ 'basic', 'advanced', 'technical' ])
 });

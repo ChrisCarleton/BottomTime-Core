@@ -53,7 +53,8 @@ describe('Sign-In With Google', () => {
 			distanceUnit: 'm',
 			temperatureUnit: 'c',
 			pressureUnit: 'bar',
-			weightUnit: 'kg'
+			weightUnit: 'kg',
+			uiComplexity: 'basic'
 		};
 		expect(account.getAccountJSON()).to.eql(expectedUser);
 		expect(account.username).to.match(/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/);
