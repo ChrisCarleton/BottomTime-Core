@@ -19,7 +19,6 @@ const expectedKeys = [
 	'lastName',
 	'location',
 	'occupation',
-	'gender',
 	'birthdate',
 	'typeOfDiver',
 	'startedDiving',
@@ -44,7 +43,6 @@ function compareProfiles(result, user) {
 	expect(result.lastName).to.equal(user.lastName);
 	expect(result.location).to.equal(user.location);
 	expect(result.occupation).to.equal(user.occupation);
-	expect(result.gender).to.equal(user.gender);
 	if (result.birthdate) {
 		expect(result.birthdate).to.equal(
 			moment(user.birthdate).format('YYYY-MM-DD')
@@ -413,7 +411,6 @@ describe('Profiles Controller', () => {
 				lastName: null,
 				location: null,
 				occupation: null,
-				gender: null,
 				birthdate: null,
 				typeOfDiver: null,
 				startedDiving: null,
