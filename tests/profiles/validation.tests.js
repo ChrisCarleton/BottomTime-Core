@@ -137,23 +137,6 @@ describe('Update profile validation', () => {
 		validateProfile();
 	});
 
-	[ 'male', 'female', null ].forEach(g => {
-		it(`gender can be set to ${ g }`, () => {
-			profile.gender = g;
-			validateProfile();
-		});
-	});
-
-	it('gender is not required', () => {
-		delete profile.gender;
-		validateProfile();
-	});
-
-	it('gender cannot be set to any other value', () => {
-		profile.gender = 'cyborg';
-		validateProfile('any.allowOnly');
-	});
-
 	it('birthdate must follow the "yyyy-mm-dd" format', () => {
 		profile.birthdate = 'Dec-26-1983';
 		validateProfile('string.regex.base');

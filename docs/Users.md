@@ -96,7 +96,6 @@ a third party auth provider.
 	"lastName": "String: The user's last name.",
 	"location": "String: Where the user is geographically located.",
 	"occupation": "String: The user's occupation.",
-	"gender": "One of 'male', or 'female'.",
 	"birthdate": "String: A string representation of the user's birthdate in this format: YYYY-MM-DD",
 	"typeOfDiver": "String: Free-form string describing the type of diver the user is.",
 	"startedDiving": "Number: The four-digit year in which the user began their diving career.",

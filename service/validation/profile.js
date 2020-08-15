@@ -9,7 +9,6 @@ export const UpdateProfileSchema = Joi.object().keys({
 	lastName: Joi.string().max(50).allow(null),
 	location: Joi.string().max(100).allow(null),
 	occupation: Joi.string().max(50).allow(null),
-	gender: Joi.string().only([ 'male', 'female' ]).allow(null),
 	birthdate: Joi.string().regex(/^\d\d\d\d-\d\d-\d\d$/).allow(null),
 	typeOfDiver: Joi.string().max(100).allow(null),
 	startedDiving: Joi.number().integer().min(year - 100).max(year).allow(null),

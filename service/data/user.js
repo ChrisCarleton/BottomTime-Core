@@ -120,11 +120,6 @@ const userSchema = mongoose.Schema({
 		es_indexed: true,
 		es_type: 'text'
 	},
-	gender: {
-		type: String,
-		es_indexed: true,
-		es_type: 'text'
-	},
 	birthdate: {
 		type: Date,
 		es_indexed: true,
@@ -227,7 +222,6 @@ userSchema.methods.getProfileJSON = function () {
 				'lastName',
 				'location',
 				'occupation',
-				'gender',
 				'typeOfDiver',
 				'startedDiving',
 				'certificationLevel',

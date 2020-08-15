@@ -47,7 +47,6 @@ export default (logsVisibility, firstName, lastName) => {
 		lastName: lastName || faker.name.lastName(),
 		location: faker.fake('{{address.city}}{{address.citySuffix}}, {{address.stateAbbr}}'),
 		occupation: faker.commerce.department(),
-		gender: faker.random.arrayElement([ 'male', 'female', null ]),
 		birthdate: moment(faker.date.past(70)).format('YYYY-MM-DD'),
 		typeOfDiver: faker.random.arrayElement([
 			'New to diving',
