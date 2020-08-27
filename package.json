@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "gulp serve | bunyan",
     "start": "node service/index.js",
-    "test": "gulp test",
-    "lint": "gulp lint",
+    "test": "npx mocha -r @babel/register -r ./tests/config -t 10000 tests/**/*.tests.js",
+    "lint": "npx eslint service/**/*.js tests/**/*.js admin/**/*.js",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "generate-test-data": "node admin/bootstrap.js ./generate-test-data",
     "init-local": "node admin/bootstrap.js ./init-local",
