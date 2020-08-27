@@ -1,8 +1,6 @@
 /* eslint no-process-env: 0 */
 import path from 'path';
 
-console.log('Loading config', process.env);
-
 const config = {
 	nodeEnv: process.env.NODE_ENV,
 	buildNumber: process.env.BT_BUILD_NUMBER,
