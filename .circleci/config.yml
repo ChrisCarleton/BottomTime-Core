@@ -29,11 +29,11 @@ jobs:
       - run:
           name: Test
           command: |
-            npm install -g nyc yarn
+            npm install -g yarn
             yarn install
             yarn lint
             yarn init-local
-            nyc yarn test
+            npx nyc yarn test
             yarn coverage
           environment:
             NODE_ENV: test

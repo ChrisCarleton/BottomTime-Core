@@ -5,11 +5,11 @@
   "main": "service/index.js",
   "private": true,
   "scripts": {
-    "dev": "npx nodemon --watch service/ | npx bunyan",
+    "serve": "npx nodemon --watch service/",
     "start": "node service/index.js",
     "test": "npx mocha -r @babel/register -r ./tests/config -t 10000 \"tests/**/*.tests.js\"",
     "lint": "npx eslint \"service/**/*.js\" \"tests/**/*.js\" \"admin/**/*.js\"",
-    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "coverage": "npx nyc report --reporter=text-lcov | coveralls",
     "generate-test-data": "node admin/bootstrap.js ./generate-test-data",
     "init-local": "node admin/bootstrap.js ./init-local",
     "kill-sessions": "node admin/bootstrap.js ./kill-sessions",
@@ -59,6 +59,7 @@
     "hex-generator": "^1.0.0",
     "mkdirp": "^0.5.1",
     "nodemon": "^2.0.4",
+    "nyc": "^15.1.0",
     "readline-sync": "^1.4.9",
     "sinon": "^7.2.0",
     "supertest": "^4.0.2"
