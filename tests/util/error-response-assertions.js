@@ -40,7 +40,7 @@ function isForbidden(expect, obj) {
 	expect(obj.errorId).to.equal(ErrorIds.forbidden);
 }
 
-export default function errorResponseAssertions(chai, utils) {
+module.exports = function errorResponseAssertions(chai, utils) {
 	const { Assertion, expect } = chai;
 	utils.addProperty(
 		Assertion.prototype,
@@ -89,4 +89,4 @@ export default function errorResponseAssertions(chai, utils) {
 			isForbidden(expect, this._obj);
 		}
 	);
-}
+};
