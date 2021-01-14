@@ -70,7 +70,7 @@
     "@babel/preset-env": "^7.7.1",
     "@babel/register": "^7.7.0",
     "@elastic/elasticsearch": "^7.1.0",
-    "aws-sdk": "^2.455.0",
+    "aws-sdk": "^2.814.0",
     "bcrypt": "5.0.0",
     "body-parser": "^1.18.3",
     "bunyan": "^1.8.12",
