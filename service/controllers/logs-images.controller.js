@@ -2,7 +2,6 @@ import { badRequest, conflict, notFound, serverError } from '../utils/error-resp
 import config from '../config';
 import fs from 'fs';
 import { ImageMetadataSchema } from '../validation/log-entry-image';
-import Joi from 'joi';
 import LogEntryImage from '../data/log-entry-images';
 import moment from 'moment';
 import path from 'path';
@@ -58,7 +57,7 @@ function validateImageUpload(res, imagePath, imageInfo) {
 		return false;
 	}
 
-	const { error } = Joi.validate(imageInfo, ImageMetadataSchema);
+	const { error } = ImageMetadataSchema.validate(imageInfo);
 	if (error) {
 		badRequest(
 			'Unable to add image. Metadata validation failed',
@@ -274,7 +273,7 @@ export function GetImageDetails(req, res) {
 }
 
 export async function UpdateImageDetails(req, res) {
-	const { error } = Joi.validate(req.body, ImageMetadataSchema);
+	const { error } = ImageMetadataSchema.validate(req.body);
 	if (error) {
 		return badRequest(
 			'Unable to update image metadata because validation failed',

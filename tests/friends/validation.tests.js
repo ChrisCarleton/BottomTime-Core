@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import faker from 'faker';
-import Joi from 'joi';
 import {
 	BulkDeleteSchema,
 	HandleFriendRequestSchema,
@@ -29,7 +28,7 @@ describe('Friends Validation Tests', () => {
 		});
 
 		function validateListFriendsQuery(expectedError) {
-			const isValid = Joi.validate(query, ListFriendsSchema);
+			const isValid = ListFriendsSchema.validate(query);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -66,7 +65,7 @@ describe('Friends Validation Tests', () => {
 		});
 
 		function validateHandleFriendRequest(expectedError) {
-			const isValid = Joi.validate(body, HandleFriendRequestSchema);
+			const isValid = HandleFriendRequestSchema.validate(body);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -105,7 +104,7 @@ describe('Friends Validation Tests', () => {
 		});
 
 		function validateBulkDelete(expectedError) {
-			const isValid = Joi.validate(body, BulkDeleteSchema);
+			const isValid = BulkDeleteSchema.validate(body);
 			ensureValid(isValid, expectedError);
 		}
 

@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import faker from 'faker';
-import Joi from 'joi';
 import { TankProfileSchema } from '../../service/validation/tank';
 
 let tankProfile = null;
@@ -15,7 +14,7 @@ function testExpectedError(err, expectedError) {
 }
 
 function validateTankProfile(expectedError) {
-	const err = Joi.validate(tankProfile, TankProfileSchema);
+	const err = TankProfileSchema.validate(tankProfile);
 	testExpectedError(err, expectedError);
 }
 

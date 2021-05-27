@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import fakeLogEntryImage from '../util/fake-log-entry-image';
 import faker from 'faker';
 import { ImageMetadataSchema } from '../../service/validation/log-entry-image';
-import Joi from 'joi';
 
 function ensureValid(isValid, expectedError) {
 	if (expectedError) {
@@ -21,7 +20,7 @@ describe('Log Entry Image Validation Tests', () => {
 	let metadata = null;
 
 	function validateMetadata(expectedError) {
-		const isValid = Joi.validate(metadata, ImageMetadataSchema);
+		const isValid = ImageMetadataSchema.validate(metadata);
 		ensureValid(isValid, expectedError);
 	}
 

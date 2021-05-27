@@ -8,7 +8,6 @@ import {
 	UserAccountSchema,
 	UserQuerySchema
 } from '../validation/user';
-import Joi from 'joi';
 import mailer from '../mail/mailer';
 import moment from 'moment';
 import templates from '../mail/templates';
@@ -24,7 +23,7 @@ export async function GetUsers(req, res, next) {
 	}
 
 	try {
-		const { error } = Joi.validate(req.query.query, UserQuerySchema);
+		const { error } = UserQuerySchema.validate(req.query.query);
 		if (error) {
 			badRequest(
 				'Search query was invalid. It should be a username or e-mail address',
@@ -55,7 +54,7 @@ export async function GetUsers(req, res, next) {
 }
 
 export async function AdminGetUsers(req, res) {
-	const { error } = Joi.validate(req.query, AdminUserQuerySchema);
+	const { error } = AdminUserQuerySchema.validate(req.query);
 	if (error) {
 		return badRequest(
 			'Unable to perform search. There is a problem with the query string.',
@@ -132,8 +131,8 @@ export function RequireUserForRegistration(req, res, next) {
 }
 
 function validateCreateUserAccount(req, res) {
-	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema.required());
-	const isBodyValid = Joi.validate(req.body, UserAccountSchema);
+	const isUsernameValid = UsernameSchema.required().validate(req.params.username);
+	const isBodyValid = UserAccountSchema.validate(req.body);
 
 	if (isUsernameValid.error) {
 		badRequest(
@@ -236,7 +235,7 @@ export async function CompleteRegistration(req, res) {
 		);
 	}
 
-	const { error } = Joi.validate(req.body, CompleteRegistrationSchema);
+	const { error } = CompleteRegistrationSchema.validate(req.body);
 	if (error) {
 		return badRequest(
 			'There was a problem with the request to complete the user\'s registration',
@@ -300,7 +299,7 @@ export function ChangeEmail(req, res) {
 
 export async function ChangePassword(req, res) {
 	try {
-		const isValid = Joi.validate(req.body, ChangePasswordSchema);
+		const isValid = ChangePasswordSchema.validate(req.body);
 		if (isValid.error) {
 			return badRequest(
 				'Request was invalid. Mostly likely, the new password did not meet strength requirements.',
@@ -365,7 +364,7 @@ export async function RequestPasswordReset(req, res) {
 }
 
 export async function ConfirmPasswordReset(req, res) {
-	const isUsernameValid = Joi.validate(req.params.username, UsernameSchema.required());
+	const isUsernameValid = UsernameSchema.required().validate(req.params.username);
 	if (isUsernameValid.error) {
 		return badRequest(
 			'Unable to reset password. The username specified in the request URL is invalid',
@@ -373,7 +372,7 @@ export async function ConfirmPasswordReset(req, res) {
 			res);
 	}
 
-	const isRequestValid = Joi.validate(req.body, ConfirmResetPasswordSchema);
+	const isRequestValid = ConfirmResetPasswordSchema.validate(req.body);
 	if (isRequestValid.error) {
 		return badRequest(
 			'Unable to reset password. The request was invalid. See details.',

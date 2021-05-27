@@ -1,7 +1,6 @@
 import { expect } from 'chai';
 import fakeCompleteRegistration from '../util/fake-complete-registration';
 import faker from 'faker';
-import Joi from 'joi';
 import {
 	AdminUserQuerySchema,
 	ChangePasswordSchema,
@@ -31,37 +30,37 @@ function testExpectedError(err, expectedError) {
 }
 
 function validateUsername(expectedError, username) {
-	const err = Joi.validate(username, UsernameSchema);
+	const err = UsernameSchema.validate(username);
 	testExpectedError(err, expectedError);
 }
 
 function validateAccount(expectedError) {
-	const err = Joi.validate(account, UserAccountSchema);
+	const err = UserAccountSchema.validate(account);
 	testExpectedError(err, expectedError);
 }
 
 function validateCompleteRegistration(expectedError) {
-	const err = Joi.validate(registration, CompleteRegistrationSchema);
+	const err = CompleteRegistrationSchema.validate(registration);
 	testExpectedError(err, expectedError);
 }
 
 function validateChangePassword(expectedError) {
-	const err = Joi.validate(changePassword, ChangePasswordSchema);
+	const err = ChangePasswordSchema.validate(changePassword);
 	testExpectedError(err, expectedError);
 }
 
 function validateConfirmPasswordReset(expectedError) {
-	const err = Joi.validate(resetPassword, ConfirmResetPasswordSchema);
+	const err = ConfirmResetPasswordSchema.validate(resetPassword);
 	testExpectedError(err, expectedError);
 }
 
 function validateUserSearch(expectedError) {
-	const err = Joi.validate(userQuery, UserQuerySchema);
+	const err = UserQuerySchema.validate(userQuery);
 	testExpectedError(err, expectedError);
 }
 
 function validateAdminUserSearch(expectedError) {
-	const err = Joi.validate(adminUserQuery, AdminUserQuerySchema);
+	const err = AdminUserQuerySchema.validate(adminUserQuery);
 	testExpectedError(err, expectedError);
 }
 

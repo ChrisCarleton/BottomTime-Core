@@ -1,6 +1,5 @@
 import { badRequest, serverError } from '../utils/error-response';
 import LogEntry from '../data/log-entry';
-import Joi from 'joi';
 import moment from 'moment';
 import { UpdateProfileSchema } from '../validation/profile';
 
@@ -54,7 +53,7 @@ export async function UpdateProfile(req, res) {
 		delete req.body.bottomTimeLogged;
 		delete req.body.readOnly;
 
-		const isValid = Joi.validate(req.body, UpdateProfileSchema);
+		const isValid = UpdateProfileSchema.validate(req.body);
 		if (isValid.error) {
 			return badRequest(
 				'Unable to update profile information because validation failed',

@@ -5,7 +5,6 @@ import {
 } from '../validation/friend';
 import config from '../config';
 import Friend from '../data/friend';
-import Joi from 'joi';
 import mailer from '../mail/mailer';
 import templates from '../mail/templates';
 import { badRequest, conflict, forbidden, notFound, serverError } from '../utils/error-response';
@@ -80,7 +79,7 @@ const QueryFunctions = {
 };
 
 export async function ListFriends(req, res) {
-	const isValid = Joi.validate(req.query, ListFriendsSchema);
+	const isValid = ListFriendsSchema.validate(req.query);
 	if (isValid.error) {
 		return badRequest('Query string was invalid', isValid.error, res);
 	}
@@ -220,7 +219,7 @@ export async function CreateFriendRequest(req, res, next) {
 }
 
 export async function LoadFriendRequestData(req, res, next) {
-	const isValid = Joi.validate(req.body, HandleFriendRequestSchema);
+	const isValid = HandleFriendRequestSchema.validate(req.body);
 	if (isValid.error) {
 		return badRequest(
 			'Request body was invalid',
@@ -355,7 +354,7 @@ export async function DeleteFriend(req, res) {
 }
 
 export async function BulkDeleteFriends(req, res) {
-	const isValid = Joi.validate(req.body, BulkDeleteSchema);
+	const isValid = BulkDeleteSchema.validate(req.body);
 	if (isValid.error) {
 		return badRequest(
 			'Invalid request body',

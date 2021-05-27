@@ -3,7 +3,6 @@ import fakeLogEntry from '../util/fake-log-entry';
 import fakeLogEntryAir from '../util/fake-log-entry-air';
 import fakeMongoId from '../util/fake-mongo-id';
 import faker from 'faker';
-import Joi from 'joi';
 import {
 	EntryQueryParamsSchema,
 	NewEntrySchema,
@@ -25,17 +24,17 @@ function ensureValid(isValid, expectedError) {
 }
 
 function validateUpdate(expectedError) {
-	const isValid = Joi.validate(logEntry, UpdateEntrySchema);
+	const isValid = UpdateEntrySchema.validate(logEntry);
 	ensureValid(isValid, expectedError);
 }
 
 function validateCreate(expectedError) {
-	const isValid = Joi.validate(logEntry, NewEntrySchema);
+	const isValid = NewEntrySchema.validate(logEntry);
 	ensureValid(isValid, expectedError);
 }
 
 function validateQueryParams(expectedError) {
-	const isValid = Joi.validate(queryString, EntryQueryParamsSchema);
+	const isValid = EntryQueryParamsSchema.validate(queryString);
 	ensureValid(isValid, expectedError);
 }
 

@@ -10,7 +10,6 @@ import { expect } from 'chai';
 import fakeDiveSite from '../util/fake-dive-site';
 import fakeDiveSiteRating from '../util/fake-dive-site-rating';
 import faker from 'faker';
-import Joi from 'joi';
 
 const VeryLongString = faker.lorem.paragraphs(7).substr(0, 1001);
 const LongString100 = VeryLongString.substr(0, 101);
@@ -31,7 +30,7 @@ describe('Dive Site Validation', () => {
 		let diveSite = null;
 
 		function validateDiveSite(expectedError) {
-			const isValid = Joi.validate(diveSite, DiveSiteSchema);
+			const isValid = DiveSiteSchema.validate(diveSite);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -311,7 +310,7 @@ describe('Dive Site Validation', () => {
 		let siteSearch = null;
 
 		function validateSiteSearch(expectedError) {
-			const isValid = Joi.validate(siteSearch, DiveSiteSearchSchema);
+			const isValid = DiveSiteSearchSchema.validate(siteSearch);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -593,7 +592,7 @@ describe('Dive Site Rating Validation', () => {
 		let rating = null;
 
 		function validateRating(expectedError) {
-			const isValid = Joi.validate(rating, DiveSiteRatingSchema);
+			const isValid = DiveSiteRatingSchema.validate(rating);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -641,7 +640,7 @@ describe('Dive Site Rating Validation', () => {
 		let listRatings = null;
 
 		function validateListRatings(expectedError) {
-			const isValid = Joi.validate(listRatings, ListDiveSiteRatingsSchema);
+			const isValid = ListDiveSiteRatingsSchema.validate(listRatings);
 			ensureValid(isValid, expectedError);
 		}
 

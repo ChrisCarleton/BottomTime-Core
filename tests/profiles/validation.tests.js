@@ -3,7 +3,6 @@
 import { expect } from 'chai';
 import fakeProfile from '../util/fake-profile';
 import faker from 'faker';
-import Joi from 'joi';
 import moment from 'moment';
 import { UpdateProfileSchema } from '../../service/validation/profile';
 
@@ -20,7 +19,7 @@ function ensureValid(isValid, expectedError) {
 }
 
 function validateProfile(expectedError) {
-	const isValid = Joi.validate(profile, UpdateProfileSchema);
+	const isValid = UpdateProfileSchema.validate(profile);
 	ensureValid(isValid, expectedError);
 }
 
