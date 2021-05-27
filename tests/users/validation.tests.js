@@ -360,7 +360,7 @@ describe('Change Password Validation', () => {
 describe('Confirm Reset Password Validation', () => {
 	beforeEach(() => {
 		resetPassword = {
-			resetToken: faker.random.uuid(),
+			resetToken: faker.datatype.uuid(),
 			newPassword: faker.internet.password(18, false, null, '*@1Az')
 		};
 	});

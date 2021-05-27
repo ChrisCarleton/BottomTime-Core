@@ -13,10 +13,6 @@ before(done => {
 after(async () => {
 	Server.close();
 	search.close();
-	// await Promise.all([
-	// 	database.connection.close,
-	// 	SessionStore.close
-	// ]);
-    await database.connection.close();
-    await SessionStore.close();
+	await database.connection.close();
+	await SessionStore.close();
 });
