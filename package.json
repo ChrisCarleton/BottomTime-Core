@@ -76,7 +76,7 @@
     "compression": "^1.7.3",
     "connect-busboy": "0.0.2",
     "connect-modrewrite": "^0.10.2",
-    "connect-mongo": "^3.0.0",
+    "connect-mongo": "4.4.1",
     "cookie-parser": "^1.4.4",
     "dotenv": "^8.2.0",
     "elasticsearch": "^16.1.1",
