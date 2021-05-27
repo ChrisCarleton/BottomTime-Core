@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: node:10.15.3-jessie
+      - image: cimg/node:15.6.0
         environment:
           BT_ES_ENDPOINT: http://es:9200
           BT_MONGO_ENDPOINT: mongodb://mongo/dev
