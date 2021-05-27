@@ -13,7 +13,7 @@ function ensureValid(isValid, expectedError) {
 	}
 }
 
-const LongString = faker.lorem.sentences(4).substr(0, 101);
+const LongString = faker.lorem.sentences(6).substr(0, 101);
 const ExtraLongString = faker.lorem.paragraphs(6).substr(0, 501);
 
 describe('Log Entry Image Validation Tests', () => {

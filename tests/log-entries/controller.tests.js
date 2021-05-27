@@ -133,7 +133,7 @@ describe('Logs Controller', () => {
 				.send(fakes)
 				.expect(400);
 			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-			expect(res.body.details.isJoi).to.be.true;
+			expect(res.body.details).to.be.an('Object');
 		});
 
 		it('Will return Bad Request if array is empty', async () => {
@@ -143,7 +143,7 @@ describe('Logs Controller', () => {
 				.send([])
 				.expect(400);
 			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-			expect(res.body.details.isJoi).to.be.true;
+			expect(res.body.details).to.be.an('Object');
 		});
 
 		it('Will return Bad Request if request payload is empty', async () => {
@@ -152,7 +152,7 @@ describe('Logs Controller', () => {
 				.set(...user1.authHeader)
 				.expect(400);
 			expect(res.body.errorId).to.equal(ErrorIds.badRequest);
-			expect(res.body.details.isJoi).to.be.true;
+			expect(res.body.details).to.be.an('Object');
 		});
 
 		it('Will return Server Error if database request fails', async () => {
