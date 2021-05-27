@@ -6,7 +6,7 @@ const params = {
 	apiVersion: '2006-03-01',
 	signatureVersion: 'v4',
 	s3ForcePathStyle: true,
-	endpoint: config.s3Endpoint === 's3' ? undefined : new AWS.Endpoint(config.s3Endpoint)
+	endpoint: config.s3Endpoint === 's3' ? null : new AWS.Endpoint(config.s3Endpoint)
 };
 
 if (params.endpoint) {
