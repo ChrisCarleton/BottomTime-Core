@@ -24,8 +24,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - bt_core_{{ checksum "package.json" }}
-            - bt_core_
+            - bt_core_nm_{{ checksum "package.json" }}
+            - bt_core_nm_
       - run:
           name: Test
           command: |
@@ -38,7 +38,7 @@ jobs:
           environment:
             NODE_ENV: test
       - save_cache:
-          key: bt_core_{{ checksum "package.json" }}
+          key: bt_core_nm_{{ checksum "package.json" }}
           paths:
             - node_modules/
 
