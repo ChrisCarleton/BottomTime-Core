@@ -10,7 +10,6 @@ import { expect } from 'chai';
 import fakeDiveSite from '../util/fake-dive-site';
 import fakeDiveSiteRating from '../util/fake-dive-site-rating';
 import faker from 'faker';
-import Joi from 'joi';
 
 const VeryLongString = faker.lorem.paragraphs(7).substr(0, 1001);
 const LongString100 = VeryLongString.substr(0, 101);
@@ -31,7 +30,7 @@ describe('Dive Site Validation', () => {
 		let diveSite = null;
 
 		function validateDiveSite(expectedError) {
-			const isValid = Joi.validate(diveSite, DiveSiteSchema);
+			const isValid = DiveSiteSchema.validate(diveSite);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -47,7 +46,7 @@ describe('Dive Site Validation', () => {
 
 		it('Name cannot be empty', () => {
 			diveSite.name = '';
-			validateDiveSite('any.empty');
+			validateDiveSite('string.empty');
 		});
 
 		it('Name must be a string', () => {
@@ -67,7 +66,7 @@ describe('Dive Site Validation', () => {
 
 		it('Location cannot be empty', () => {
 			diveSite.location = '';
-			validateDiveSite('any.empty');
+			validateDiveSite('string.empty');
 		});
 
 		it('Location can be null', () => {
@@ -92,7 +91,7 @@ describe('Dive Site Validation', () => {
 
 		it('Country cannot be empty', () => {
 			diveSite.country = '';
-			validateDiveSite('any.empty');
+			validateDiveSite('string.empty');
 		});
 
 		it('Country can be null', () => {
@@ -112,7 +111,7 @@ describe('Dive Site Validation', () => {
 
 		it('Water must be a string', () => {
 			diveSite.water = 8;
-			validateDiveSite('string.base');
+			validateDiveSite('any.only');
 		});
 
 		[ 'salt', 'fresh', null ].forEach(value => {
@@ -124,12 +123,12 @@ describe('Dive Site Validation', () => {
 
 		it('Water cannot be invalid', () => {
 			diveSite.water = 'wet';
-			validateDiveSite('any.allowOnly');
+			validateDiveSite('any.only');
 		});
 
 		it('Accessibility must be a string', () => {
 			diveSite.accessibility = true;
-			validateDiveSite('string.base');
+			validateDiveSite('any.only');
 		});
 
 		[ 'shore', 'boat', null ].forEach(value => {
@@ -141,7 +140,7 @@ describe('Dive Site Validation', () => {
 
 		it('Accessibility cannot be invalid', () => {
 			diveSite.accessibility = 'long drive';
-			validateDiveSite('any.allowOnly');
+			validateDiveSite('any.only');
 		});
 
 		it('Entry fee is optional', () => {
@@ -186,7 +185,7 @@ describe('Dive Site Validation', () => {
 
 		it('Description cannot be empty', () => {
 			diveSite.description = '';
-			validateDiveSite('any.empty');
+			validateDiveSite('string.empty');
 		});
 
 		it('Description can be null', () => {
@@ -238,7 +237,7 @@ describe('Dive Site Validation', () => {
 				'livingTheDream'
 			];
 
-			validateDiveSite('any.empty');
+			validateDiveSite('string.empty');
 		});
 
 		it('Tags must be strings', () => {
@@ -253,7 +252,7 @@ describe('Dive Site Validation', () => {
 
 		it('Tags must be alphanumeric with spaces allowed', () => {
 			diveSite.tags = [ 'ok', 'also ok', 'not_ok!!' ];
-			validateDiveSite('string.regex.base');
+			validateDiveSite('string.pattern.base');
 		});
 
 		it('Tags collection cannot have more than 50 tags', () => {
@@ -311,7 +310,7 @@ describe('Dive Site Validation', () => {
 		let siteSearch = null;
 
 		function validateSiteSearch(expectedError) {
-			const isValid = Joi.validate(siteSearch, DiveSiteSearchSchema);
+			const isValid = DiveSiteSearchSchema.validate(siteSearch);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -362,7 +361,7 @@ describe('Dive Site Validation', () => {
 
 		it('Water type cannot be invalid', () => {
 			siteSearch.water = 'muddy';
-			validateSiteSearch('any.allowOnly');
+			validateSiteSearch('any.only');
 		});
 
 		it('Accessibility is optional', () => {
@@ -379,7 +378,7 @@ describe('Dive Site Validation', () => {
 
 		it('Accessibility cannot be invalid', () => {
 			siteSearch.water = 'long hike';
-			validateSiteSearch('any.allowOnly');
+			validateSiteSearch('any.only');
 		});
 
 		it('Avoid entry fee is optional', () => {
@@ -566,7 +565,7 @@ describe('Dive Site Validation', () => {
 
 		it('Sort by cannot be any other value', () => {
 			siteSearch.sortBy = 'not_allowed';
-			validateSiteSearch('any.allowOnly');
+			validateSiteSearch('any.only');
 		});
 
 		it('Sort order is not required', () => {
@@ -583,7 +582,7 @@ describe('Dive Site Validation', () => {
 
 		it('Sort order cannot be any other value', () => {
 			siteSearch.sortOrder = 'not_allowed';
-			validateSiteSearch('any.allowOnly');
+			validateSiteSearch('any.only');
 		});
 	});
 });
@@ -593,7 +592,7 @@ describe('Dive Site Rating Validation', () => {
 		let rating = null;
 
 		function validateRating(expectedError) {
-			const isValid = Joi.validate(rating, DiveSiteRatingSchema);
+			const isValid = DiveSiteRatingSchema.validate(rating);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -641,7 +640,7 @@ describe('Dive Site Rating Validation', () => {
 		let listRatings = null;
 
 		function validateListRatings(expectedError) {
-			const isValid = Joi.validate(listRatings, ListDiveSiteRatingsSchema);
+			const isValid = ListDiveSiteRatingsSchema.validate(listRatings);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -706,7 +705,7 @@ describe('Dive Site Rating Validation', () => {
 
 		it('Sort by must be a string', () => {
 			listRatings.sortBy = 7;
-			validateListRatings('string.base');
+			validateListRatings('any.only');
 		});
 
 		[ 'date', 'rating' ].forEach(value => {
@@ -718,7 +717,7 @@ describe('Dive Site Rating Validation', () => {
 
 		it('Sort by cannot be invalid', () => {
 			listRatings.sortBy = 'user';
-			validateListRatings('any.allowOnly');
+			validateListRatings('any.only');
 		});
 
 		it('Sort order is optional', () => {
@@ -728,7 +727,7 @@ describe('Dive Site Rating Validation', () => {
 
 		it('Sort order must be a string', () => {
 			listRatings.sortOrder = 23;
-			validateListRatings('string.base');
+			validateListRatings('any.only');
 		});
 
 		[ 'asc', 'desc' ].forEach(value => {
@@ -740,7 +739,7 @@ describe('Dive Site Rating Validation', () => {
 
 		it('Sort order cannot be invalid', () => {
 			listRatings.sortOrder = 'up';
-			validateListRatings('any.allowOnly');
+			validateListRatings('any.only');
 		});
 	});
 });

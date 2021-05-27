@@ -23,7 +23,7 @@ const specialties = [
 ];
 
 function fakeSpecialties() {
-	const count = faker.random.number({ min: 0, max: 4 });
+	const count = faker.datatype.number({ min: 0, max: 4 });
 	if (count === 0) {
 		return null;
 	}
@@ -59,7 +59,7 @@ export default (logsVisibility, firstName, lastName) => {
 			'Instructor',
 			'Professional diver'
 		]),
-		startedDiving: faker.random.number({ min: year - 55, max: year }),
+		startedDiving: faker.datatype.number({ min: year - 55, max: year }),
 		certificationLevel: faker.random.arrayElement([
 			'Open Water',
 			'Advanced Open Water',

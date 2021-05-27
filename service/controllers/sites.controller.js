@@ -10,7 +10,6 @@ import {
 	DiveSiteSearchSchema,
 	ListDiveSiteRatingsSchema
 } from '../validation/site';
-import Joi from 'joi';
 import moment from 'moment';
 import searchUtils from '../utils/search-utils';
 
@@ -38,7 +37,7 @@ async function getAverageRating(diveSiteId) {
 
 /* eslint-disable complexity */
 export async function searchSites(req, res) {
-	const { error } = Joi.validate(req.query, DiveSiteSearchSchema);
+	const { error } = DiveSiteSearchSchema.validate(req.query);
 	if (error) {
 		return badRequest(
 			'Unable to complete search because there was a problem with the query string.',
@@ -154,7 +153,7 @@ export function getSite(req, res) {
 }
 
 export async function createSites(req, res) {
-	const { error } = Joi.validate(req.body, DiveSiteCollectionSchema);
+	const { error } = DiveSiteCollectionSchema.validate(req.body);
 	if (error) {
 		return badRequest(
 			'Unable to create dive sites. There was a problem validating the request body. See details.',
@@ -181,7 +180,7 @@ export async function createSites(req, res) {
 }
 
 export async function updateSite(req, res) {
-	const { error } = Joi.validate(req.body, DiveSiteSchema);
+	const { error } = DiveSiteSchema.validate(req.body);
 	if (error) {
 		return badRequest(
 			'Could not update site. There was a problem with the data submitted.',
@@ -212,7 +211,7 @@ export async function deleteSite(req, res) {
 }
 
 export async function listSiteRatings(req, res) {
-	const { error } = Joi.validate(req.query, ListDiveSiteRatingsSchema);
+	const { error } = ListDiveSiteRatingsSchema.validate(req.query);
 	if (error) {
 		return badRequest(
 			'Could not complete request. There was a problem with the query string.',
@@ -241,7 +240,7 @@ export function getSiteRating(req, res) {
 }
 
 export async function addSiteRating(req, res) {
-	const { error } = Joi.validate(req.body, DiveSiteRatingSchema);
+	const { error } = DiveSiteRatingSchema.validate(req.body);
 	if (error) {
 		return badRequest(
 			'Unable to post the site rating because the request body was invalid.',
@@ -270,7 +269,7 @@ export async function addSiteRating(req, res) {
 }
 
 export async function updateSiteRating(req, res) {
-	const { error } = Joi.validate(req.body, DiveSiteRatingSchema);
+	const { error } = DiveSiteRatingSchema.validate(req.body);
 	if (error) {
 		return badRequest(
 			'Unable to update dive site rating. There was a problem in the request body.',

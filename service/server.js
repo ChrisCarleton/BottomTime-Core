@@ -6,12 +6,12 @@ import compression from 'compression';
 import containerMetadata from './utils/container-metadata';
 import config from './config';
 import cookieParser from 'cookie-parser';
-import database from './data/database';
 import express from 'express';
 import glob from 'glob';
 import http from 'http';
 import log, { requestLogger } from './logger';
 import modRewrite from 'connect-modrewrite';
+import MongoStore from 'connect-mongo';
 import { handleServerError, notFound, serverErrorMiddleware } from './utils/error-response';
 import path from 'path';
 import session from 'express-session';
@@ -41,7 +41,11 @@ process.on('uncaughtException', err => {
 	process.exit(187);
 });
 
-const MongoStore = require('connect-mongo')(session);
+const mongoStore = MongoStore.create({
+	mongoUrl: config.mongoEndpoint,
+	autoRemove: 'interval',
+	autoRemoveInterval: 30
+});
 
 // Express middleware
 const app = express();
@@ -54,9 +58,7 @@ app.use(session({
 	secret: config.sessionSecret,
 	resave: true,
 	saveUninitialized: true,
-	store: new MongoStore({
-		mongooseConnection: database.connection
-	})
+	store: mongoStore
 }));
 app.use(requestLogger);
 app.use(serverErrorMiddleware);
@@ -83,3 +85,4 @@ log.info(`Service is now listening on port ${ config.port }.`);
 
 export const App = app;
 export const Server = server;
+export const SessionStore = mongoStore;

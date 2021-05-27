@@ -9,8 +9,8 @@ Component | Status
 Dev Build | [![CircleCI](https://circleci.com/gh/ChrisCarleton/BottomTime-Core/tree/master.svg?style=svg&circle-token=b4c86baca538392eeb5676fd14ef920f2cc44857)](https://circleci.com/gh/ChrisCarleton/BottomTime-Core/tree/master)
 Production Build | [![CircleCI](https://circleci.com/gh/ChrisCarleton/BottomTime-Core/tree/prod.svg?style=svg&circle-token=b4c86baca538392eeb5676fd14ef920f2cc44857)](https://circleci.com/gh/ChrisCarleton/BottomTime-Core/tree/prod)
 Test Coverage | [![Coverage Status](https://coveralls.io/repos/github/ChrisCarleton/BottomTime-Core/badge.svg?branch=master)](https://coveralls.io/github/ChrisCarleton/BottomTime-Core?branch=master)
-Dependencies | [![Dependencies](https://david-dm.org/ChrisCarleton/BottomTime-Core.svg)](https://david-dm.org/ChrisCarleton/BottomTime-Core)
-Dev Dependencies | [![devDependencies Status](https://david-dm.org/ChrisCarleton/BottomTime-Core/dev-status.svg)](https://david-dm.org/ChrisCarleton/BottomTime-Core?type=dev)
+Dependencies | [![Dependencies](https://status.david-dm.org/gh/ChrisCarleton/BottomTime-Core.svg)](https://david-dm.org/ChrisCarleton/BottomTime-Core)
+Dev Dependencies | [![devDependencies Status](https://status.david-dm.org/gh/ChrisCarleton/BottomTime-Core.svg?type=dev)](https://david-dm.org/ChrisCarleton/BottomTime-Core?type=dev)
 Security Vulnerabilities | [![Known Vulnerabilities](https://snyk.io/test/github/ChrisCarleton/BottomTime-Core/badge.svg?targetFile=package.json)](https://snyk.io/test/github/ChrisCarleton/BottomTime-Core?targetFile=package.json)
 
 ## Environment Variables

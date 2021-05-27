@@ -5,8 +5,8 @@ export const DiveSiteSchema = Joi.object().keys({
 	name: Joi.string().required().max(200),
 	location: Joi.string().max(100).allow(null),
 	country: Joi.string().max(100).allow(null),
-	water: Joi.string().only([ 'salt', 'fresh', null ]),
-	accessibility: Joi.string().only([ 'shore', 'boat', null ]),
+	water: Joi.string().valid('salt', 'fresh', null),
+	accessibility: Joi.string().valid('shore', 'boat', null),
 	entryFee: Joi.boolean().allow(null),
 	difficulty: Joi.number().min(1.0).max(5.0).allow(null),
 	description: Joi.string().max(1000).allow(null),
@@ -25,8 +25,8 @@ export const DiveSiteCollectionSchema = Joi
 
 export const DiveSiteSearchSchema = Joi.object().keys({
 	query: Joi.string().allow(''),
-	water: Joi.string().only([ 'salt', 'fresh' ]),
-	accessibility: Joi.string().only([ 'shore', 'boat' ]),
+	water: Joi.string().valid('salt', 'fresh'),
+	accessibility: Joi.string().valid('shore', 'boat'),
 	avoidEntryFee: Joi.boolean(),
 	maxDifficulty: Joi.number().min(1.0).max(5.0),
 	minRating: Joi.number().min(1.0).max(5.0),
@@ -38,8 +38,8 @@ export const DiveSiteSearchSchema = Joi.object().keys({
 	distance: Joi.number().positive().max(1000),
 	count: Joi.number().integer().positive().max(1000),
 	skip: Joi.number().integer().min(0),
-	sortBy: Joi.string().only([ 'relevance', 'difficulty', 'rating' ]),
-	sortOrder: Joi.string().only([ 'asc', 'desc' ])
+	sortBy: Joi.string().valid('relevance', 'difficulty', 'rating'),
+	sortOrder: Joi.string().valid('asc', 'desc')
 }).with('distance', 'closeTo');
 
 export const DiveSiteRatingSchema = Joi.object().keys({
@@ -50,6 +50,6 @@ export const DiveSiteRatingSchema = Joi.object().keys({
 export const ListDiveSiteRatingsSchema = Joi.object().keys({
 	count: Joi.number().integer().positive().max(1000),
 	skip: Joi.number().integer().min(0),
-	sortBy: Joi.string().only([ 'rating', 'date' ]),
-	sortOrder: Joi.string().only([ 'asc', 'desc' ])
+	sortBy: Joi.string().valid('rating', 'date'),
+	sortOrder: Joi.string().valid('asc', 'desc')
 });

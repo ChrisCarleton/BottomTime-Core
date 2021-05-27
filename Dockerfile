@@ -1,13 +1,15 @@
-FROM	node:10.15.3
+FROM	node:15.6.0
 
 ENV		NODE_ENV production
 
 RUN		mkdir -p /usr/share/bottomtime/temp/media/images
 WORKDIR	/usr/share/bottomtime
-ADD		. .
+ADD     package.json .
+ADD     yarn.lock .
+ADD     .babelrc .
+ADD     service/ .
 
-RUN		npm install -g gulp-cli --loglevel=error
-RUN		npm install --loglevel=error
+RUN		yarn install --production
 
-CMD		[ "npm", "start" ]
+CMD		[ "yarn", "serve" ]
 EXPOSE	29201

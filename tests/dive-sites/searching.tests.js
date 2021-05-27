@@ -4,7 +4,7 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import fakeDiveSite, { toDiveSite } from '../util/fake-dive-site';
 import faker from 'faker';
-import { getDistance } from 'geolib';
+import getDistance from 'geolib/es/getDistance';
 import request from 'supertest';
 import sinon from 'sinon';
 
@@ -56,7 +56,7 @@ describe('Searching Dive Sites', () => {
 				faker.random.arrayElement(RoatanDiveSites)
 			]));
 			diveSites[i] = toDiveSite(fakes[i]);
-			diveSites[i].avgRating = faker.random.number({ min: 10, max: 50 }) / 10;
+			diveSites[i].avgRating = faker.datatype.number({ min: 10, max: 50 }) / 10;
 		}
 
 		await DiveSite.deleteMany({});

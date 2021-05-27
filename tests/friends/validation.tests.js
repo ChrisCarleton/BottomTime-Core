@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import faker from 'faker';
-import Joi from 'joi';
 import {
 	BulkDeleteSchema,
 	HandleFriendRequestSchema,
@@ -29,7 +28,7 @@ describe('Friends Validation Tests', () => {
 		});
 
 		function validateListFriendsQuery(expectedError) {
-			const isValid = Joi.validate(query, ListFriendsSchema);
+			const isValid = ListFriendsSchema.validate(query);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -51,7 +50,7 @@ describe('Friends Validation Tests', () => {
 
 		it('Fails if type parameter is not a recognised value.', () => {
 			query.type = 'not-valid';
-			validateListFriendsQuery('any.allowOnly');
+			validateListFriendsQuery('any.only');
 		});
 	});
 
@@ -66,7 +65,7 @@ describe('Friends Validation Tests', () => {
 		});
 
 		function validateHandleFriendRequest(expectedError) {
-			const isValid = Joi.validate(body, HandleFriendRequestSchema);
+			const isValid = HandleFriendRequestSchema.validate(body);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -105,7 +104,7 @@ describe('Friends Validation Tests', () => {
 		});
 
 		function validateBulkDelete(expectedError) {
-			const isValid = Joi.validate(body, BulkDeleteSchema);
+			const isValid = BulkDeleteSchema.validate(body);
 			ensureValid(isValid, expectedError);
 		}
 
@@ -115,7 +114,7 @@ describe('Friends Validation Tests', () => {
 
 		it('Fails if array element is not a user name', () => {
 			body[1] = '## Totally INval!d';
-			validateBulkDelete('string.regex.base');
+			validateBulkDelete('string.pattern.base');
 		});
 
 		it('Fails if array is emtpy', () => {

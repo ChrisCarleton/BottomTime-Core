@@ -1,5 +1,4 @@
 import { badRequest, conflict, forbidden, notFound, serverError } from '../utils/error-response';
-import Joi from 'joi';
 import Tank from '../data/tanks';
 import { TankProfileSchema } from '../validation/tank';
 import tankProperties from '../utils/tank-properties';
@@ -37,7 +36,7 @@ export async function GetTanks(req, res) {
 }
 
 export async function CreateTank(req, res) {
-	const { error } = Joi.validate(req.body, TankProfileSchema);
+	const { error } = TankProfileSchema.validate(req.body);
 	if (error) {
 		return badRequest(
 			'Tank profile information was invalid',
@@ -74,7 +73,7 @@ export async function CreateTank(req, res) {
 }
 
 export async function UpdateTank(req, res) {
-	const { error } = Joi.validate(req.body, TankProfileSchema);
+	const { error } = TankProfileSchema.validate(req.body);
 	if (error) {
 		return badRequest(
 			'Tank profile information was invalid',

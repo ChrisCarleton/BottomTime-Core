@@ -21,7 +21,7 @@ const KnownTags = [
 ];
 
 function generateTags() {
-	const tagsCount = faker.random.number({ min: 1, max: 6 });
+	const tagsCount = faker.datatype.number({ min: 1, max: 6 });
 	const tags = new Array(tagsCount);
 	for (let i = 0; i < tags.length; i++) {
 		tags[i] = faker.random.arrayElement(KnownTags);
@@ -31,11 +31,11 @@ function generateTags() {
 }
 
 export default userId => {
-	const bottomTime = faker.random.number({ min: 10, max: 70 });
-	const totalTime = faker.random.number({ min: bottomTime, max: bottomTime + 8 });
+	const bottomTime = faker.datatype.number({ min: 10, max: 70 });
+	const totalTime = faker.datatype.number({ min: bottomTime, max: bottomTime + 8 });
 
-	const averageDepth = faker.random.number({ min: 5, max: 36 });
-	const maxDepth = faker.random.number({ min: averageDepth, max: averageDepth + 5 });
+	const averageDepth = faker.datatype.number({ min: 5, max: 36 });
+	const maxDepth = faker.datatype.number({ min: averageDepth, max: averageDepth + 5 });
 
 	return {
 		userId,
@@ -43,7 +43,7 @@ export default userId => {
 		diveNumber: diveNumber++,
 		bottomTime,
 		totalTime,
-		surfaceInterval: faker.random.number({ min: 7, max: 120 }),
+		surfaceInterval: faker.datatype.number({ min: 7, max: 120 }),
 		location: faker.fake('{{address.city}}{{address.citySuffix}}, {{address.stateAbbr}}'),
 		site: faker.fake('{{address.cityPrefix}} {{name.lastName}}'),
 		averageDepth,
@@ -52,36 +52,36 @@ export default userId => {
 		decoStops: [
 			{
 				depth: 3,
-				duration: faker.random.number({ min: 3, max: 15 })
+				duration: faker.datatype.number({ min: 3, max: 15 })
 			}
 		],
 		gps: {
-			latitude: faker.random.number({ min: -90.0, max: 90.0 }),
-			longitude: faker.random.number({ min: -180.0, max: 180.0 })
+			latitude: faker.datatype.number({ min: -90.0, max: 90.0 }),
+			longitude: faker.datatype.number({ min: -180.0, max: 180.0 })
 		},
 		weight: {
-			belt: faker.random.number({ min: 0, max: 27 }) / 10,
-			integrated: faker.random.number({ min: 0, max: 27 }) / 10,
-			backplate: faker.random.number({ min: 0, max: 45 }) / 10,
-			ankles: faker.random.number({ min: 0, max: 90 }) / 100,
+			belt: faker.datatype.number({ min: 0, max: 27 }) / 10,
+			integrated: faker.datatype.number({ min: 0, max: 27 }) / 10,
+			backplate: faker.datatype.number({ min: 0, max: 45 }) / 10,
+			ankles: faker.datatype.number({ min: 0, max: 90 }) / 100,
 			correctness: faker.random.arrayElement([ 'good', 'too little', 'too much' ]),
 			trim: faker.random.arrayElement([ 'good', 'feet down', 'feet up' ])
 		},
 		temperature: {
-			surface: faker.random.number({ min: 20, max: 35 }),
-			water: faker.random.number({ min: 3, max: 18 }),
+			surface: faker.datatype.number({ min: 20, max: 35 }),
+			water: faker.datatype.number({ min: 3, max: 18 }),
 			thermoclines: [
 				{
-					depth: faker.random.number({ min: 15, max: 25 }),
-					temperature: faker.random.number({ min: -2, max: 3 })
+					depth: faker.datatype.number({ min: 15, max: 25 }),
+					temperature: faker.datatype.number({ min: -2, max: 3 })
 				}
 			]
 		},
-		rating: faker.random.number({ min: 1, max: 5 }),
-		visibility: faker.random.number({ min: 1, max: 5 }),
-		wind: faker.random.number({ min: 1, max: 5 }),
-		current: faker.random.number({ min: 1, max: 5 }),
-		waterChoppiness: faker.random.number({ min: 1, max: 5 }),
+		rating: faker.datatype.number({ min: 1, max: 5 }),
+		visibility: faker.datatype.number({ min: 1, max: 5 }),
+		wind: faker.datatype.number({ min: 1, max: 5 }),
+		current: faker.datatype.number({ min: 1, max: 5 }),
+		waterChoppiness: faker.datatype.number({ min: 1, max: 5 }),
 		weather: faker.random.arrayElement([
 			'Sunny',
 			'Cloudy',

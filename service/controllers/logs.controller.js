@@ -43,7 +43,7 @@ function getWhereClauseForSearch(query) {
 
 export async function ListLogs(req, res) {
 	try {
-		const isValid = Joi.validate(req.query, EntryQueryParamsSchema);
+		const isValid = EntryQueryParamsSchema.validate(req.query);
 		if (isValid.error) {
 			return badRequest(
 				'Could not complete the request. Check the query string parameters and try again.',
@@ -85,7 +85,7 @@ export function GetLog(req, res) {
 
 export async function CreateLogs(req, res) {
 	try {
-		const isValid = Joi.validate(req.body, Joi.array().min(1).items(NewEntrySchema));
+		const isValid = Joi.array().min(1).items(NewEntrySchema).validate(req.body);
 		if (isValid.error) {
 			return badRequest(
 				'Could not create log entries. Validation failed.',
@@ -116,7 +116,7 @@ export async function CreateLogs(req, res) {
 
 export async function UpdateLogs(req, res) {
 	try {
-		const isValid = Joi.validate(req.body, Joi.array().min(1).max(100).items(UpdateEntrySchema));
+		const isValid = Joi.array().min(1).max(100).items(UpdateEntrySchema).validate(req.body);
 		if (isValid.error) {
 			return badRequest(
 				'Could not update log entries. Validation failed.',
@@ -150,7 +150,7 @@ export async function UpdateLogs(req, res) {
 
 export async function UpdateLog(req, res) {
 	try {
-		const isValid = Joi.validate(req.body, NewEntrySchema);
+		const isValid = NewEntrySchema.validate(req.body);
 		if (isValid.error) {
 			return badRequest(
 				'Could not update log entry. Validation failed.',
@@ -171,7 +171,7 @@ export async function UpdateLog(req, res) {
 
 export async function DeleteLogs(req, res) {
 	try {
-		const isValid = Joi.validate(req.body, Joi.array().items(EntryId));
+		const isValid = Joi.array().items(EntryId).validate(req.body);
 		if (isValid.error) {
 			return badRequest(
 				'Could not delete log entries. Validation failed.',

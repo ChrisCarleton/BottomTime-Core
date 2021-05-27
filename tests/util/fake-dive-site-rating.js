@@ -4,7 +4,7 @@ import moment from 'moment';
 
 export default () => {
 	const fake = {
-		rating: faker.random.number({ min: 10, max: 50 }) / 10,
+		rating: faker.datatype.number({ min: 10, max: 50 }) / 10,
 		comments: faker.lorem.sentences(3)
 	};
 
@@ -18,4 +18,3 @@ export function toDiveSiteRating(fake, diveSiteId, user) {
 	rating.diveSite = diveSiteId;
 	return rating;
 }
-

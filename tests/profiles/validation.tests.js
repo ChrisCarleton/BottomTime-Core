@@ -3,7 +3,6 @@
 import { expect } from 'chai';
 import fakeProfile from '../util/fake-profile';
 import faker from 'faker';
-import Joi from 'joi';
 import moment from 'moment';
 import { UpdateProfileSchema } from '../../service/validation/profile';
 
@@ -20,7 +19,7 @@ function ensureValid(isValid, expectedError) {
 }
 
 function validateProfile(expectedError) {
-	const isValid = Joi.validate(profile, UpdateProfileSchema);
+	const isValid = UpdateProfileSchema.validate(profile);
 	ensureValid(isValid, expectedError);
 }
 
@@ -39,17 +38,17 @@ describe('Update profile validation', () => {
 
 	it('logsVisibility cannot be an unapproved value', () => {
 		profile.logsVisibility = 'private-ish';
-		validateProfile('any.allowOnly');
+		validateProfile('any.only');
 	});
 
 	it('logsVisibility must be a string', () => {
 		profile.logsVisibility = 33;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('logsVisibility cannot be null', () => {
 		profile.logsVisibility = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('logsVisibility is optional', () => {
@@ -139,7 +138,7 @@ describe('Update profile validation', () => {
 
 	it('birthdate must follow the "yyyy-mm-dd" format', () => {
 		profile.birthdate = 'Dec-26-1983';
-		validateProfile('string.regex.base');
+		validateProfile('string.pattern.base');
 	});
 
 	it('birthdate can be null', () => {
@@ -276,12 +275,12 @@ describe('Update profile validation', () => {
 
 	it('Distance unit cannot be set to an invalid value', () => {
 		profile.distanceUnit = 'y';
-		validateProfile('any.allowOnly');
+		validateProfile('any.only');
 	});
 
 	it('Distance unit cannot be null', () => {
 		profile.distanceUnit = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('Distance unit can be omitted', () => {
@@ -298,12 +297,12 @@ describe('Update profile validation', () => {
 
 	it('Temperature unit cannot be set to an invalid value', () => {
 		profile.temperatureUnit = 'K';
-		validateProfile('any.allowOnly');
+		validateProfile('any.only');
 	});
 
 	it('Temperature unit cannot be null', () => {
 		profile.temperatureUnit = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('Temperature unit can be omitted', () => {
@@ -320,12 +319,12 @@ describe('Update profile validation', () => {
 
 	it('Weight unit cannot be set to an invalid value', () => {
 		profile.weightUnit = 'st';
-		validateProfile('any.allowOnly');
+		validateProfile('any.only');
 	});
 
 	it('Weight unit cannot be null', () => {
 		profile.weightUnit = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('Weight unit can be omitted', () => {
@@ -342,12 +341,12 @@ describe('Update profile validation', () => {
 
 	it('Pressure unit cannot be set to an invalid value', () => {
 		profile.pressureUnit = 'kPa';
-		validateProfile('any.allowOnly');
+		validateProfile('any.only');
 	});
 
 	it('Pressure unit cannot be null', () => {
 		profile.pressureUnit = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('Pressure unit can be omitted', () => {
@@ -364,12 +363,12 @@ describe('Update profile validation', () => {
 
 	it('UI complexity cannot be set to an invalid value', () => {
 		profile.uiComplexity = 'simple';
-		validateProfile('any.allowOnly');
+		validateProfile('any.only');
 	});
 
 	it('UI complexity cannot be null', () => {
 		profile.uiComplexity = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('UI complexity can be omitted', () => {

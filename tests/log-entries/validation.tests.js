@@ -3,7 +3,6 @@ import fakeLogEntry from '../util/fake-log-entry';
 import fakeLogEntryAir from '../util/fake-log-entry-air';
 import fakeMongoId from '../util/fake-mongo-id';
 import faker from 'faker';
-import Joi from 'joi';
 import {
 	EntryQueryParamsSchema,
 	NewEntrySchema,
@@ -25,17 +24,17 @@ function ensureValid(isValid, expectedError) {
 }
 
 function validateUpdate(expectedError) {
-	const isValid = Joi.validate(logEntry, UpdateEntrySchema);
+	const isValid = UpdateEntrySchema.validate(logEntry);
 	ensureValid(isValid, expectedError);
 }
 
 function validateCreate(expectedError) {
-	const isValid = Joi.validate(logEntry, NewEntrySchema);
+	const isValid = NewEntrySchema.validate(logEntry);
 	ensureValid(isValid, expectedError);
 }
 
 function validateQueryParams(expectedError) {
-	const isValid = Joi.validate(queryString, EntryQueryParamsSchema);
+	const isValid = EntryQueryParamsSchema.validate(queryString);
 	ensureValid(isValid, expectedError);
 }
 
@@ -54,7 +53,7 @@ describe('Log entry validation', () => {
 
 		it('Create does not allow an entry Id', () => {
 			logEntry.entryId = fakeMongoId();
-			validateCreate('object.allowUnknown');
+			validateCreate('object.unknown');
 		});
 
 		it('Entry time is a valid ISO date', () => {
@@ -153,7 +152,7 @@ describe('Log entry validation', () => {
 
 		it('Location is required', () => {
 			logEntry.location = '';
-			validateCreate('any.empty');
+			validateCreate('string.empty');
 		});
 
 		it('Location must be a string', () => {
@@ -168,7 +167,7 @@ describe('Log entry validation', () => {
 
 		it('Site is required', () => {
 			logEntry.site = '';
-			validateCreate('any.empty');
+			validateCreate('string.empty');
 		});
 
 		it('Site cannot exceed 200 characters', () => {
@@ -242,7 +241,7 @@ describe('Log entry validation', () => {
 				'livingTheDream'
 			];
 
-			validateCreate('any.empty');
+			validateCreate('string.empty');
 		});
 
 		it('Tags must be strings', () => {
@@ -257,7 +256,7 @@ describe('Log entry validation', () => {
 
 		it('Tags must be alphanumeric', () => {
 			logEntry.tags = [ 'ok', 'not_ok' ];
-			validateCreate('string.regex.base');
+			validateCreate('string.pattern.base');
 		});
 
 		it('Tags collection cannot have more than 50 tags', () => {
@@ -425,7 +424,7 @@ describe('Log entry validation', () => {
 
 		it('Air name cannot be empty', () => {
 			logEntry.air[0].name = '';
-			validateCreate('any.empty');
+			validateCreate('string.empty');
 		});
 
 		it('Air name can be null', () => {
@@ -492,7 +491,7 @@ describe('Log entry validation', () => {
 
 		it('Air tank material cannot be set to an invalid value', () => {
 			logEntry.air[0].material = 'adamantium';
-			validateCreate('any.allowOnly');
+			validateCreate('any.only');
 		});
 
 		it('Oxygen content is optional', () => {
@@ -583,7 +582,7 @@ describe('Log entry validation', () => {
 
 		it('Correctness cannot be an invalid value', () => {
 			logEntry.weight.correctness = 'not bad';
-			validateCreate('any.allowOnly');
+			validateCreate('any.only');
 		});
 
 		it('Trim is optional', () => {
@@ -600,7 +599,7 @@ describe('Log entry validation', () => {
 
 		it('Trim cannot be an invalid value', () => {
 			logEntry.weight.trim = 'nailed it!';
-			validateCreate('any.allowOnly');
+			validateCreate('any.only');
 		});
 	});
 
@@ -749,7 +748,7 @@ describe('Log entry validation', () => {
 
 			it(`${ field } cannot be empty`, () => {
 				logEntry[field] = '';
-				validateCreate('any.empty');
+				validateCreate('string.empty');
 			});
 
 			it(`${ field } cannot be more than 100 characters`, () => {
@@ -854,7 +853,7 @@ describe('Entry query params validation', () => {
 
 	it('sortBy cannot be an invalid value', () => {
 		queryString.sortBy = 'somethingElse';
-		validateQueryParams('any.allowOnly');
+		validateQueryParams('any.only');
 	});
 
 	[ 'asc', 'desc' ].forEach(order => {
@@ -866,7 +865,7 @@ describe('Entry query params validation', () => {
 
 	it('sortOrder cannot be an invalid value', () => {
 		queryString.sortOrder = 'up';
-		validateQueryParams('any.allowOnly');
+		validateQueryParams('any.only');
 	});
 
 	it('If sortBy is included sortOrder is required', () => {
@@ -923,7 +922,7 @@ describe('Entry query params validation', () => {
 	it('seenIds must contain valid Ids', () => {
 		queryString.lastSeen = '48';
 		queryString.seenIds = [ 'a298a3b95f96bfie9e177978' ];
-		validateQueryParams('string.base');
+		validateQueryParams('string.hex');
 
 		queryString.seenIds = 'a298a3b95f96bfe9e177978';
 		validateQueryParams('string.length');

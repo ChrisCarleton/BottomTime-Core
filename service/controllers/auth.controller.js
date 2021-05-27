@@ -1,11 +1,10 @@
 import { badRequest, serverError, unauthorized } from '../utils/error-response';
-import Joi from 'joi';
 import { LoginSchema } from '../validation/user';
 import passport from 'passport';
 import User from '../data/user';
 
 export function AuthenticateUser(req, res, next) {
-	const { error } = Joi.validate(req.body, LoginSchema);
+	const { error } = LoginSchema.validate(req.body);
 	if (error) {
 		return badRequest(
 			'Could not authenticate user: request was invalid.',

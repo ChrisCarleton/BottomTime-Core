@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import faker from 'faker';
-import Joi from 'joi';
 import { TankProfileSchema } from '../../service/validation/tank';
 
 let tankProfile = null;
@@ -10,12 +9,12 @@ function testExpectedError(err, expectedError) {
 		expect(err.error).to.exist;
 		expect(err.error.details[0].type).to.equal(expectedError);
 	} else {
-		expect(err.error).to.be.null;
+		expect(err.error).to.be.undefined;
 	}
 }
 
 function validateTankProfile(expectedError) {
-	const err = Joi.validate(tankProfile, TankProfileSchema);
+	const err = TankProfileSchema.validate(tankProfile);
 	testExpectedError(err, expectedError);
 }
 
@@ -45,7 +44,7 @@ describe('Tank Profile Validation', () => {
 
 	it('Name cannot be empty', () => {
 		tankProfile.name = '';
-		validateTankProfile('any.empty');
+		validateTankProfile('string.empty');
 	});
 
 	it('Name cannot be longer than 200 characters', () => {
@@ -107,12 +106,12 @@ describe('Tank Profile Validation', () => {
 
 	it('Tank material canot be an invalid value', () => {
 		tankProfile.material = 'ti';
-		validateTankProfile('any.allowOnly');
+		validateTankProfile('any.only');
 	});
 
 	it('Tank material must be a string', () => {
 		tankProfile.material = true;
-		validateTankProfile('string.base');
+		validateTankProfile('any.only');
 	});
 
 	it('isCustom can be included without breaking validation', () => {

@@ -9,7 +9,7 @@ export const LoginSchema = Joi.object().keys({
 export const UserAccountSchema = Joi.object().keys({
 	email: Joi.string().email().required(),
 	password: PasswordValidation,
-	role: Joi.string().valid([ 'user', 'admin' ]).required()
+	role: Joi.string().valid('user', 'admin').required()
 }).required();
 
 export const CompleteRegistrationSchema = Joi.object().keys({
@@ -17,12 +17,12 @@ export const CompleteRegistrationSchema = Joi.object().keys({
 	email: Joi.string().email().required(),
 	firstName: Joi.string().max(50),
 	lastName: Joi.string().max(50),
-	logsVisibility: Joi.string().only([ 'private', 'public', 'friends-only' ]),
-	weightUnit: Joi.string().only([ 'kg', 'lbs' ]),
-	temperatureUnit: Joi.string().only([ 'c', 'f' ]),
-	distanceUnit: Joi.string().only([ 'm', 'ft' ]),
-	pressureUnit: Joi.string().only([ 'bar', 'psi' ]),
-	uiComplexity: Joi.string().only([ 'basic', 'advanced', 'technical' ])
+	logsVisibility: Joi.string().valid('private', 'public', 'friends-only'),
+	weightUnit: Joi.string().valid('kg', 'lbs'),
+	temperatureUnit: Joi.string().valid('c', 'f'),
+	distanceUnit: Joi.string().valid('m', 'ft'),
+	pressureUnit: Joi.string().valid('bar', 'psi'),
+	uiComplexity: Joi.string().valid('basic', 'advanced', 'technical')
 });
 
 export const ChangePasswordSchema = Joi.object().keys({
@@ -35,18 +35,18 @@ export const ConfirmResetPasswordSchema = Joi.object().keys({
 	newPassword: PasswordValidation
 }).required();
 
-export const UserQuerySchema = Joi.alternatives().try([
+export const UserQuerySchema = Joi.alternatives().try(
 	UsernameSchema,
 	Joi.string().email()
-]).required();
+).required();
 
 export const AdminUserQuerySchema = Joi.object().keys({
 	query: Joi.string(),
 	count: Joi.number().integer().positive().max(1000),
 	skip: Joi.number().integer().min(0),
-	sortBy: Joi.string().only([ 'relevance', 'username', 'created' ]),
-	sortOrder: Joi.string().only([ 'asc', 'desc' ]),
+	sortBy: Joi.string().valid('relevance', 'username', 'created'),
+	sortOrder: Joi.string().valid('asc', 'desc'),
 	lockedOut: Joi.boolean(),
-	role: Joi.string().only([ 'user', 'admin' ]),
-	logsVisibility: Joi.string().only([ 'private', 'public', 'friends-only' ])
+	role: Joi.string().valid('user', 'admin'),
+	logsVisibility: Joi.string().valid('private', 'public', 'friends-only')
 });

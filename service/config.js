@@ -32,7 +32,7 @@ const config = {
 		}
 	},
 
-	s3Endpoint: process.env.BT_S3_ENDPOINT,
+	s3Endpoint: process.env.BT_S3_ENDPOINT || 'http://localhost:4569/',
 	mediaBucket: process.env.BT_MEDIA_BUCKET || 'BottomTime-Media',
 	tempDir: process.env.BT_TEMP_DIR || path.resolve(__dirname, '../temp/'),
 
