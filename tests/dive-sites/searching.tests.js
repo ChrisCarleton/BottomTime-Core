@@ -4,7 +4,7 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import fakeDiveSite, { toDiveSite } from '../util/fake-dive-site';
 import faker from 'faker';
-// import getDistance from 'geolib/es/getDistance';
+import getDistance from 'geolib/es/getDistance';
 import request from 'supertest';
 import sinon from 'sinon';
 
