@@ -4,9 +4,11 @@ ENV		NODE_ENV production
 
 RUN		mkdir -p /usr/share/bottomtime/temp/media/images
 WORKDIR	/usr/share/bottomtime
-ADD		. .
+ADD     package.json .
+ADD     yarn.lock .
+ADD     .babelrc .
+ADD     service/ .
 
-# RUN		npm install -g yarn --loglevel=error
 RUN		yarn install --production
 
 CMD		[ "yarn", "serve" ]
