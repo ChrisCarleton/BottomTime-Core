@@ -20,7 +20,7 @@ const KnownTags = [
 ];
 
 function generateTags() {
-	const tagsCount = faker.random.number({ min: 1, max: 6 });
+	const tagsCount = faker.datatype.number({ min: 1, max: 6 });
 	const tags = new Array(tagsCount);
 	for (let i = 0; i < tags.length; i++) {
 		tags[i] = faker.random.arrayElement(KnownTags);
@@ -44,13 +44,13 @@ export default userName => {
 		country: faker.address.country(),
 		water: faker.random.arrayElement([ 'salt', 'fresh' ]),
 		accessibility: faker.random.arrayElement([ 'shore', 'boat' ]),
-		entryFee: faker.random.boolean(),
-		difficulty: faker.random.number({ min: 10, max: 50 }) / 10,
+		entryFee: faker.datatype.boolean(),
+		difficulty: faker.datatype.number({ min: 10, max: 50 }) / 10,
 		description: faker.lorem.sentences(3),
 		tags: generateTags(),
 		gps: {
-			lon: faker.random.number({ min: -1800000, max: 1800000 }) / 10000,
-			lat: faker.random.number({ min: -900000, max: 900000 }) / 10000
+			lon: faker.datatype.number({ min: -1800000, max: 1800000 }) / 10000,
+			lat: faker.datatype.number({ min: -900000, max: 900000 }) / 10000
 		}
 	};
 
