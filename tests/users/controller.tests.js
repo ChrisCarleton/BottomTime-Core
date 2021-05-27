@@ -371,7 +371,7 @@ describe('Users Controller', () => {
 		});
 
 		it('Admins can complete registration on behalf of other users', async () => {
-			const { body } = await registrationAgent
+			const { body } = await request(App)
 				.post(`/users/${ tempUser.username }/completeRegistration`)
 				.set(...admin.authHeader)
 				.send(registration)
