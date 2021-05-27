@@ -41,6 +41,12 @@ process.on('uncaughtException', err => {
 	process.exit(187);
 });
 
+const mongoStore = MongoStore.create({
+	mongoUrl: config.mongoEndpoint,
+	autoRemove: 'interval',
+	autoRemoveInterval: 30
+});
+
 // Express middleware
 const app = express();
 app.use(compression());
@@ -52,11 +58,7 @@ app.use(session({
 	secret: config.sessionSecret,
 	resave: true,
 	saveUninitialized: true,
-	store: MongoStore.create({
-		mongoUrl: config.mongoEndpoint,
-		autoRemove: 'interval',
-		autoRemoveInterval: 30
-	})
+	store: mongoStore
 }));
 app.use(requestLogger);
 app.use(serverErrorMiddleware);
@@ -83,3 +85,4 @@ log.info(`Service is now listening on port ${ config.port }.`);
 
 export const App = app;
 export const Server = server;
+export const SessionStore = mongoStore;

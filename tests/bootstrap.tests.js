@@ -1,6 +1,6 @@
 import database from '../service/data/database';
 import search from '../service/search';
-import { Server } from '../service/server';
+import { Server, SessionStore } from '../service/server';
 
 before(done => {
 	// Make sure the MongoDB and ES connections are open before running any tests.
@@ -10,8 +10,13 @@ before(done => {
 	});
 });
 
-after(() => {
+after(async () => {
 	Server.close();
 	search.close();
-	database.connection.close();
+	// await Promise.all([
+	// 	database.connection.close,
+	// 	SessionStore.close
+	// ]);
+    await database.connection.close();
+    await SessionStore.close();
 });
