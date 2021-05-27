@@ -111,7 +111,7 @@ describe('Tank Profile Validation', () => {
 
 	it('Tank material must be a string', () => {
 		tankProfile.material = true;
-		validateTankProfile('string.base');
+		validateTankProfile('any.only');
 	});
 
 	it('isCustom can be included without breaking validation', () => {

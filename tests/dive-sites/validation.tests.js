@@ -111,7 +111,7 @@ describe('Dive Site Validation', () => {
 
 		it('Water must be a string', () => {
 			diveSite.water = 8;
-			validateDiveSite('string.base');
+			validateDiveSite('any.only');
 		});
 
 		[ 'salt', 'fresh', null ].forEach(value => {
@@ -128,7 +128,7 @@ describe('Dive Site Validation', () => {
 
 		it('Accessibility must be a string', () => {
 			diveSite.accessibility = true;
-			validateDiveSite('string.base');
+			validateDiveSite('any.only');
 		});
 
 		[ 'shore', 'boat', null ].forEach(value => {
@@ -705,7 +705,7 @@ describe('Dive Site Rating Validation', () => {
 
 		it('Sort by must be a string', () => {
 			listRatings.sortBy = 7;
-			validateListRatings('string.base');
+			validateListRatings('any.only');
 		});
 
 		[ 'date', 'rating' ].forEach(value => {
@@ -727,7 +727,7 @@ describe('Dive Site Rating Validation', () => {
 
 		it('Sort order must be a string', () => {
 			listRatings.sortOrder = 23;
-			validateListRatings('string.base');
+			validateListRatings('any.only');
 		});
 
 		[ 'asc', 'desc' ].forEach(value => {

@@ -43,12 +43,12 @@ describe('Update profile validation', () => {
 
 	it('logsVisibility must be a string', () => {
 		profile.logsVisibility = 33;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('logsVisibility cannot be null', () => {
 		profile.logsVisibility = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('logsVisibility is optional', () => {
@@ -280,7 +280,7 @@ describe('Update profile validation', () => {
 
 	it('Distance unit cannot be null', () => {
 		profile.distanceUnit = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('Distance unit can be omitted', () => {
@@ -302,7 +302,7 @@ describe('Update profile validation', () => {
 
 	it('Temperature unit cannot be null', () => {
 		profile.temperatureUnit = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('Temperature unit can be omitted', () => {
@@ -324,7 +324,7 @@ describe('Update profile validation', () => {
 
 	it('Weight unit cannot be null', () => {
 		profile.weightUnit = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('Weight unit can be omitted', () => {
@@ -346,7 +346,7 @@ describe('Update profile validation', () => {
 
 	it('Pressure unit cannot be null', () => {
 		profile.pressureUnit = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('Pressure unit can be omitted', () => {
@@ -368,7 +368,7 @@ describe('Update profile validation', () => {
 
 	it('UI complexity cannot be null', () => {
 		profile.uiComplexity = null;
-		validateProfile('string.base');
+		validateProfile('any.only');
 	});
 
 	it('UI complexity can be omitted', () => {

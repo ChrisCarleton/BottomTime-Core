@@ -432,12 +432,12 @@ describe('Search Users Validation', () => {
 
 	it('Will fail if query is missing', () => {
 		userQuery = null;
-		validateUserSearch('string.base');
+		validateUserSearch('alternatives.types');
 	});
 
 	it('Will fail if query is invalid', () => {
 		userQuery = 'Totally not valid!!';
-		validateUserSearch('string.pattern.base');
+		validateUserSearch('alternatives.match');
 	});
 });
 
@@ -517,7 +517,7 @@ describe('Admin user search query', () => {
 
 	it('Sort by must be a string', () => {
 		adminUserQuery.sortBy = 7;
-		validateAdminUserSearch('string.base');
+		validateAdminUserSearch('any.only');
 	});
 
 	[ 'relevance', 'username', 'created' ].forEach(f => {
@@ -534,7 +534,7 @@ describe('Admin user search query', () => {
 
 	it('Sort by must be a string', () => {
 		adminUserQuery.sortBy = 1;
-		validateAdminUserSearch('string.base');
+		validateAdminUserSearch('any.only');
 	});
 
 	it('Sort order is optional', () => {
@@ -544,7 +544,7 @@ describe('Admin user search query', () => {
 
 	it('Sort order must be a string', () => {
 		adminUserQuery.sortOrder = 13;
-		validateAdminUserSearch('string.base');
+		validateAdminUserSearch('any.only');
 	});
 
 	[ 'asc', 'desc' ].forEach(o => {
@@ -561,7 +561,7 @@ describe('Admin user search query', () => {
 
 	it('Sort order must be a string', () => {
 		adminUserQuery.sortOrder = 50;
-		validateAdminUserSearch('string.base');
+		validateAdminUserSearch('any.only');
 	});
 
 	it('Locked out is optional', () => {
@@ -581,7 +581,7 @@ describe('Admin user search query', () => {
 
 	it('Role must be a string', () => {
 		adminUserQuery.role = 7;
-		validateAdminUserSearch('string.base');
+		validateAdminUserSearch('any.only');
 	});
 
 	[ 'user', 'admin' ].forEach(r => {
@@ -603,7 +603,7 @@ describe('Admin user search query', () => {
 
 	it('Logs visibility must be a string', () => {
 		adminUserQuery.logsVisibility = true;
-		validateAdminUserSearch('string.base');
+		validateAdminUserSearch('any.only');
 	});
 
 	[ 'private', 'public', 'friends-only' ].forEach(v => {

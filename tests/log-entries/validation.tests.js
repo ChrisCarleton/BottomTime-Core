@@ -53,7 +53,7 @@ describe('Log entry validation', () => {
 
 		it('Create does not allow an entry Id', () => {
 			logEntry.entryId = fakeMongoId();
-			validateCreate('object.allowUnknown');
+			validateCreate('object.unknown');
 		});
 
 		it('Entry time is a valid ISO date', () => {
@@ -922,7 +922,7 @@ describe('Entry query params validation', () => {
 	it('seenIds must contain valid Ids', () => {
 		queryString.lastSeen = '48';
 		queryString.seenIds = [ 'a298a3b95f96bfie9e177978' ];
-		validateQueryParams('string.base');
+		validateQueryParams('string.hex');
 
 		queryString.seenIds = 'a298a3b95f96bfe9e177978';
 		validateQueryParams('string.length');
