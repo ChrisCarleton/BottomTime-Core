@@ -2,6 +2,7 @@
 .git/
 .nyc_output/
 .vscode/
+.idea/
 admin/
 coverage/
 docs/
