@@ -40,7 +40,7 @@ const logEntryBaseSchema = {
 			name: Joi.string().max(200).allow(null),
 			size: Joi.number().positive().allow(null),
 			workingPressure: Joi.number().positive().allow(null),
-			material: Joi.string().only([ 'al', 'fe', null ]),
+			material: Joi.string().valid('al', 'fe', null),
 			oxygen: Joi.number().positive().max(100).allow(null),
 			helium: Joi.number().min(0).max(95).allow(null)
 		})
@@ -69,8 +69,8 @@ const logEntryBaseSchema = {
 		backplate: Joi.number().min(0).allow(null),
 		ankles: Joi.number().min(0).allow(null),
 		other: Joi.number().min(0).allow(null),
-		correctness: Joi.string().only([ 'good', 'too little', 'too much', null ]),
-		trim: Joi.string().only([ 'good', 'feet down', 'feet up', null ])
+		correctness: Joi.string().valid('good', 'too little', 'too much', null),
+		trim: Joi.string().valid('good', 'feet down', 'feet up', null)
 	}),
 	rating: Joi.number().min(1).max(5).allow(null),
 	visibility: Joi.number().min(1).max(5).allow(null),
@@ -96,9 +96,9 @@ export const UpdateEntrySchema = Joi.object().keys({
 
 export const EntryQueryParamsSchema = Joi.object().keys({
 	count: Joi.number().integer().min(1).max(1000),
-	sortBy: Joi.string().only([ 'entryTime', 'maxDepth', 'bottomTime' ]),
-	sortOrder: Joi.string().only([ 'asc', 'desc' ]),
-	lastSeen: Joi.alternatives().when(
+	sortBy: Joi.string().valid('entryTime', 'maxDepth', 'bottomTime'),
+	sortOrder: Joi.string().valid('asc', 'desc'),
+	lastSeen: Joi.alternatives().conditional(
 		'sortBy',
 		{
 			is: 'entryTime',
@@ -110,4 +110,4 @@ export const EntryQueryParamsSchema = Joi.object().keys({
 		Joi.string().hex().length(24),
 		Joi.array().items(Joi.string().hex().length(24))
 	)
-}).and([ 'sortBy', 'sortOrder' ]).with('seenIds', 'lastSeen');
+}).and('sortBy', 'sortOrder').with('seenIds', 'lastSeen');

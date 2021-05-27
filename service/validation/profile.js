@@ -4,7 +4,7 @@ import moment from 'moment';
 const year = moment().year();
 
 export const UpdateProfileSchema = Joi.object().keys({
-	logsVisibility: Joi.string().only([ 'private', 'friends-only', 'public' ]),
+	logsVisibility: Joi.string().valid('private', 'friends-only', 'public'),
 	firstName: Joi.string().max(50).allow(null),
 	lastName: Joi.string().max(50).allow(null),
 	location: Joi.string().max(100).allow(null),
@@ -16,9 +16,9 @@ export const UpdateProfileSchema = Joi.object().keys({
 	certificationAgencies: Joi.string().max(100).allow(null),
 	specialties: Joi.string().max(200).allow(null),
 	about: Joi.string().max(1000).allow(null),
-	weightUnit: Joi.string().only([ 'kg', 'lbs' ]),
-	temperatureUnit: Joi.string().only([ 'c', 'f' ]),
-	distanceUnit: Joi.string().only([ 'm', 'ft' ]),
-	pressureUnit: Joi.string().only([ 'bar', 'psi' ]),
-	uiComplexity: Joi.string().only([ 'basic', 'advanced', 'technical' ])
+	weightUnit: Joi.string().valid('kg', 'lbs'),
+	temperatureUnit: Joi.string().valid('c', 'f'),
+	distanceUnit: Joi.string().valid('m', 'ft'),
+	pressureUnit: Joi.string().valid('bar', 'psi'),
+	uiComplexity: Joi.string().valid('basic', 'advanced', 'technical')
 });

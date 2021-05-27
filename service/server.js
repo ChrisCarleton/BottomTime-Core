@@ -6,12 +6,12 @@ import compression from 'compression';
 import containerMetadata from './utils/container-metadata';
 import config from './config';
 import cookieParser from 'cookie-parser';
-import database from './data/database';
 import express from 'express';
 import glob from 'glob';
 import http from 'http';
 import log, { requestLogger } from './logger';
 import modRewrite from 'connect-modrewrite';
+import MongoStore from 'connect-mongo';
 import { handleServerError, notFound, serverErrorMiddleware } from './utils/error-response';
 import path from 'path';
 import session from 'express-session';
@@ -41,8 +41,6 @@ process.on('uncaughtException', err => {
 	process.exit(187);
 });
 
-const MongoStore = require('connect-mongo')(session);
-
 // Express middleware
 const app = express();
 app.use(compression());
@@ -54,8 +52,10 @@ app.use(session({
 	secret: config.sessionSecret,
 	resave: true,
 	saveUninitialized: true,
-	store: new MongoStore({
-		mongooseConnection: database.connection
+	store: MongoStore.create({
+		mongoUrl: config.mongoEndpoint,
+		autoRemove: 'interval',
+		autoRemoveInterval: 30
 	})
 }));
 app.use(requestLogger);
