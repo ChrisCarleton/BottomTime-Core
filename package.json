@@ -8,7 +8,7 @@
     "serve": "npx nodemon --watch service/",
     "start": "node service/index.js",
     "test": "npx mocha -r @babel/register -r ./tests/config -t 10000 \"tests/**/*.tests.js\"",
-    "lint": "npx eslint \"service/**/*.js\" \"tests/**/*.js\" \"admin/**/*.js\"",
+    "lint": "npx eslint --fix \"service/**/*.js\" \"tests/**/*.js\" \"admin/**/*.js\"",
     "coverage": "npx nyc report --reporter=text-lcov | coveralls",
     "generate-test-data": "node admin/bootstrap.js ./generate-test-data",
     "init-local-full": "admin/init-local.sh",
