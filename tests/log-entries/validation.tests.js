@@ -152,7 +152,7 @@ describe('Log entry validation', () => {
 
 		it('Location is required', () => {
 			logEntry.location = '';
-			validateCreate('any.empty');
+			validateCreate('string.empty');
 		});
 
 		it('Location must be a string', () => {
@@ -167,7 +167,7 @@ describe('Log entry validation', () => {
 
 		it('Site is required', () => {
 			logEntry.site = '';
-			validateCreate('any.empty');
+			validateCreate('string.empty');
 		});
 
 		it('Site cannot exceed 200 characters', () => {
@@ -241,7 +241,7 @@ describe('Log entry validation', () => {
 				'livingTheDream'
 			];
 
-			validateCreate('any.empty');
+			validateCreate('string.empty');
 		});
 
 		it('Tags must be strings', () => {
@@ -256,7 +256,7 @@ describe('Log entry validation', () => {
 
 		it('Tags must be alphanumeric', () => {
 			logEntry.tags = [ 'ok', 'not_ok' ];
-			validateCreate('string.regex.base');
+			validateCreate('string.pattern.base');
 		});
 
 		it('Tags collection cannot have more than 50 tags', () => {
@@ -424,7 +424,7 @@ describe('Log entry validation', () => {
 
 		it('Air name cannot be empty', () => {
 			logEntry.air[0].name = '';
-			validateCreate('any.empty');
+			validateCreate('string.empty');
 		});
 
 		it('Air name can be null', () => {
@@ -491,7 +491,7 @@ describe('Log entry validation', () => {
 
 		it('Air tank material cannot be set to an invalid value', () => {
 			logEntry.air[0].material = 'adamantium';
-			validateCreate('any.allowOnly');
+			validateCreate('any.only');
 		});
 
 		it('Oxygen content is optional', () => {
@@ -582,7 +582,7 @@ describe('Log entry validation', () => {
 
 		it('Correctness cannot be an invalid value', () => {
 			logEntry.weight.correctness = 'not bad';
-			validateCreate('any.allowOnly');
+			validateCreate('any.only');
 		});
 
 		it('Trim is optional', () => {
@@ -599,7 +599,7 @@ describe('Log entry validation', () => {
 
 		it('Trim cannot be an invalid value', () => {
 			logEntry.weight.trim = 'nailed it!';
-			validateCreate('any.allowOnly');
+			validateCreate('any.only');
 		});
 	});
 
@@ -748,7 +748,7 @@ describe('Log entry validation', () => {
 
 			it(`${ field } cannot be empty`, () => {
 				logEntry[field] = '';
-				validateCreate('any.empty');
+				validateCreate('string.empty');
 			});
 
 			it(`${ field } cannot be more than 100 characters`, () => {
@@ -853,7 +853,7 @@ describe('Entry query params validation', () => {
 
 	it('sortBy cannot be an invalid value', () => {
 		queryString.sortBy = 'somethingElse';
-		validateQueryParams('any.allowOnly');
+		validateQueryParams('any.only');
 	});
 
 	[ 'asc', 'desc' ].forEach(order => {
@@ -865,7 +865,7 @@ describe('Entry query params validation', () => {
 
 	it('sortOrder cannot be an invalid value', () => {
 		queryString.sortOrder = 'up';
-		validateQueryParams('any.allowOnly');
+		validateQueryParams('any.only');
 	});
 
 	it('If sortBy is included sortOrder is required', () => {

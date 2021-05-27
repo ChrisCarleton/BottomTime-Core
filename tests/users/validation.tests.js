@@ -25,7 +25,7 @@ function testExpectedError(err, expectedError) {
 		expect(err.error).to.exist;
 		expect(err.error.details[0].type).to.equal(expectedError);
 	} else {
-		expect(err.error).to.be.null;
+		expect(err.error).to.be.undefined;
 	}
 }
 
@@ -76,7 +76,7 @@ describe('Username Validation', () => {
 	});
 
 	it('Username cannot contain invalid characters', () => {
-		validateUsername('string.regex.base', 'Here#are@bad*characters!');
+		validateUsername('string.pattern.base', 'Here#are@bad*characters!');
 	});
 
 	it('Valid usernames are accepted', () => {
@@ -111,7 +111,7 @@ describe('Account Details Validation', () => {
 
 	it('Role must be an accepted value', () => {
 		account.role = 'professor';
-		validateAccount('any.allowOnly');
+		validateAccount('any.only');
 	});
 
 	it('Password is required', () => {
@@ -131,22 +131,22 @@ describe('Account Details Validation', () => {
 
 	it('Password must contain an uppercase letter', () => {
 		account.password = 'aassdf3838..!#$@';
-		validateAccount('string.regex.base');
+		validateAccount('string.pattern.base');
 	});
 
 	it('Password must contain a lowercase letter', () => {
 		account.password = 'IGV*OGO3838..!#$@';
-		validateAccount('string.regex.base');
+		validateAccount('string.pattern.base');
 	});
 
 	it('Password must contain a number', () => {
 		account.password = 'aassdfIUBOI..!#$@';
-		validateAccount('string.regex.base');
+		validateAccount('string.pattern.base');
 	});
 
 	it('Password must contain a special character', () => {
 		account.password = 'aCCssdf3838';
-		validateAccount('string.regex.base');
+		validateAccount('string.pattern.base');
 	});
 });
 
@@ -162,7 +162,7 @@ describe('Complete Registration Validation', () => {
 
 	it('Username must be valid', () => {
 		registration.username = 'not valid';
-		validateCompleteRegistration('string.regex.base');
+		validateCompleteRegistration('string.pattern.base');
 	});
 
 	it('Email is required', () => {
@@ -219,7 +219,7 @@ describe('Complete Registration Validation', () => {
 
 	it('Logs visibility cannot be set to another value', () => {
 		registration.logsVisibility = 'just my neighbour, Steve';
-		validateCompleteRegistration('any.allowOnly');
+		validateCompleteRegistration('any.only');
 	});
 
 	it('Weight unit is optional', () => {
@@ -236,7 +236,7 @@ describe('Complete Registration Validation', () => {
 
 	it('Weight unit cannot be set to another value', () => {
 		registration.weightUnit = 'stone';
-		validateCompleteRegistration('any.allowOnly');
+		validateCompleteRegistration('any.only');
 	});
 
 	it('Temperature unit is optional', () => {
@@ -253,7 +253,7 @@ describe('Complete Registration Validation', () => {
 
 	it('Temperature unit cannot be set to another value', () => {
 		registration.temperatureUnit = 'K';
-		validateCompleteRegistration('any.allowOnly');
+		validateCompleteRegistration('any.only');
 	});
 
 	it('Distance unit is optional', () => {
@@ -270,7 +270,7 @@ describe('Complete Registration Validation', () => {
 
 	it('Distance unit cannot be set to another value', () => {
 		registration.distanceUnit = 'km';
-		validateCompleteRegistration('any.allowOnly');
+		validateCompleteRegistration('any.only');
 	});
 
 	it('Pressure unit is optional', () => {
@@ -287,12 +287,12 @@ describe('Complete Registration Validation', () => {
 
 	it('Pressure unit cannot be set to another value', () => {
 		registration.pressureUnit = 'kpa';
-		validateCompleteRegistration('any.allowOnly');
+		validateCompleteRegistration('any.only');
 	});
 
 	it('UI complexity cannot be set to another value', () => {
 		registration.uiComplexity = 'simple';
-		validateCompleteRegistration('any.allowOnly');
+		validateCompleteRegistration('any.only');
 	});
 
 	it('UI complexity is optional', () => {
@@ -338,22 +338,22 @@ describe('Change Password Validation', () => {
 
 	it('New password must contain an uppercase letter', () => {
 		changePassword.newPassword = 'aassdf3838..!#$@';
-		validateChangePassword('string.regex.base');
+		validateChangePassword('string.pattern.base');
 	});
 
 	it('New password must contain a lowercase letter', () => {
 		changePassword.newPassword = 'IGV*OGO3838..!#$@';
-		validateChangePassword('string.regex.base');
+		validateChangePassword('string.pattern.base');
 	});
 
 	it('New password must contain a number', () => {
 		changePassword.newPassword = 'aassdfIUBOI..!#$@';
-		validateChangePassword('string.regex.base');
+		validateChangePassword('string.pattern.base');
 	});
 
 	it('New password must contain a special character', () => {
 		changePassword.newPassword = 'aCCssdf3838';
-		validateChangePassword('string.regex.base');
+		validateChangePassword('string.pattern.base');
 	});
 });
 
@@ -397,22 +397,22 @@ describe('Confirm Reset Password Validation', () => {
 
 	it('New password must contain an uppercase letter', () => {
 		resetPassword.newPassword = 'aassdf3838..!#$@';
-		validateConfirmPasswordReset('string.regex.base');
+		validateConfirmPasswordReset('string.pattern.base');
 	});
 
 	it('New password must contain a lowercase letter', () => {
 		resetPassword.newPassword = 'IGV*OGO3838..!#$@';
-		validateConfirmPasswordReset('string.regex.base');
+		validateConfirmPasswordReset('string.pattern.base');
 	});
 
 	it('New password must contain a number', () => {
 		resetPassword.newPassword = 'aassdfIUBOI..!#$@';
-		validateConfirmPasswordReset('string.regex.base');
+		validateConfirmPasswordReset('string.pattern.base');
 	});
 
 	it('New password must contain a special character', () => {
 		resetPassword.newPassword = 'aCCssdf3838';
-		validateConfirmPasswordReset('string.regex.base');
+		validateConfirmPasswordReset('string.pattern.base');
 	});
 });
 
@@ -437,7 +437,7 @@ describe('Search Users Validation', () => {
 
 	it('Will fail if query is invalid', () => {
 		userQuery = 'Totally not valid!!';
-		validateUserSearch('string.regex.base');
+		validateUserSearch('string.pattern.base');
 	});
 });
 
@@ -529,7 +529,7 @@ describe('Admin user search query', () => {
 
 	it('Sort by cannot be invalid', () => {
 		adminUserQuery.sortBy = 'not_valid';
-		validateAdminUserSearch('any.allowOnly');
+		validateAdminUserSearch('any.only');
 	});
 
 	it('Sort by must be a string', () => {
@@ -556,7 +556,7 @@ describe('Admin user search query', () => {
 
 	it('Sort order cannot be invalid', () => {
 		adminUserQuery.sortOrder = 'lol';
-		validateAdminUserSearch('any.allowOnly');
+		validateAdminUserSearch('any.only');
 	});
 
 	it('Sort order must be a string', () => {
@@ -593,7 +593,7 @@ describe('Admin user search query', () => {
 
 	it('Role cannot be invalid', () => {
 		adminUserQuery.role = 'supervisor';
-		validateAdminUserSearch('any.allowOnly');
+		validateAdminUserSearch('any.only');
 	});
 
 	it('Logs visibility is optional', () => {
@@ -615,6 +615,6 @@ describe('Admin user search query', () => {
 
 	it('Logs visibility cannot be invalid', () => {
 		adminUserQuery.logsVisibility = 'just-tom';
-		validateAdminUserSearch('any.allowOnly');
+		validateAdminUserSearch('any.only');
 	});
 });

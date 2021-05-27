@@ -50,7 +50,7 @@ describe('Friends Validation Tests', () => {
 
 		it('Fails if type parameter is not a recognised value.', () => {
 			query.type = 'not-valid';
-			validateListFriendsQuery('any.allowOnly');
+			validateListFriendsQuery('any.only');
 		});
 	});
 
@@ -114,7 +114,7 @@ describe('Friends Validation Tests', () => {
 
 		it('Fails if array element is not a user name', () => {
 			body[1] = '## Totally INval!d';
-			validateBulkDelete('string.regex.base');
+			validateBulkDelete('string.pattern.base');
 		});
 
 		it('Fails if array is emtpy', () => {
