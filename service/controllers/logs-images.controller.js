@@ -9,7 +9,7 @@ import path from 'path';
 import sharp from 'sharp';
 import slug from 'slug';
 import storage from '../storage';
-import uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 
 const ImageDir = path.resolve(config.tempDir, 'media/images/');
 const ImageMimeTypeRegex = /^image\/(jpeg|png|tiff)$/i;

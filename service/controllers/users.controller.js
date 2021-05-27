@@ -14,7 +14,7 @@ import moment from 'moment';
 import templates from '../mail/templates';
 import User from '../data/user';
 import { UsernameRegex, UsernameSchema } from '../validation/common';
-import uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 import searchUtils from '../utils/search-utils';
 
 export async function GetUsers(req, res, next) {

@@ -1,6 +1,6 @@
 import { EmailTakenError, SsoError } from './errors';
 import containerMetadata from '../utils/container-metadata';
-import uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 
 export const ErrorIds = {
 	authError: 'bottom-time/errors/auth',

@@ -14,7 +14,7 @@ import request from 'supertest';
 import templates from '../../service/mail/templates';
 import sinon from 'sinon';
 import User from '../../service/data/user';
-import uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 
 function createNewAccountRequest() {
 	const firstName = faker.name.firstName();

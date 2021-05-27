@@ -8,7 +8,7 @@ import moment from 'moment';
 import passport from 'passport';
 import url from 'url';
 import User from './data/user';
-import uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 
 passport.use(new LocalStrategy(async (username, password, done) => {
 	try {
