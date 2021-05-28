@@ -166,4 +166,34 @@ describe('Auth Controller', () => {
 				.expect(204);
 		});
 	});
+
+	describe('POST /auth/resetPassword', () => {
+		it('Will return 400 if request body is missing', async () => {
+
+		});
+
+		it('Will return 400 if email field is missing', async () => {
+
+		});
+
+		it('Will return 400 if email address is empty', async () => {
+
+		});
+
+		it('Will return 400 if email address is invalid', async () => {
+
+		});
+
+		it('Will return 204 if email address does not match a user account', async () => {
+
+		});
+
+		it('Will return 204, create a token, and send an email if email address matches an account', async () => {
+
+		});
+
+		it('Will return 500 if something goes wrong', async () => {
+
+		});
+	});
 });
