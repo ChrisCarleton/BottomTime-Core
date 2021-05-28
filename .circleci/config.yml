@@ -62,6 +62,7 @@ jobs:
             - .babelrc
             - package.json
             - yarn.lock
+            - Dockerfile
             - src/
             - node_modules/
 
