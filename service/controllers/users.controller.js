@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { badRequest, conflict, forbidden, serverError, unauthorized } from '../utils/error-response';
+import {badRequest, conflict, forbidden, notFound, serverError, unauthorized} from '../utils/error-response';
 import {
 	AdminUserQuerySchema,
 	CompleteRegistrationSchema,
@@ -169,9 +169,16 @@ function validateCreateUserAccount(req, res) {
 
 export async function GetUserAccount(req, res) {
 	try {
+		const user = await User.findByUsername(req.params.username);
 
+		if (user) {
+			res.json(user.getAccountJSON());
+		} else {
+		    notFound(req, res);
+		}
 	} catch (err) {
-
+	    const logId = req.logError('Failed to retrieve user account information from database', err);
+	    serverError(res, logId);
 	}
 }
 

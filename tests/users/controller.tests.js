@@ -53,31 +53,59 @@ describe('Users Controller', () => {
 
 	describe('GET /users/:username', () => {
 		it('Anonymous users will receive a 401 error response', async () => {
-
+			const { body } = await request(App).get(`/users/${ regularUser.user.username }`);
+			expect(body).to.be.an.unauthorizedResponse;
 		});
 
 		it('Regular users will receive a 403 response if they try to access their own account', async () => {
+			const { body } = await request(App)
+				.get(`/users/${ regularUser.user.username }`)
+				.set(...regularUser.authHeader);
 
+			expect(body).to.be.a.forbiddenResponse;
 		});
 
 		it('Regular users will receive a 403 response if they try to access another user\'s account', async () => {
+			const { body } = await request(App)
+				.get(`/users/${ admin.user.username }`)
+				.set(...regularUser.authHeader);
 
+			expect(body).to.be.a.forbiddenResponse;
 		});
 
 		it('Regular users will receive a 403 response if they try to access a non-existent account', async () => {
+			const { body } = await request(App)
+				.get('/users/not_a_real_user')
+				.set(...regularUser.authHeader);
 
+			expect(body).to.be.a.forbiddenResponse;
 		});
 
 		it('Administrators will receive a 404 response if they try to access a non-existent account', async () => {
+			const { body } = await request(App)
+				.get('/users/not_a_real_user')
+				.set(...admin.authHeader);
 
+			expect(body).to.be.a.notFoundResponse;
 		});
 
 		it('Administrators can retrieve user account information', async () => {
+			const { body } = await request(App)
+				.get(`/users/${ regularUser.user.username }`)
+				.set(...admin.authHeader)
+				.expect(200);
 
+			expect(body).to.eql(regularUser.user.getAccountJSON());
 		});
 
 		it('A 500 server error response is returned if something goes wrong', async () => {
+			stub = sinon.stub(User, 'findByUsername').rejects('nope');
+			const { body } = await request(App)
+				.get(`/users/${ regularUser.user.username }`)
+				.set(...admin.authHeader)
+				.expect(500);
 
+			expect(body).to.be.a.serverErrorResponse;
 		});
 	});
 

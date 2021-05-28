@@ -10,11 +10,11 @@ import {
 	RequireAccountPermission,
 	RequireUserForRegistration
 } from '../controllers/users.controller';
-import { RequireUser } from '../controllers/security.controller';
+import { RequireAdminUser, RequireUser } from '../controllers/security.controller';
 
 module.exports = app => {
 	app.get('/users', RequireUser, GetUsers, AdminGetUsers);
-	app.get('/users/:username', GetUserAccount);
+	app.get('/users/:username', RequireAdminUser, GetUserAccount);
 	app.put('/users/:username', CreateUserAccount);
 	app.post('/users/:username/changePassword', RequireUser, RequireAccountPermission, ChangePassword);
 	app.post('/users/:username/resetPassword', RequestPasswordReset);
