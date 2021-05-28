@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cimg/node:15.6.0-alpine
+      - image: node:15.6.0-alpine
         environment:
           BT_ES_ENDPOINT: http://es:9200
           BT_MONGO_ENDPOINT: mongodb://mongo/dev
