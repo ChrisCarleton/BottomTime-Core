@@ -42,13 +42,9 @@ jobs:
             yarn coverage
           environment:
             NODE_ENV: test
-
-  deploy-image-dev:
-    machine:
-      enabled: true
-      image: circleci/classic:201808-01
-    steps:
-      - checkout
+      - run:
+          name: Purge Dependencies
+          command: rm -rf node_modules/
       - restore_cache:
           keys:
             - bt_core_nm_prod_{{ checksum "package.json" }}
@@ -60,6 +56,22 @@ jobs:
           key: bt_core_nm_prod_{{ checksum "package.json" }}
           paths:
             - node_modules/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .babelrc
+            - package.json
+            - yarn.lock
+            - src/
+            - node_modules/
+
+  deploy-image-dev:
+    machine:
+      enabled: true
+      image: circleci/classic:201808-01
+    steps:
+      - attach_workspace:
+          at: .
       - run:
           name: Build Docker Image
           command: docker build -t bottom-time/core .
@@ -80,7 +92,8 @@ jobs:
       enabled: true
       image: circleci/classic:201808-01
     steps:
-      - checkout
+      - attach_workspace:
+          at: .
       - restore_cache:
           keys:
             - bt_core_nm_prod_{{ checksum "package.json" }}
