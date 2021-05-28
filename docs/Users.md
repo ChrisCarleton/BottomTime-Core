@@ -168,6 +168,22 @@ HTTP Status Code | Details
 **401 Not Authorized** | The call failed because the current user is unauthenticated. Only authenticated users may call this route.
 **500 Server Error** | An internal error occurred while attempting to retrieve the profile information from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
 
+### GET /users/:username
+Gets a user's account information. This route is limited to administrators only.
+
+#### Route Parameters
+
+* **username** - A valid [username](#usernames) that identifies the user whose account information will be retrieved.
+
+#### Responses
+HTTP Status Code | Details
+---- | ----
+**200 OK** | The call succeeded and the response body will be a [UserAccount](Authentication.md#useraccount-object) object.
+**401 Not Authorized** | The call failed because the current user is unauthenticated.
+**403 Forbidden** | The call failed because the current user is not an administrator.
+**404 Not Found** | The requested user was not found in the database.
+**500 Server Error** | An internal error occurred while attempting to retrieve the profile information from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
+
 ### PUT /users/:username
 Creates a new user account. Certain actions are not permitted, however. These
 requests will fail with a `403 Forbidden` HTTP error.
