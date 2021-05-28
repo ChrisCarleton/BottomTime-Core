@@ -4,12 +4,12 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import faker from 'faker';
 import fakeUser from '../util/fake-user';
-import mailer from "../../service/mail/mailer";
+import mailer from '../../service/mail/mailer';
 import request from 'supertest';
 import sinon from 'sinon';
-import templates from "../../service/mail/templates";
+import templates from '../../service/mail/templates';
 import User from '../../service/data/user';
-import moment from "moment";
+import moment from 'moment';
 
 describe('Auth Controller', () => {
 
@@ -224,7 +224,7 @@ describe('Auth Controller', () => {
 		it('Will return 204 if email address does not match a user account', async () => {
 			await request(App)
 				.post(ResetPasswordRoute)
-				.send({ email: 'unknown_user@gizmail.dop' })
+				.send({ email: 'unknown_user@gizmail.ca' })
 				.expect(204);
 		});
 
@@ -239,17 +239,19 @@ describe('Auth Controller', () => {
 				.send({ email: user.email })
 				.expect(204);
 
-			// TODO: Update the template.
-			expect(mailerSpy.called).to.be.true;
 			expect(templatingSpy.called).to.be.true;
-			expect(templatingSpy.getCall(0).args[0]).to.equal(user.email);
+			expect(templatingSpy.getCall(0).args[0]).to.equal(user.username);
 			expect(templatingSpy.getCall(0).args[2]).to.be.a('String');
 
+			expect(mailerSpy.called).to.be.true;
 			const [ mailOptions ] = mailerSpy.getCall(0).args;
 			expect(mailOptions.to).to.equal(user.email);
 			expect(mailOptions.from).to.not.exist;
 			expect(mailOptions.subject).to.equal('Reset BottomTime password');
-			expect(mailOptions.html).to.exist;
+			expect(mailOptions.html)
+				.to.exist
+				.and.to.contain(user.username)
+				.and.to.contain(templatingSpy.getCall(0).args[2]);
 
 			const entity = await User.findByUsername(user.username);
 			expect(entity.passwordResetToken).to.exist;
@@ -263,7 +265,7 @@ describe('Auth Controller', () => {
 			stub = sinon.stub(User, 'findByEmail').rejects('nope');
 			const { body } = await request(App)
 				.post(ResetPasswordRoute)
-				.send({ email: 'unknown_user@gizmail.dop' })
+				.send({ email: 'unknown_user@gizmail.ca' })
 				.expect(500);
 
 			expect(body).to.be.a.serverErrorResponse;
