@@ -27,19 +27,21 @@ jobs:
             - bt_core_nm_{{ checksum "package.json" }}
             - bt_core_nm_
       - run:
+          name: Yarn Install
+          command: yarn install
+      - save_cache:
+          key: bt_core_nm_{{ checksum "package.json" }}
+          paths:
+            - node_modules/
+      - run:
           name: Test
           command: |
-            yarn install
             yarn lint
             yarn init-local
             npx nyc yarn test
             yarn coverage
           environment:
             NODE_ENV: test
-      - save_cache:
-          key: bt_core_nm_{{ checksum "package.json" }}
-          paths:
-            - node_modules/
 
   deploy-image-dev:
     machine:
