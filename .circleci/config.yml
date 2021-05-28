@@ -63,7 +63,7 @@ jobs:
             - package.json
             - yarn.lock
             - Dockerfile
-            - src/
+            - service/
             - node_modules/
 
   deploy-image-dev:
