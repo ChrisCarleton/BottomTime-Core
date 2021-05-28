@@ -18,6 +18,7 @@ export function ResetPasswordEmail(username, userFriendlyName, resetToken) {
 		`/resetPassword?username=${ username }&token=${ resetToken }`);
 
 	return resetEmailTemplate({
+		username,
 		userFriendlyName,
 		resetUrl,
 		siteUrl: config.siteUrl,
