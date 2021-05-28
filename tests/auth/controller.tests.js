@@ -4,8 +4,11 @@ import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import faker from 'faker';
 import fakeUser from '../util/fake-user';
+import mailer from '../../service/mail/mailer';
+import moment from 'moment';
 import request from 'supertest';
 import sinon from 'sinon';
+import templates from '../../service/mail/templates';
 import User from '../../service/data/user';
 
 describe('Auth Controller', () => {
@@ -164,6 +167,108 @@ describe('Auth Controller', () => {
 			await request(App)
 				.post('/auth/logout')
 				.expect(204);
+		});
+	});
+
+	describe('POST /auth/resetPassword', () => {
+		const ResetPasswordRoute = '/auth/resetPassword';
+
+		let templatingSpy = null;
+		let mailerSpy = null;
+
+		after(() => {
+			if (templatingSpy) {
+				templatingSpy.restore();
+			}
+
+			if (mailerSpy) {
+				mailerSpy.restore();
+			}
+		});
+
+		it('Will return 400 if request body is missing', async () => {
+			const { body } = await request(App)
+				.post(ResetPasswordRoute)
+				.expect(400);
+
+			expect(body).to.be.a.badRequestResponse;
+		});
+
+		it('Will return 400 if email field is missing', async () => {
+			const { body } = await request(App)
+				.post(ResetPasswordRoute)
+				.send({ username: 'mike' })
+				.expect(400);
+
+			expect(body).to.be.a.badRequestResponse;
+		});
+
+		it('Will return 400 if email address is empty', async () => {
+			const { body } = await request(App)
+				.post(ResetPasswordRoute)
+				.send({ email: '' })
+				.expect(400);
+
+			expect(body).to.be.a.badRequestResponse;
+		});
+
+		it('Will return 400 if email address is invalid', async () => {
+			const { body } = await request(App)
+				.post(ResetPasswordRoute)
+				.send({ email: 'not an e-mail address' })
+				.expect(400);
+
+			expect(body).to.be.a.badRequestResponse;
+		});
+
+		it('Will return 204 if email address does not match a user account', async () => {
+			await request(App)
+				.post(ResetPasswordRoute)
+				.send({ email: 'unknown_user@gizmail.ca' })
+				.expect(204);
+		});
+
+		it('Will return 204, create a token, and send an email if email address matches an account', async () => {
+			const user = new User(fakeUser());
+			templatingSpy = sinon.spy(templates, 'ResetPasswordEmail');
+			mailerSpy = sinon.spy(mailer, 'sendMail');
+			await user.save();
+
+			await request(App)
+				.post(ResetPasswordRoute)
+				.send({ email: user.email })
+				.expect(204);
+
+			expect(templatingSpy.called).to.be.true;
+			expect(templatingSpy.getCall(0).args[0]).to.equal(user.username);
+			expect(templatingSpy.getCall(0).args[2]).to.be.a('String');
+
+			expect(mailerSpy.called).to.be.true;
+			const [ mailOptions ] = mailerSpy.getCall(0).args;
+			expect(mailOptions.to).to.equal(user.email);
+			expect(mailOptions.from).to.not.exist;
+			expect(mailOptions.subject).to.equal('Reset BottomTime password');
+			expect(mailOptions.html)
+				.to.exist
+				.and.to.contain(user.username)
+				.and.to.contain(templatingSpy.getCall(0).args[2]);
+
+			const entity = await User.findByUsername(user.username);
+			expect(entity.passwordResetToken).to.exist;
+			expect(entity.passwordResetExpiration).to.be.a('Date');
+			expect(
+				moment(entity.passwordResetExpiration).diff(moment().add(1, 'd'), 'm')
+			).to.be.lessThan(1);
+		});
+
+		it('Will return 500 if something goes wrong', async () => {
+			stub = sinon.stub(User, 'findByEmail').rejects('nope');
+			const { body } = await request(App)
+				.post(ResetPasswordRoute)
+				.send({ email: 'unknown_user@gizmail.ca' })
+				.expect(500);
+
+			expect(body).to.be.a.serverErrorResponse;
 		});
 	});
 });

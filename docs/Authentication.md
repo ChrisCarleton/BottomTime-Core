@@ -99,3 +99,24 @@ browsing the app.
 
 #### Route Parameters
 * **provider** - The name of the 3rd-party SSO provider. The only accepted values are `google`.
+
+### POST /auth/resetPassword
+Requests that an email be sent for a forgotten username or password. This API call does not require an active
+session. An email containing the account username and a token that can be used to reset the user's password will
+be sent by e-mail if the supplied email matches an account in the system. The token can be posted
+to `POST /users/:username/confirmPasswordReset` within 24 hours to reset the user's password.
+
+#### Message Body
+The message body should contain a JSON object with a single field: the email address associated with the account.
+```json
+{
+  "email": "REQUIRED A string containing the email address."
+}
+```
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**204 No Content** | The request was received and processed. If the `email` field matches a valid user account then a reset token will be emailed to the user's e-mail address.
+**400 Bad Request** | The request failed because the message body was missing, malformed, or contained an invalid e-mail address.
+**500 Server Error** | An internal error occurred while attempting to create the reset token or send the email. An [Error](General.md#error-object) Object will be returned in the response body with more details.

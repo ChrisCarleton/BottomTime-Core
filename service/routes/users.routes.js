@@ -6,7 +6,6 @@ import {
 	CreateUserAccount,
 	GetUserAccount,
 	GetUsers,
-	RequestPasswordReset,
 	RequireAccountPermission,
 	RequireUserForRegistration
 } from '../controllers/users.controller';
@@ -17,7 +16,6 @@ module.exports = app => {
 	app.get('/users/:username', RequireAdminUser, GetUserAccount);
 	app.put('/users/:username', CreateUserAccount);
 	app.post('/users/:username/changePassword', RequireUser, RequireAccountPermission, ChangePassword);
-	app.post('/users/:username/resetPassword', RequestPasswordReset);
 	app.post('/users/:username/confirmResetPassword', ConfirmPasswordReset);
 	app.post(
 		'/users/:username/completeRegistration',

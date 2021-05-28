@@ -2,7 +2,8 @@ import {
 	AuthenticateUser,
 	GetCurrentUser,
 	Login,
-	Logout
+	Logout,
+	ResetPassword
 } from '../controllers/auth.controller';
 import passport from 'passport';
 
@@ -22,6 +23,7 @@ module.exports = app => {
 
 	app.post('/auth/login', AuthenticateUser, Login);
 	app.post('/auth/logout', Logout);
+	app.post('/auth/resetPassword', ResetPassword);
 
 	app.get('/auth/google', passport.authenticate('google', { scope: [ 'email' ] }));
 	app.get(

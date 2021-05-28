@@ -269,23 +269,6 @@ HTTP Status Code | Details
 **404 Not Found** | A user with the username specified in the **username** route parameter does not exist and so no user account could be found. An [Error](General.md#error-object) Object will be returned in the response body.
 **500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
 
-### POST /users/:username/resetPassword
-Requests that a forgotten password be reset. This API call does not require an active session. A
-confirmation token will be sent by e-mail to the account owner's email address. The token must be posted
-to `POST /users/:username/confirmPasswordReset` within 24 hours to complete the password reset.
-
-#### Route Parameters
-* **username** - The username identifying the account for which the password reset will be requested.
-
-#### Message Body
-The message body should be empty.
-
-#### Responses
-HTTP Status Code | Details
------ | -----
-**204 No Content** | The request was received and processed. If the `username` route parameter refers to a valid user account then a reset token will be emailed to the user's e-mail address.
-**500 Server Error** | An internal error occurred while attempting to create the reset token or send the email. An [Error](General.md#error-object) Object will be returned in the response body with more details.
-
 ### POST /users/:username/confirmResetPassword
 Changes a user's password after a reset password request has been made. A call to
 `POST /users/:username/resetPassword` must be made before-hand to receive the reset token necessary to
