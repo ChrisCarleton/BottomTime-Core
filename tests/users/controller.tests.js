@@ -533,7 +533,7 @@ describe('Users Controller', () => {
 			expect(bcrypt.compareSync(oldPassword, entity.passwordHash)).to.be.true;
 		});
 
-		it('Will return Forbidden if requested user account canot be found', async () => {
+		it('Will return Forbidden if requested user account cannot be found', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');
 			const newPassword = faker.internet.password(18, false, null, '@1a_Z');
 
@@ -736,81 +736,6 @@ describe('Users Controller', () => {
 			expect(res.body.status).to.equal(500);
 			expect(res.body.errorId).to.equal(ErrorIds.serverError);
 			expect(res.body.logId).to.exist;
-		});
-	});
-
-	describe('POST /users/:username/resetPassword', () => {
-		let templatingSpy = null;
-		let mailerSpy = null;
-
-		afterEach(() => {
-			if (templatingSpy) {
-				templatingSpy.restore();
-				templatingSpy = null;
-			}
-
-			if (mailerSpy) {
-				mailerSpy.restore();
-				mailerSpy = null;
-			}
-		});
-
-		it('Will generate a reset token and email it', async () => {
-			const user = new User(fakeUser());
-			templatingSpy = sinon.spy(templates, 'ResetPasswordEmail');
-			mailerSpy = sinon.spy(mailer, 'sendMail');
-
-			await user.save();
-			await request(App).post(`/users/${ user.username }/resetPassword`).expect(204);
-
-			expect(mailerSpy.called).to.be.true;
-			expect(templatingSpy.called).to.be.true;
-			expect(templatingSpy.getCall(0).args[0]).to.equal(user.username);
-			expect(templatingSpy.getCall(0).args[2]).to.be.a('String');
-
-			const [ mailOptions ] = mailerSpy.getCall(0).args;
-			expect(mailOptions.to).to.equal(user.email);
-			expect(mailOptions.from).to.not.exist;
-			expect(mailOptions.subject).to.equal('Reset BottomTime password');
-			expect(mailOptions.html).to.exist;
-
-			const entity = await User.findByUsername(user.username);
-			expect(entity.passwordResetToken).to.exist;
-			expect(entity.passwordResetExpiration).to.be.a('Date');
-			expect(
-				moment(entity.passwordResetExpiration).diff(moment().add(1, 'd'), 'm')
-			).to.be.lessThan(1);
-		});
-
-		it('Will return 204 even if the user account does not exist', async () => {
-			await request(App)
-				.post('/users/MadeUpUser/resetPassword')
-				.expect(204);
-		});
-
-		it('Will return server error if the database cannot be accessed', async () => {
-			const user = new User(fakeUser());
-			await user.save();
-
-			stub = sinon.stub(User, 'findOne');
-			stub.rejects('nope');
-
-			await request(App)
-				.post(`/users/${ user.username }/resetPassword`)
-				.expect(500);
-		});
-
-		it('Will return Server Error if mailer fails', async () => {
-			const user = new User(fakeUser());
-			await user.save();
-
-			stub = sinon.stub(mailer, 'sendMail');
-			stub.rejects('nope');
-
-			const res = await request(App).post(`/users/${ user.username }/resetPassword`).expect(500);
-			expect(res.body.status).to.equal(500);
-			expect(res.body.logId).to.exist;
-			expect(res.body.errorId).to.equal(ErrorIds.serverError);
 		});
 	});
 
