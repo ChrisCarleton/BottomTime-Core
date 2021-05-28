@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cimg/node:15.6.0
+      - image: node:15.6.0-alpine
         environment:
           BT_ES_ENDPOINT: http://es:9200
           BT_MONGO_ENDPOINT: mongodb://mongo/dev
@@ -27,19 +27,21 @@ jobs:
             - bt_core_nm_{{ checksum "package.json" }}
             - bt_core_nm_
       - run:
+          name: Yarn Install
+          command: yarn install
+      - save_cache:
+          key: bt_core_nm_{{ checksum "package.json" }}
+          paths:
+            - node_modules/
+      - run:
           name: Test
           command: |
-            yarn install
             yarn lint
             yarn init-local
             npx nyc yarn test
             yarn coverage
           environment:
             NODE_ENV: test
-      - save_cache:
-          key: bt_core_nm_{{ checksum "package.json" }}
-          paths:
-            - node_modules/
 
   deploy-image-dev:
     machine:
@@ -47,6 +49,17 @@ jobs:
       image: circleci/classic:201808-01
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - bt_core_nm_prod_{{ checksum "package.json" }}
+            - bt_core_nm_prod_
+      - run:
+          name: Get Production Dependencies
+          command: yarn install --production
+      - save_cache:
+          key: bt_core_nm_prod_{{ checksum "package.json" }}
+          paths:
+            - node_modules/
       - run:
           name: Build Docker Image
           command: docker build -t bottom-time/core .
@@ -68,6 +81,17 @@ jobs:
       image: circleci/classic:201808-01
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - bt_core_nm_prod_{{ checksum "package.json" }}
+            - bt_core_nm_prod_
+      - run:
+          name: Get Production Dependencies
+          command: yarn install --production
+      - save_cache:
+          key: bt_core_nm_prod_{{ checksum "package.json" }}
+          paths:
+            - node_modules/
       - run:
           name: Build Docker Image
           command: docker build -t bottom-time/core .

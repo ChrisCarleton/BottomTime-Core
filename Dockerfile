@@ -1,15 +1,9 @@
-FROM	node:15.6.0
+FROM	node:15.6.0-alpine
 
 ENV		NODE_ENV production
-
 RUN		mkdir -p /usr/share/bottomtime/temp/media/images
 WORKDIR	/usr/share/bottomtime
-ADD     package.json .
-ADD     yarn.lock .
-ADD     .babelrc .
-ADD     service/ .
-
-RUN		yarn install --production
+ADD     package.json yarn.lock .babelrc service/ node_modules/ ./
 
 CMD		[ "yarn", "serve" ]
 EXPOSE	29201
