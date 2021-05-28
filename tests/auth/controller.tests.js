@@ -5,11 +5,11 @@ import { expect } from 'chai';
 import faker from 'faker';
 import fakeUser from '../util/fake-user';
 import mailer from '../../service/mail/mailer';
+import moment from 'moment';
 import request from 'supertest';
 import sinon from 'sinon';
 import templates from '../../service/mail/templates';
 import User from '../../service/data/user';
-import moment from 'moment';
 
 describe('Auth Controller', () => {
 

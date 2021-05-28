@@ -85,7 +85,7 @@ export async function ResetPassword(req, res) {
 
 		const mailTemplate = templates.ResetPasswordEmail(
 			user.username,
-			user.username,
+			user.getFriendlyName(),
 			user.passwordResetToken
 		);
 
