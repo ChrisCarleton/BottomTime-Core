@@ -92,7 +92,7 @@ export async function ResetPassword(req, res) {
 		await mailer.sendMail({
 			to: user.email,
 			subject: 'Reset BottomTime password',
-            html: mailTemplate
+			html: mailTemplate
 		});
 
 		return res.sendStatus(204);

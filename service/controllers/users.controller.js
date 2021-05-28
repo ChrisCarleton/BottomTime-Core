@@ -8,12 +8,9 @@ import {
 	UserAccountSchema,
 	UserQuerySchema
 } from '../validation/user';
-import mailer from '../mail/mailer';
 import moment from 'moment';
-import templates from '../mail/templates';
 import User from '../data/user';
 import { UsernameRegex, UsernameSchema } from '../validation/common';
-import { v4 as uuid } from 'uuid';
 import searchUtils from '../utils/search-utils';
 
 export async function GetUsers(req, res, next) {
@@ -321,44 +318,6 @@ export async function ChangePassword(req, res) {
 		res.sendStatus(204);
 	} catch (err) {
 		const logId = req.logError('Failed to save new password', err);
-		serverError(res, logId);
-	}
-}
-
-export async function RequestPasswordReset(req, res) {
-	try {
-		let token = null;
-		let userEntity = null;
-
-		const user = await User.findByUsername(req.params.username);
-		if (!user) {
-			return res.sendStatus(204);
-		}
-
-		userEntity = user;
-		token = uuid();
-		user.passwordResetToken = token;
-		user.passwordResetExpiration = moment().add(1, 'd').utc().toDate();
-
-		const entity = await user.save();
-		if (!entity) {
-			return res.sendStatus(204);
-		}
-
-		const mailTemplate = templates.ResetPasswordEmail(
-			userEntity.username,
-			userEntity.username,
-			token);
-
-		await mailer.sendMail({
-			to: userEntity.email,
-			subject: 'Reset BottomTime password',
-			html: mailTemplate
-		});
-
-		res.sendStatus(204);
-	} catch (err) {
-		const logId = req.logError('Failed establish password reset window. See details.', err);
 		serverError(res, logId);
 	}
 }

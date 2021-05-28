@@ -5,7 +5,6 @@ import {
 	ConfirmPasswordReset,
 	CreateUserAccount,
 	GetUsers,
-	RequestPasswordReset,
 	RequireAccountPermission,
 	RequireUserForRegistration
 } from '../controllers/users.controller';
