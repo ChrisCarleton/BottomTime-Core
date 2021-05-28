@@ -167,6 +167,14 @@ function validateCreateUserAccount(req, res) {
 	return true;
 }
 
+export async function GetUserAccount(req, res) {
+	try {
+
+	} catch (err) {
+
+	}
+}
+
 export async function CreateUserAccount(req, res) {
 	if (!validateCreateUserAccount(req, res)) {
 		return;

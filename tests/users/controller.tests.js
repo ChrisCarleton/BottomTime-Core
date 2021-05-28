@@ -51,6 +51,36 @@ describe('Users Controller', () => {
 		}
 	});
 
+	describe('GET /users/:username', () => {
+		it('Anonymous users will receive a 401 error response', async () => {
+
+		});
+
+		it('Regular users will receive a 403 response if they try to access their own account', async () => {
+
+		});
+
+		it('Regular users will receive a 403 response if they try to access another user\'s account', async () => {
+
+		});
+
+		it('Regular users will receive a 403 response if they try to access a non-existent account', async () => {
+
+		});
+
+		it('Administrators will receive a 404 response if they try to access a non-existent account', async () => {
+
+		});
+
+		it('Administrators can retrieve user account information', async () => {
+
+		});
+
+		it('A 500 server error response is returned if something goes wrong', async () => {
+
+		});
+	});
+
 	describe('PUT /users/:username', () => {
 		it('Anonymous users can create accounts and will receive an auth token', async () => {
 			const fake = createNewAccountRequest();
