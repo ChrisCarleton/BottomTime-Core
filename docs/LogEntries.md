@@ -116,7 +116,8 @@ suitable to be returned in queries for many log entries.
 	"location": "String: Up to 200 characters",
 	"site": "String: Up to 200 characters",
 	"bottomTime": "Number: Bottom time minutes",
-	"maxDepth": "Number: Maximum depth in meters"
+	"maxDepth": "Number: Maximum depth in meters", 
+  	"comments": "String: The comments made on the log."
 }
 ```
 
@@ -128,24 +129,17 @@ Queries a user's log book for log entries.
 * **userName** - Name of the user whose log book the entries will be queried from.
 
 #### Query Parameters
+* **query** - Include this parameter to search for a string or phrase in the user's logs.
 * **count** - Maximum number of records to return in the query. Can be any number between 1 and 1000.
 * **sortBy** - The field on which the returned entries should be sorted. Allowed values are **entryTime**,
 **bottomTime**, and **maxDepth**. The default is **entryTime**.
 * **sortOrder** - The order in which sorted entries should be returned. Allowed values are **asc**
 (ascending order), and **desc** (descending order.) The default value is **desc**.
-* **lastSeen** - For searches where some results have already been shown, the **lastSeen** value should be
-set to the entryTime, maxDepth, or bottomTime (depending on the value of the **sortBy** parameter) of the
-last entry returned in the previous query. This tells the API that the search should resume at or beyond
-that value.
-* **seenIds** - For searches where some results have already been show, the **seenIds** value should be
-set to an array of entryIds that should be excluded from the results. Example: A search was made for entries
-ordered by bottomTime in descending order. The last entry returned had a bottomTime of 38 minutes. To
-continue getting more results **lastSeen** should be set to 38, and **seenIds** should be a comma-separated
-list of all entry Ids that have already been returned where bottomTime is 38 minutes (so that they are not
-repeated in the next set of results.)
+* **skip** - Skip over the first _n_ results. Used for pagination or "load more" scenarios.
 
 **NOTE:** The **sortBy** and **sortOrder** parameters are a pair. If one is included in the query string,
-then the other is also required.
+then the other is also required. If `query` is included then `sortBy` and `sortOrder` will be ignored. Results will
+be returned in order of relevance to the search query.
 
 #### Responses
 HTTP Status Code | Details

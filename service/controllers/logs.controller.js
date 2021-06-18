@@ -8,7 +8,9 @@ import {
 } from '../validation/log-entry';
 import Joi from 'joi';
 import LogEntry from '../data/log-entry';
+import searchUtils from "../utils/search-utils";
 
+// TODO: Fix this to work with skip instead of lastSeen and seenIds. Blech!
 function getWhereClauseForSearch(query) {
 	const whereClause = {};
 	const operator = query.sortOrder === 'asc' ? '$gte' : '$lte';
@@ -41,7 +43,8 @@ function getWhereClauseForSearch(query) {
 	return whereClause;
 }
 
-export async function ListLogs(req, res) {
+// TODO: Remove deprecated function
+export async function ListLogs(req, res, next) {
 	try {
 		const isValid = EntryQueryParamsSchema.validate(req.query);
 		if (isValid.error) {
@@ -49,6 +52,10 @@ export async function ListLogs(req, res) {
 				'Could not complete the request. Check the query string parameters and try again.',
 				isValid.error,
 				res);
+		}
+
+		if (req.query.query) {
+			return next();
 		}
 
 		const query = req.query || {};
@@ -62,7 +69,7 @@ export async function ListLogs(req, res) {
 		const entries = await LogEntry
 			.find({ userId: req.account.id })
 			.where(whereClause)
-			.select('_id entryTime location site bottomTime maxDepth')
+			.select('_id entryTime location site bottomTime maxDepth comments rating tags')
 			.sort(sortOrder)
 			.limit(parseInt(query.count, 10) || 100)
 			.exec();
@@ -72,6 +79,54 @@ export async function ListLogs(req, res) {
 		const logId = req.logError(
 			'Failed to query database records',
 			err);
+		serverError(res, logId);
+	}
+}
+
+// TODO: Adapt this to work with log entries
+export async function SearchLogs(req, res) {
+    const isValid = EntryQueryParamsSchema.validate(req.query);
+    if (isValid.error) {
+        return badRequest(
+            'Could not complete the request. Check the query string parameters and try again.',
+            isValid.error,
+            res);
+    }
+
+    try {
+		const esQuery = searchUtils.getBaseQuery();
+		searchUtils.setLimits(esQuery, req.query.skip, req.query.count);
+		searchUtils.addSearchTerm(esQuery, req.query.query, [
+		    'tags^10',
+			'comments^2',
+			'location^5',
+			'site^4'
+		]);
+		searchUtils.selectFields(esQuery, [
+			'_id',
+			'entryTime',
+			'location',
+			'site',
+			'bottomTime',
+			'maxDepth',
+			'comments',
+			'rating',
+			'tags'
+		]);
+		searchUtils.addFilter(esQuery, {
+			term: {
+				userId: req.account.id
+			}
+		});
+		searchUtils.addSorting(esQuery, req.query.sortBy, req.query.sortOrder);
+
+		const results = await LogEntry.esSearch(esQuery);
+		res.json(results.body.hits.hits.map(hit => ({
+			...hit._source,
+			score: hit._score
+		})));
+	} catch (err) {
+		const logId = req.logError('Unable to search for log entries', err);
 		serverError(res, logId);
 	}
 }

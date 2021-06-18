@@ -95,19 +95,9 @@ export const UpdateEntrySchema = Joi.object().keys({
 });
 
 export const EntryQueryParamsSchema = Joi.object().keys({
+    query: Joi.string(),
 	count: Joi.number().integer().min(1).max(1000),
 	sortBy: Joi.string().valid('entryTime', 'maxDepth', 'bottomTime'),
 	sortOrder: Joi.string().valid('asc', 'desc'),
-	lastSeen: Joi.alternatives().conditional(
-		'sortBy',
-		{
-			is: 'entryTime',
-			then: Joi.string().isoDate(),
-			otherwise: Joi.number().positive()
-		}
-	),
-	seenIds: Joi.alternatives().try(
-		Joi.string().hex().length(24),
-		Joi.array().items(Joi.string().hex().length(24))
-	)
-}).and('sortBy', 'sortOrder').with('seenIds', 'lastSeen');
+    skip: Joi.number().integer().min(0),
+}).and('sortBy', 'sortOrder');

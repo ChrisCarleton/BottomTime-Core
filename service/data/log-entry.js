@@ -1,31 +1,61 @@
 import _ from 'lodash';
+import config from '../config';
+import mexp from 'mongoose-elasticsearch-xp';
 import moment from 'moment';
 import mongoose from './database';
+import search from '../search';
 
+// TODO: Add ElasticSearch indexing
 const logEntrySchema = mongoose.Schema({
 	userId: {
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'User',
 		required: true,
-		index: true
+		index: true,
+		es_indexed: true,
+		es_type: 'keyword'
 	},
-	diveNumber: Number,
+	diveNumber: {
+		type: Number,
+		es_indexed: true,
+		es_type: 'integer'
+	},
 	entryTime: {
 		type: Date,
 		required: true,
-		index: true
+		index: true,
+		es_indexed: true,
+		es_type: 'date'
 	},
 	location: String,
 	site: String,
 	gps: {
 		type: [ Number ],
-		index: '2dsphere'
+		index: '2dsphere',
+		es_indexed: true,
+		es_type: 'geo_point'
 	},
-	bottomTime: Number,
-	totalTime: Number,
+	bottomTime: {
+		type: Number,
+		es_indexed: true,
+		es_type: 'float'
+	},
+	totalTime: {
+		type: Number,
+		es_indexed: true,
+		es_type: 'float'
+	},
 	surfaceInterval: Number,
-	maxDepth: Number,
-	averageDepth: Number,
+	maxDepth: {
+		type: Number,
+		es_indexed: true,
+		es_type: 'float'
+	},
+	averageDepth: {
+		type: Number,
+		es_indexed: true,
+		es_type: 'float'
+	},
 	air: [
 		{
 			in: Number,
@@ -70,7 +100,9 @@ const logEntrySchema = mongoose.Schema({
 	rating: {
 		type: Number,
 		index: true,
-		sparse: true
+		sparse: true,
+        es_indexed: true,
+		es_type: 'float'
 	},
 	visibility: Number,
 	wind: Number,
@@ -78,8 +110,15 @@ const logEntrySchema = mongoose.Schema({
 	waterChoppiness: Number,
 	weather: String,
 	suit: String,
-	tags: [ String ],
-	comments: String,
+	tags: {
+		type: [ String ],
+		es_indexed: true
+	},
+	comments: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
 	signatures: [
 		{
 			user: {
@@ -95,6 +134,11 @@ const logEntrySchema = mongoose.Schema({
 		}
 	]
 	// facility: {}
+});
+
+logEntrySchema.plugin(mexp, {
+	index: `${ config.elasticSearchIndex }_diveLogs`,
+	client: search
 });
 
 logEntrySchema.statics.searchByUser = function (userId, options, done) {
