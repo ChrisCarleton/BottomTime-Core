@@ -138,8 +138,7 @@ Queries a user's log book for log entries.
 * **skip** - Skip over the first _n_ results. Used for pagination or "load more" scenarios.
 
 **NOTE:** The **sortBy** and **sortOrder** parameters are a pair. If one is included in the query string,
-then the other is also required. If `query` is included then `sortBy` and `sortOrder` will be ignored. Results will
-be returned in order of relevance to the search query.
+then the other is also required.
 
 #### Responses
 HTTP Status Code | Details
