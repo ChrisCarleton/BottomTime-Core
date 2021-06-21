@@ -172,6 +172,16 @@ describe('Log Entry Searching', () => {
 			expect(result.status).to.equal(200);
 			expect(result.body).to.be.an('Array');
 		});
+
+		it('Only logs belonging to the specified user will be returned', async () => {
+			const result = await request(App)
+				.get(`/users/${ publicUser.user.username }/logs`)
+				.set(...publicUser.authHeader);
+			const userIds = (await LogEntry.find({ userId: publicUser.user._id })).map(entry => entry.userId);
+			userIds.forEach(id => {
+				expect(id).to.eql(publicUser.user._id);
+			});
+		});
 	});
 
 	describe('Parameters', () => {
