@@ -121,7 +121,8 @@ const logEntrySchema = mongoose.Schema({
 	suit: String,
 	tags: {
 		type: [ String ],
-		es_indexed: true
+		es_indexed: true,
+		es_type: 'text'
 	},
 	comments: {
 		type: String,
