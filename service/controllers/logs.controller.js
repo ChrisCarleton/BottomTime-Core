@@ -59,7 +59,6 @@ export async function SearchLogs(req, res) {
 		})));
 	} catch (err) {
 		const logId = req.logError('Unable to search for log entries', err);
-		req.log.fatal(err);
 		serverError(res, logId);
 	}
 }

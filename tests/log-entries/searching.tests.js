@@ -387,6 +387,22 @@ describe('Log Entry Searching', () => {
 				expect(results[i].score).to.be.at.most(results[i - 1].score);
 			}
 		});
+
+		it('Will return a 500 error if call to ElasticSearch fails', async () => {
+			stub = sinon.stub(LogEntry, 'esSearch');
+			stub.rejects('Nope');
+
+			const result = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
+				.query({
+					query: 'lake night',
+					count: 100
+				})
+				.expect(500);
+
+			expect(result.body).to.be.a.serverErrorResponse;
+		});
 	});
 
 	describe('Load more', () => {
