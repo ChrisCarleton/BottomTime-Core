@@ -7,7 +7,6 @@ import moment from 'moment';
 import mongoose from './database';
 import search from '../search';
 
-// TODO: Add ElasticSearch indexing
 const logEntrySchema = mongoose.Schema({
 	userId: {
 		type: mongoose.Schema.Types.ObjectId,

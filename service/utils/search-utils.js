@@ -45,7 +45,7 @@ export default {
 	},
 
 	setLimits: (esQuery, skip, count) => {
-	    count = count || 500;
+		count = count || 500;
 		esQuery.size = typeof count === 'string' ? parseInt(count, 10) : count;
 
 		if (skip) {

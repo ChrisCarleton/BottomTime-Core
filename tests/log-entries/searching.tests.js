@@ -367,7 +367,6 @@ describe('Log Entry Searching', () => {
 					count: 100
 				});
 			results = results.body;
-			console.log(JSON.stringify(results, null, ' '));
 			expect(results).to.be.an('Array');
 			expect(results).to.not.be.empty;
 			expect(results.length).to.be.at.most(100);
