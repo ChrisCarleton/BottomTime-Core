@@ -27,7 +27,9 @@ function sleep(duration) {
 		try {
 			await storage.headBucket({ Bucket: config.mediaBucket }).promise();
 			bucketExists = true;
-		} catch (err) {}
+		} catch (err) {
+			// Exception is expected if bucket does not exist
+		}
 
 		if (!bucketExists) {
 			await storage.createBucket({ Bucket: config.mediaBucket }).promise();
@@ -59,14 +61,14 @@ function sleep(duration) {
 			log(' *', index);
 			const exists = await esClient.indices.exists({ index });
 
-			if (!exists.body) {
-				await esClient.indices.create({ index });
-			} else {
+			if (exists.body) {
 				log('   (already exists)');
+			} else {
+				await esClient.indices.create({ index });
 			}
 		}
 
-        // Types have been deprecated. No longer used in ES7+.
+		// Types have been deprecated. No longer used in ES7+.
 		// log('Creating ElasticSearch types...');
 		// await require('../service/data/sites').esCreateMapping();
 		// await require('../service/data/user').esCreateMapping();
