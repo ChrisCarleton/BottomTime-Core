@@ -357,6 +357,25 @@ describe('Log Entry Searching', () => {
 				.set(...friendsOnlyUser.authHeader)
 				.expect(500);
 		});
+
+		it('Will return results based on a search query ordered by relevance', async () => {
+			let results = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
+				.query({
+					query: 'lake night',
+					count: 100
+				});
+			results = results.body;
+			console.log(JSON.stringify(results, null, ' '));
+			expect(results).to.be.an('Array');
+			expect(results).to.not.be.empty;
+			expect(results.length).to.be.at.most(100);
+
+			for (let i = 1; i < results.length; i++) {
+				expect(results[i].score).to.be.at.most(results[i - 1].score);
+			}
+		});
 	});
 
 	describe('Load more', () => {
