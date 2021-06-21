@@ -174,12 +174,14 @@ describe('Log Entry Searching', () => {
 		});
 
 		it('Only logs belonging to the specified user will be returned', async () => {
-			const result = await request(App)
+			const { body } = await request(App)
 				.get(`/users/${ publicUser.user.username }/logs`)
 				.set(...publicUser.authHeader);
-			const userIds = (await LogEntry.find({ userId: publicUser.user._id })).map(entry => entry.userId);
-			userIds.forEach(id => {
-				expect(id).to.eql(publicUser.user._id);
+
+			const expectedIds = (await LogEntry.find({ userId: publicUser.user._id }))
+				.map(entry => entry._id.toString());
+			body.forEach(result => {
+				expect(expectedIds).to.contain(result.entryId);
 			});
 		});
 	});
