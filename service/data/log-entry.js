@@ -1,3 +1,5 @@
+/* eslint camelcase: 0 */
+
 import _ from 'lodash';
 import config from '../config';
 import mexp from 'mongoose-elasticsearch-xp';
@@ -27,8 +29,16 @@ const logEntrySchema = mongoose.Schema({
 		es_indexed: true,
 		es_type: 'date'
 	},
-	location: String,
-	site: String,
+	location: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
+	site: {
+		type: String,
+		es_indexed: true,
+		es_type: 'text'
+	},
 	gps: {
 		type: [ Number ],
 		index: '2dsphere',
@@ -101,7 +111,7 @@ const logEntrySchema = mongoose.Schema({
 		type: Number,
 		index: true,
 		sparse: true,
-        es_indexed: true,
+		es_indexed: true,
 		es_type: 'float'
 	},
 	visibility: Number,
@@ -137,7 +147,7 @@ const logEntrySchema = mongoose.Schema({
 });
 
 logEntrySchema.plugin(mexp, {
-	index: `${ config.elasticSearchIndex }_diveLogs`,
+	index: `${ config.elasticSearchIndex }_dive_logs`,
 	client: search
 });
 
@@ -247,4 +257,6 @@ logEntrySchema.methods.assign = function (entity) {
 	}
 };
 
-export default mongoose.model('LogEntry', logEntrySchema);
+const model = mongoose.model('LogEntry', logEntrySchema);
+export default model;
+module.exports = model;

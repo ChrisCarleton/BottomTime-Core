@@ -95,9 +95,9 @@ export const UpdateEntrySchema = Joi.object().keys({
 });
 
 export const EntryQueryParamsSchema = Joi.object().keys({
-    query: Joi.string(),
+	query: Joi.string(),
 	count: Joi.number().integer().min(1).max(1000),
 	sortBy: Joi.string().valid('entryTime', 'maxDepth', 'bottomTime'),
 	sortOrder: Joi.string().valid('asc', 'desc'),
-    skip: Joi.number().integer().min(0),
+	skip: Joi.number().integer().min(0)
 }).and('sortBy', 'sortOrder');

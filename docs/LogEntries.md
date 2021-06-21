@@ -131,10 +131,10 @@ Queries a user's log book for log entries.
 #### Query Parameters
 * **query** - Include this parameter to search for a string or phrase in the user's logs.
 * **count** - Maximum number of records to return in the query. Can be any number between 1 and 1000.
-* **sortBy** - The field on which the returned entries should be sorted. Allowed values are **entryTime**,
-**bottomTime**, and **maxDepth**. The default is **entryTime**.
+* **sortBy** - The field on which the returned entries should be sorted. Allowed values are **relevance**, **entryTime**,
+**bottomTime**, and **maxDepth**. The default is **relevance** if a search query is provided, otherwise, **entryTime**.
 * **sortOrder** - The order in which sorted entries should be returned. Allowed values are **asc**
-(ascending order), and **desc** (descending order.) The default value is **desc**.
+(ascending order), and **desc** (descending order.) The default value will be **desc**.
 * **skip** - Skip over the first _n_ results. Used for pagination or "load more" scenarios.
 
 **NOTE:** The **sortBy** and **sortOrder** parameters are a pair. If one is included in the query string,

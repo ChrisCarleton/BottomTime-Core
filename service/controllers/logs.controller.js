@@ -8,7 +8,7 @@ import {
 } from '../validation/log-entry';
 import Joi from 'joi';
 import LogEntry from '../data/log-entry';
-import searchUtils from "../utils/search-utils";
+import searchUtils from '../utils/search-utils';
 
 // TODO: Fix this to work with skip instead of lastSeen and seenIds. Blech!
 function getWhereClauseForSearch(query) {
@@ -85,19 +85,24 @@ export async function ListLogs(req, res, next) {
 
 // TODO: Adapt this to work with log entries
 export async function SearchLogs(req, res) {
-    const isValid = EntryQueryParamsSchema.validate(req.query);
-    if (isValid.error) {
-        return badRequest(
-            'Could not complete the request. Check the query string parameters and try again.',
-            isValid.error,
-            res);
-    }
+	const isValid = EntryQueryParamsSchema.validate(req.query);
+	if (isValid.error) {
+		return badRequest(
+			'Could not complete the request. Check the query string parameters and try again.',
+			isValid.error,
+			res);
+	}
 
-    try {
+	if (!req.query.sortBy) {
+		req.query.sortBy = req.query.query ? 'relevance' : 'entryTime';
+		req.query.sortOrder = 'desc';
+	}
+
+	try {
 		const esQuery = searchUtils.getBaseQuery();
-		searchUtils.setLimits(esQuery, req.query.skip, req.query.count);
+		searchUtils.setLimits(esQuery, req.query.skip, req.query.count || 200);
 		searchUtils.addSearchTerm(esQuery, req.query.query, [
-		    'tags^10',
+			'tags^10',
 			'comments^2',
 			'location^5',
 			'site^4'
@@ -123,10 +128,12 @@ export async function SearchLogs(req, res) {
 		const results = await LogEntry.esSearch(esQuery);
 		res.json(results.body.hits.hits.map(hit => ({
 			...hit._source,
+			entryId: hit._id,
 			score: hit._score
 		})));
 	} catch (err) {
 		const logId = req.logError('Unable to search for log entries', err);
+		req.log.fatal(err);
 		serverError(res, logId);
 	}
 }

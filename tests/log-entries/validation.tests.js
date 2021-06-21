@@ -8,7 +8,6 @@ import {
 	NewEntrySchema,
 	UpdateEntrySchema
 } from '../../service/validation/log-entry';
-import moment from 'moment';
 
 let logEntry = null;
 let queryString = null;
@@ -884,14 +883,22 @@ describe('Entry query params validation', () => {
 	});
 
 	it('Skip must be a number', () => {
-
+		queryString.skip = 'two';
+		validateQueryParams('number.base');
 	});
 
 	it('Skip cannot be negative', () => {
-
+		queryString.skip = -1;
+		validateQueryParams('number.min');
 	});
 
 	it('Skip can be zero', () => {
+		queryString.skip = 0;
+		validateQueryParams();
+	});
 
+	it('Skip can be positive', () => {
+		queryString.skip = 500;
+		validateQueryParams();
 	});
 });
