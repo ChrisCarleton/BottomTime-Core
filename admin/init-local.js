@@ -49,12 +49,14 @@ function sleep(duration) {
 
 		await Promise.all([
 			esClient.indices.create({ index: `${ config.elasticSearchIndex }_sites` }),
-			esClient.indices.create({ index: `${ config.elasticSearchIndex }_users` })
+			esClient.indices.create({ index: `${ config.elasticSearchIndex }_users` }),
+			esClient.indices.create({ index: `${ config.elasticSearchIndex }_dive_logs` })
 		]);
 
 		log('Creating ElasticSearch types...');
 		await require('../service/data/sites').esCreateMapping();
 		await require('../service/data/user').esCreateMapping();
+		await require('../service/data/log-entry').esCreateMapping();
 		log('ElasticSearch has been initialized.');
 
 	} catch (err) {

@@ -8,70 +8,57 @@ import {
 } from '../validation/log-entry';
 import Joi from 'joi';
 import LogEntry from '../data/log-entry';
+import searchUtils from '../utils/search-utils';
 
-function getWhereClauseForSearch(query) {
-	const whereClause = {};
-	const operator = query.sortOrder === 'asc' ? '$gte' : '$lte';
-
-	if (query.lastSeen) {
-		switch (query.sortBy) {
-		case 'maxDepth':
-			whereClause.maxDepth = {};
-			whereClause.maxDepth[operator] = parseInt(query.lastSeen, 10);
-			break;
-		case 'bottomTime':
-			whereClause.bottomTime = {};
-			whereClause.bottomTime[operator] = parseInt(query.lastSeen, 10);
-			break;
-		default:
-			whereClause.entryTime = {};
-			whereClause.entryTime[operator] = Date.parse(query.lastSeen);
-			break;
-		}
-
-		if (query.seenIds) {
-			if (typeof (query.seenIds) === 'string') {
-				query.seenIds = [ query.seenIds ];
-			}
-
-			whereClause._id = { $nin: query.seenIds };
-		}
+export async function SearchLogs(req, res) {
+	const isValid = EntryQueryParamsSchema.validate(req.query);
+	if (isValid.error) {
+		return badRequest(
+			'Could not complete the request. Check the query string parameters and try again.',
+			isValid.error,
+			res);
 	}
 
-	return whereClause;
-}
+	if (!req.query.sortBy) {
+		req.query.sortBy = req.query.query ? 'relevance' : 'entryTime';
+		req.query.sortOrder = 'desc';
+	}
 
-export async function ListLogs(req, res) {
 	try {
-		const isValid = EntryQueryParamsSchema.validate(req.query);
-		if (isValid.error) {
-			return badRequest(
-				'Could not complete the request. Check the query string parameters and try again.',
-				isValid.error,
-				res);
-		}
+		const esQuery = searchUtils.getBaseQuery();
+		searchUtils.setLimits(esQuery, req.query.skip, req.query.count || 200);
+		searchUtils.addSearchTerm(esQuery, req.query.query, [
+			'tags^10',
+			'comments^2',
+			'location^5',
+			'site^4'
+		]);
+		searchUtils.selectFields(esQuery, [
+			'_id',
+			'entryTime',
+			'location',
+			'site',
+			'bottomTime',
+			'maxDepth',
+			'comments',
+			'rating',
+			'tags'
+		]);
+		searchUtils.addFilter(esQuery, {
+			term: {
+				userId: req.account.id
+			}
+		});
+		searchUtils.addSorting(esQuery, req.query.sortBy, req.query.sortOrder);
 
-		const query = req.query || {};
-		let sortOrder = '-entryTime';
-
-		if (query.sortBy) {
-			sortOrder = `${ query.sortOrder === 'asc' ? '' : '-' }${ query.sortBy }`;
-		}
-
-		const whereClause = getWhereClauseForSearch(query);
-		const entries = await LogEntry
-			.find({ userId: req.account.id })
-			.where(whereClause)
-			.select('_id entryTime location site bottomTime maxDepth')
-			.sort(sortOrder)
-			.limit(parseInt(query.count, 10) || 100)
-			.exec();
-
-		res.json(_.map(entries, r => r.toCleanJSON()));
+		const results = await LogEntry.esSearch(esQuery);
+		res.json(results.body.hits.hits.map(hit => ({
+			...hit._source,
+			entryId: hit._id,
+			score: hit._score
+		})));
 	} catch (err) {
-		const logId = req.logError(
-			'Failed to query database records',
-			err);
+		const logId = req.logError('Unable to search for log entries', err);
 		serverError(res, logId);
 	}
 }

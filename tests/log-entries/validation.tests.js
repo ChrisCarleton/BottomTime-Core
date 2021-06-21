@@ -8,7 +8,6 @@ import {
 	NewEntrySchema,
 	UpdateEntrySchema
 } from '../../service/validation/log-entry';
-import moment from 'moment';
 
 let logEntry = null;
 let queryString = null;
@@ -820,6 +819,11 @@ describe('Entry query params validation', () => {
 		};
 	});
 
+	it('Query must be a string', () => {
+		queryString.query = 4324;
+		validateQueryParams('string.base');
+	});
+
 	it('Validation succeeds if request is valid', () => {
 		validateQueryParams();
 	});
@@ -878,53 +882,23 @@ describe('Entry query params validation', () => {
 		validateQueryParams('object.and');
 	});
 
-	it('Will accept lastSeen and seenIds', () => {
-		queryString.lastSeen = '48';
-		queryString.seenIds = [ fakeMongoId(), fakeMongoId(), fakeMongoId() ];
-		validateQueryParams();
-	});
-
-	it('Will not accept seenIds without lastSeen', () => {
-		queryString.seenIds = [ fakeMongoId(), fakeMongoId(), fakeMongoId() ];
-		validateQueryParams('object.with');
-	});
-
-	it('lastSeen must be an ISO date when sorting by entryTime', () => {
-		queryString.sortBy = 'entryTime';
-		queryString.lastSeen = 48;
-		validateQueryParams('string.base');
-	});
-
-	it('lastSeen must be a number when sorting by maxDepth', () => {
-		queryString.sortBy = 'maxDepth';
-		queryString.lastSeen = moment().toISOString();
+	it('Skip must be a number', () => {
+		queryString.skip = 'two';
 		validateQueryParams('number.base');
 	});
 
-	it('lastSeen must be a number when sorting by bottomTime', () => {
-		queryString.sortBy = 'maxDepth';
-		queryString.lastSeen = 'seven';
-		validateQueryParams('number.base');
+	it('Skip cannot be negative', () => {
+		queryString.skip = -1;
+		validateQueryParams('number.min');
 	});
 
-	it('seenIds can be a single valid Id', () => {
-		queryString.lastSeen = '48';
-		queryString.seenIds = fakeMongoId();
+	it('Skip can be zero', () => {
+		queryString.skip = 0;
 		validateQueryParams();
 	});
 
-	it('seenIds can be an array of valid Ids', () => {
-		queryString.lastSeen = 48;
-		queryString.seenIds = [ fakeMongoId(), fakeMongoId() ];
+	it('Skip can be positive', () => {
+		queryString.skip = 500;
 		validateQueryParams();
-	});
-
-	it('seenIds must contain valid Ids', () => {
-		queryString.lastSeen = '48';
-		queryString.seenIds = [ 'a298a3b95f96bfie9e177978' ];
-		validateQueryParams('string.hex');
-
-		queryString.seenIds = 'a298a3b95f96bfe9e177978';
-		validateQueryParams('string.length');
 	});
 });

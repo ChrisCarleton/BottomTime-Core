@@ -12,6 +12,18 @@ import request from 'supertest';
 import sinon from 'sinon';
 import User from '../../service/data/user';
 
+const expectedKeys = [
+	'entryId',
+	'entryTime',
+	'maxDepth',
+	'location',
+	'site',
+	'bottomTime',
+	'rating',
+	'comments',
+	'tags',
+	'score'
+];
 const SameyEntryTimes = [
 	faker.date.past(3).toISOString(),
 	faker.date.past(3).toISOString(),
@@ -50,12 +62,17 @@ describe('Log Entry Searching', () => {
 				return newEntry;
 			})
 		);
+		await LogEntry.esSynchronize();
 	});
 
 	after(async () => {
 		await Promise.all([
 			LogEntry.deleteMany({}),
 			User.deleteMany({})
+		]);
+		await Promise.all([
+			LogEntry.esSynchronize(),
+			User.esSynchronize()
 		]);
 	});
 
@@ -155,6 +172,18 @@ describe('Log Entry Searching', () => {
 			expect(result.status).to.equal(200);
 			expect(result.body).to.be.an('Array');
 		});
+
+		it('Only logs belonging to the specified user will be returned', async () => {
+			const { body } = await request(App)
+				.get(`/users/${ publicUser.user.username }/logs`)
+				.set(...publicUser.authHeader);
+
+			const expectedIds = (await LogEntry.find({ userId: publicUser.user._id }))
+				.map(entry => entry._id.toString());
+			body.forEach(result => {
+				expect(expectedIds).to.contain(result.entryId);
+			});
+		});
 	});
 
 	describe('Parameters', () => {
@@ -173,17 +202,10 @@ describe('Log Entry Searching', () => {
 				.set(...friendsOnlyUser.authHeader);
 			results = results.body;
 			expect(results).to.be.an('Array');
-			expect(results).to.have.length(100);
+			expect(results).to.have.length(200);
 
 			for (let i = 0; i < results.length; i++) {
-				expect(results[i]).to.have.keys(
-					'entryId',
-					'entryTime',
-					'maxDepth',
-					'location',
-					'site',
-					'bottomTime'
-				);
+				expect(results[i]).to.have.keys(...expectedKeys);
 
 				if (i > 0) {
 					expect(Date.parse(results[i].entryTime))
@@ -202,7 +224,7 @@ describe('Log Entry Searching', () => {
 				});
 			results = results.body;
 			expect(results).to.be.an('Array');
-			expect(results).to.have.length(100);
+			expect(results).to.have.length(200);
 
 			for (let i = 1; i < results.length; i++) {
 				expect(Date.parse(results[i].entryTime))
@@ -220,7 +242,7 @@ describe('Log Entry Searching', () => {
 				});
 			results = results.body;
 			expect(results).to.be.an('Array');
-			expect(results).to.have.length(100);
+			expect(results).to.have.length(200);
 
 			for (let i = 1; i < results.length; i++) {
 				expect(Date.parse(results[i].entryTime))
@@ -238,7 +260,7 @@ describe('Log Entry Searching', () => {
 				});
 			results = results.body;
 			expect(results).to.be.an('Array');
-			expect(results).to.have.length(100);
+			expect(results).to.have.length(200);
 
 			for (let i = 1; i < results.length; i++) {
 				expect(results[i].maxDepth).to.be.at.most(results[i - 1].maxDepth);
@@ -255,7 +277,7 @@ describe('Log Entry Searching', () => {
 				});
 			results = results.body;
 			expect(results).to.be.an('Array');
-			expect(results).to.have.length(100);
+			expect(results).to.have.length(200);
 
 			for (let i = 1; i < results.length; i++) {
 				expect(results[i].maxDepth).to.be.at.least(results[i - 1].maxDepth);
@@ -272,7 +294,7 @@ describe('Log Entry Searching', () => {
 				});
 			results = results.body;
 			expect(results).to.be.an('Array');
-			expect(results).to.have.length(100);
+			expect(results).to.have.length(200);
 
 			for (let i = 1; i < results.length; i++) {
 				expect(results[i].bottomTime).to.be.at.most(results[i - 1].bottomTime);
@@ -289,7 +311,7 @@ describe('Log Entry Searching', () => {
 				});
 			results = results.body;
 			expect(results).to.be.an('Array');
-			expect(results).to.have.length(100);
+			expect(results).to.have.length(200);
 
 			for (let i = 1; i < results.length; i++) {
 				expect(results[i].bottomTime).to.be.at.least(results[i - 1].bottomTime);
@@ -347,6 +369,40 @@ describe('Log Entry Searching', () => {
 				.set(...friendsOnlyUser.authHeader)
 				.expect(500);
 		});
+
+		it('Will return results based on a search query ordered by relevance', async () => {
+			let results = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
+				.query({
+					query: 'lake night',
+					count: 100
+				});
+			results = results.body;
+			expect(results).to.be.an('Array');
+			expect(results).to.not.be.empty;
+			expect(results.length).to.be.at.most(100);
+
+			for (let i = 1; i < results.length; i++) {
+				expect(results[i].score).to.be.at.most(results[i - 1].score);
+			}
+		});
+
+		it('Will return a 500 error if call to ElasticSearch fails', async () => {
+			stub = sinon.stub(LogEntry, 'esSearch');
+			stub.rejects('Nope');
+
+			const result = await request(App)
+				.get(`/users/${ friendsOnlyUser.user.username }/logs`)
+				.set(...friendsOnlyUser.authHeader)
+				.query({
+					query: 'lake night',
+					count: 100
+				})
+				.expect(500);
+
+			expect(result.body).to.be.a.serverErrorResponse;
+		});
 	});
 
 	describe('Load more', () => {
@@ -372,25 +428,13 @@ describe('Log Entry Searching', () => {
 			expect(results).to.be.an('Array');
 			expect(results).to.have.length(50);
 
-			const seenIds = [];
-			const lastSeen = results[results.length - 1][sortBy];
-
-			for (let i = results.length - 1; i >= 0; i--) {
-				if (results[i][sortBy] === lastSeen) {
-					seenIds.push(results[i].entryId);
-				} else {
-					break;
-				}
-			}
-
 			const more = await request(App)
 				.get(`/users/${ privateUser.user.username }/logs`)
 				.query({
 					count: 50,
+					skip: 50,
 					sortBy,
-					sortOrder,
-					lastSeen,
-					seenIds
+					sortOrder
 				})
 				.set(...privateUser.authHeader);
 

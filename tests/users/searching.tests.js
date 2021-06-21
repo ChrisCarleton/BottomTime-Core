@@ -90,8 +90,7 @@ describe('User searching', () => {
 			expect(body).to.be.descendingBy('score');
 		});
 
-		// TODO: Tests for 'username' sort order are breaking. What's going on? Pls fix.
-		[ 'relevance', 'created' ].forEach(sortBy => {
+		[ 'relevance', 'created', 'username' ].forEach(sortBy => {
 			[ 'asc', 'desc' ].forEach(sortOrder => {
 				it(`Can return results sorted by ${ sortBy } (${ sortOrder })`, async () => {
 					const count = 25;

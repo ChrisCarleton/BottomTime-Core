@@ -21,8 +21,8 @@ import {
 	DeleteLog,
 	DeleteLogs,
 	GetLog,
-	ListLogs,
 	RetrieveLogEntry,
+	SearchLogs,
 	UpdateLog,
 	UpdateLogs
 } from '../controllers/logs.controller';
@@ -35,7 +35,7 @@ const DownloadImageRoute = `${ ImageRoute }/:imageType(image|thumbnail)`;
 
 module.exports = app => {
 	app.route(LogsRoute)
-		.get(RetrieveUserAccount, AssertUserReadPermission, ListLogs)
+		.get(RetrieveUserAccount, AssertUserReadPermission, SearchLogs)
 		.post(RetrieveUserAccount, AssertUserWritePermission, CreateLogs)
 		.put(RetrieveUserAccount, AssertUserWritePermission, UpdateLogs)
 		.delete(RetrieveUserAccount, AssertUserWritePermission, DeleteLogs);

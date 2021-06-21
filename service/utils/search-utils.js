@@ -34,9 +34,10 @@ export default {
 	},
 
 	addSorting: (esQuery, sortBy, sortOrder, mappings) => {
+		mappings = mappings || {};
 		if (sortBy) {
-			const fieldName = mappings[sortBy];
-			if (fieldName) {
+			const fieldName = mappings[sortBy] || sortBy;
+			if (fieldName && fieldName !== 'relevance') {
 				esQuery.sort = {};
 				esQuery.sort[fieldName] = { order: sortOrder || 'asc' };
 			}
@@ -44,12 +45,11 @@ export default {
 	},
 
 	setLimits: (esQuery, skip, count) => {
-		esQuery.size = count
-			? parseInt(count, 10)
-			: 500;
+		count = count || 500;
+		esQuery.size = typeof count === 'string' ? parseInt(count, 10) : count;
 
 		if (skip) {
-			esQuery.from = parseInt(skip, 10);
+			esQuery.from = typeof skip === 'string' ? parseInt(skip, 10) : skip;
 		}
 	},
 
