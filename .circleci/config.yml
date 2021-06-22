@@ -12,7 +12,7 @@ jobs:
           BT_S3_ENDPOINT: http://s3:4569/
       - image: mongo:2.6.8
         name: mongo
-      - image: elasticsearch:7.12.1
+      - image: elasticsearch:7.13.2
         name: es
         environment:
           discovery.type: single-node
