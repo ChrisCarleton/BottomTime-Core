@@ -16,6 +16,7 @@ jobs:
         name: es
         environment:
           discovery.type: single-node
+          ES_JAVA_OPTS: -Xms750m -Xmx750m
       - image: lphoward/fake-s3:latest
         name: s3
       - image: tecnativa/smtp-sink:latest
