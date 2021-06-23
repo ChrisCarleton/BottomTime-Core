@@ -35,6 +35,7 @@ export async function SearchLogs(req, res) {
 		]);
 		searchUtils.selectFields(esQuery, [
 			'_id',
+			'diveNumber',
 			'entryTime',
 			'location',
 			'site',
