@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import config from '../config';
-import mexp from 'mongoose-elasticsearch-xp';
+import { v7 as mexp } from 'mongoose-elasticsearch-xp';
 import moment from 'moment';
 import mongoose from './database';
 import search from '../search';
@@ -121,7 +121,8 @@ const logEntrySchema = mongoose.Schema({
 	suit: String,
 	tags: {
 		type: [ String ],
-		es_indexed: true
+		es_indexed: true,
+		es_type: 'text'
 	},
 	comments: {
 		type: String,

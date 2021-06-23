@@ -26,7 +26,7 @@ import User from '../service/data/user';
 (async () => {
 	try {
 		const users = _.map(
-			new Array(faker.random.number({ min: 200, max: 400 })),
+			new Array(faker.datatype.number({ min: 200, max: 400 })),
 			() => new User(fakeUser('bottomtime'))
 		);
 
@@ -70,7 +70,7 @@ import User from '../service/data/user';
 
 		await mapLimit(users, 20, async (u, cb) => {
 			const diveSites = _.map(
-				new Array(faker.random.number({ min: 4, max: 40 })),
+				new Array(faker.datatype.number({ min: 4, max: 40 })),
 				() => toDiveSite(fakeDiveSite(u.username))
 			);
 
@@ -80,7 +80,7 @@ import User from '../service/data/user';
 			diveSites.forEach(s => {
 				let ratingsSum = 0;
 				const ratings = _.map(
-					new Array(faker.random.number({ min: 1, max: 300 })),
+					new Array(faker.datatype.number({ min: 1, max: 300 })),
 					() => {
 						const rating = toDiveSiteRating(
 							fakeDiveSiteRating(),
@@ -120,7 +120,7 @@ import User from '../service/data/user';
 		log('Creating a boat-load of log entries (this could take a while)...');
 		await mapLimit(users, 30, async (u, cb) => {
 			const logEntries = _.map(
-				new Array(faker.random.number({ min: 50, max: 500 })),
+				new Array(faker.datatype.number({ min: 50, max: 500 })),
 				() => toLogEntry(fakeLogEntry(u._id))
 			);
 			totalEntries += logEntries.length;
@@ -134,18 +134,18 @@ import User from '../service/data/user';
 		});
 
 		log(`Created ${ chalk.bold(totalEntries) } log entries.`);
-
-		// Will need this when we start indexing log entries:
-		// log('Syncing ES...');
-		// await LogEntry.esSynchronize();
-		// log('Done');
+		log('Syncing ES...');
+		await LogEntry.esSynchronize();
+		log('Done');
 	} catch (err) {
 		log.error(chalk.red(err));
 		process.exitCode = 1;
 	} finally {
 		log('Closing connections...');
-		search.close();
-		await database.connection.close();
+		await Promise.all([
+			search.close(),
+			database.connection.close()
+		]);
 		log('Task completed.');
 	}
 })();

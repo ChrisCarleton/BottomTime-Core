@@ -5,9 +5,12 @@ import log from './logger';
 const params = {
 	apiVersion: '2006-03-01',
 	signatureVersion: 'v4',
-	s3ForcePathStyle: true,
-	endpoint: config.s3Endpoint === 's3' ? null : new AWS.Endpoint(config.s3Endpoint)
+	s3ForcePathStyle: true
 };
+
+if (config.s3Endpoint !== 's3') {
+	params.endpoint = new AWS.Endpoint(config.s3Endpoint);
+}
 
 if (params.endpoint) {
 	log.debug('Initializing S3 client with endpoint:', params.endpoint);

@@ -3,7 +3,7 @@
 import _ from 'lodash';
 import config from '../config';
 import mongoose from './database';
-import { v6 as mexp } from 'mongoose-elasticsearch-xp';
+import { v7 as mexp } from 'mongoose-elasticsearch-xp';
 import search from '../search';
 
 require('./site-ratings');

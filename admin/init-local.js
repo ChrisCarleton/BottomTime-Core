@@ -21,11 +21,19 @@ function sleep(duration) {
 }
 
 (async () => {
-	log('Creating local S3 Buckets...');
+	log('Creating S3 Buckets...');
 	try {
-		await storage.createBucket({
-			Bucket: 'BottomTime-Media'
-		}).promise();
+		let bucketExists = false;
+		try {
+			await storage.headBucket({ Bucket: config.mediaBucket }).promise();
+			bucketExists = true;
+		} catch (err) {
+			// Exception is expected if bucket does not exist
+		}
+
+		if (!bucketExists) {
+			await storage.createBucket({ Bucket: config.mediaBucket }).promise();
+		}
 		log('Buckets have been created.');
 
 		log('Attempting to connect to ElasticSearch...');
@@ -47,20 +55,27 @@ function sleep(duration) {
 			node: config.elasticSearchEndpoint
 		});
 
-		await Promise.all([
-			esClient.indices.create({ index: `${ config.elasticSearchIndex }_sites` }),
-			esClient.indices.create({ index: `${ config.elasticSearchIndex }_users` }),
-			esClient.indices.create({ index: `${ config.elasticSearchIndex }_dive_logs` })
-		]);
+		const indices = [ '_sites', '_users', '_dive_logs' ];
+		for (let i = 0; i < indices.length; i++) {
+			const index = `${ config.elasticSearchIndex }${ indices[i] }`;
+			log(' *', index);
+			const exists = await esClient.indices.exists({ index });
 
-		log('Creating ElasticSearch types...');
+			if (exists.body) {
+				log('   (already exists)');
+			} else {
+				await esClient.indices.create({ index });
+			}
+		}
+
+		log('Creating ElasticSearch type mappings...');
 		await require('../service/data/sites').esCreateMapping();
 		await require('../service/data/user').esCreateMapping();
 		await require('../service/data/log-entry').esCreateMapping();
 		log('ElasticSearch has been initialized.');
 
 	} catch (err) {
-		log.error(chalk.red(err));
+		log.error(chalk.red(err), err.stack);
 		process.exitCode = 1;
 	} finally {
 		log('Closing connections...');
