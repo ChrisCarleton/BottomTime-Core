@@ -68,12 +68,11 @@ function sleep(duration) {
 			}
 		}
 
-		// Types have been deprecated. No longer used in ES7+.
-		// log('Creating ElasticSearch types...');
-		// await require('../service/data/sites').esCreateMapping();
-		// await require('../service/data/user').esCreateMapping();
-		// await require('../service/data/log-entry').esCreateMapping();
-		// log('ElasticSearch has been initialized.');
+		log('Creating ElasticSearch type mappings...');
+		await require('../service/data/sites').esCreateMapping();
+		await require('../service/data/user').esCreateMapping();
+		await require('../service/data/log-entry').esCreateMapping();
+		log('ElasticSearch has been initialized.');
 
 	} catch (err) {
 		log.error(chalk.red(err), err.stack);

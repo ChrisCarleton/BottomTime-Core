@@ -134,18 +134,18 @@ import User from '../service/data/user';
 		});
 
 		log(`Created ${ chalk.bold(totalEntries) } log entries.`);
-
-		// Will need this when we start indexing log entries:
-		// log('Syncing ES...');
-		// await LogEntry.esSynchronize();
-		// log('Done');
+		log('Syncing ES...');
+		await LogEntry.esSynchronize();
+		log('Done');
 	} catch (err) {
 		log.error(chalk.red(err));
 		process.exitCode = 1;
 	} finally {
 		log('Closing connections...');
-		search.close();
-		await database.connection.close();
+		await Promise.all([
+			search.close(),
+			database.connection.close()
+		]);
 		log('Task completed.');
 	}
 })();
