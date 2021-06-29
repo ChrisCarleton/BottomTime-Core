@@ -11,6 +11,7 @@
     "lint": "npx eslint --fix \"service/**/*.js\" \"tests/**/*.js\" \"admin/**/*.js\"",
     "coverage": "npx nyc report --reporter=text-lcov | coveralls",
     "generate-test-data": "node admin/bootstrap.js ./generate-test-data",
+    "es-sync": "node admin/bootstrap.js ./es-sync",
     "init-local-full": "admin/init-local.sh",
     "init-local": "node admin/bootstrap.js ./init-local",
     "kill-sessions": "node admin/bootstrap.js ./kill-sessions",
