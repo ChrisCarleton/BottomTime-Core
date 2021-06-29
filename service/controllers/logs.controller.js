@@ -35,6 +35,7 @@ export async function SearchLogs(req, res) {
 		]);
 		searchUtils.selectFields(esQuery, [
 			'_id',
+			'diveNumber',
 			'entryTime',
 			'location',
 			'site',
@@ -91,7 +92,7 @@ export async function CreateLogs(req, res) {
 			return new LogEntry(e);
 		});
 
-		await LogEntry.insertMany(logEntries);
+		await Promise.all(_.map(logEntries, entry => entry.save()));
 		res.status(201).json(logEntries.map(e => e.toCleanJSON()));
 	} catch (err) {
 		const logId = req.logError(

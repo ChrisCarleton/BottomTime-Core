@@ -158,7 +158,7 @@ describe('Logs Controller', () => {
 		it('Will return Server Error if database request fails', async () => {
 			const fake = fakeLogEntry();
 
-			stub = sinon.stub(LogEntry, 'insertMany');
+			stub = sinon.stub(LogEntry.prototype, 'save');
 			stub.rejects('nope');
 
 			const res = await request(App)

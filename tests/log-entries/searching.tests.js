@@ -15,6 +15,7 @@ import User from '../../service/data/user';
 const expectedKeys = [
 	'entryId',
 	'entryTime',
+	'diveNumber',
 	'maxDepth',
 	'location',
 	'site',

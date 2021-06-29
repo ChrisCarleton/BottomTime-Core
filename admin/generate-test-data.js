@@ -61,6 +61,7 @@ import User from '../service/data/user';
 		}
 		await adminUser.save();
 		await User.esSynchronize();
+		users.push(adminUser);
 		log(`Admin user ${ chalk.bold.green(adminUser.username) } exists.`);
 
 		log('Creating dive sites and ratings (this could take a while)...');
