@@ -92,10 +92,10 @@ describe('User searching', () => {
 
 		[
 		    'relevance',
-            'created'
-            // TODO: Fix this tests for username sorting - they are unreliable and fail intermittently.
+			'created'
+			// TODO: Fix this tests for username sorting - they are unreliable and fail intermittently.
 			// 'username'
-        ].forEach(sortBy => {
+		].forEach(sortBy => {
 			[ 'asc', 'desc' ].forEach(sortOrder => {
 				it(`Can return results sorted by ${ sortBy } (${ sortOrder })`, async () => {
 					const count = 25;
