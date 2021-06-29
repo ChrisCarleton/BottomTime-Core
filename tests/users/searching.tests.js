@@ -91,7 +91,7 @@ describe('User searching', () => {
 		});
 
 		[
-		    'relevance',
+			'relevance',
 			'created'
 			// TODO: Fix this tests for username sorting - they are unreliable and fail intermittently.
 			// 'username'

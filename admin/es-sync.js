@@ -1,3 +1,4 @@
+/* eslint no-console: off */
 const chalk = require('chalk');
 import database from '../service/data/database';
 import search from '../service/search';
