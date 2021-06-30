@@ -18,7 +18,10 @@ const config = {
 
 	auth: {
 		googleClientId: process.env.BT_GOOGLE_CLIENT_ID || 'abcd',
-		googleClientSecret: process.env.BT_GOOGLE_CLIENT_SECRET || '1234'
+		googleClientSecret: process.env.BT_GOOGLE_CLIENT_SECRET || '1234',
+
+		discordClientId: process.env.BT_DISCORD_CLIENT_ID || 'abcd',
+		discordClientSecret: process.env.BT_DISCORD_CLIENT_SECRET || '1234'
 	},
 
 	smtp: {
