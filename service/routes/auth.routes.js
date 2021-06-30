@@ -32,4 +32,12 @@ module.exports = app => {
 		passport.authenticate('google'),
 		redirectToHome
 	);
+
+	app.get('/auth/discord', passport.authenticate('discord', { scope: [ 'identify', 'email' ] }));
+	app.get(
+		'/auth/discord/callback',
+		setSsoProvider('discord'),
+		passport.authenticate('discord'),
+		redirectToHome
+	);
 };

@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import config from './config';
+import { Strategy as DiscordStrategy } from 'passport-discord';
 import { EmailTakenError, SsoError } from './utils/errors';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as LocalStrategy } from 'passport-local';
@@ -24,27 +25,29 @@ passport.use(new LocalStrategy(async (username, password, done) => {
 	}
 }));
 
-export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
+async function oauthSignIn(profile, idField, cb) {
 	try {
-		let user = await User.findOne({ googleId: profile.id });
+		let user = await User.findOne(idField);
 		if (user) {
 			return cb(null, user);
 		}
 
-		user = await User.findByEmail(profile.emails[0].value);
+		const email = profile.email || profile.emails[0].value;
+		user = await User.findByEmail(email);
 		if (user) {
 			return cb(new EmailTakenError());
 		}
+
 
 		const username = uuid();
 		user = {
 			username,
 			usernameLower: username,
-			email: profile.emails[0].value,
-			emailLower: profile.emails[0].value.toLowerCase(),
+			email,
+			emailLower: email.toLowerCase(),
 			createdAt: moment().utc().toDate(),
-			googleId: profile.id,
-			isRegistrationIncomplete: true
+			isRegistrationIncomplete: true,
+			...idField
 		};
 
 		if (profile.name) {
@@ -55,13 +58,21 @@ export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
 		user = new User(user);
 		await user.save();
 
-		log.info('Created new user account based on Google Sign In:', user.username);
+		log.info('Created new user account based on single sign-on:', user.username);
 		return cb(null, user);
 	} catch (err) {
 		return cb(
-			new SsoError('Error occurred while attempting to authenticate using Google strategy.', err)
+			new SsoError('Error occurred while attempting to authenticate using OAuth.', err)
 		);
 	}
+}
+
+export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
+	await oauthSignIn(profile, { googleId: profile.id }, cb);
+}
+
+export async function SignInWithDiscord(accessToken, refreshToken, profile, cb) {
+	await oauthSignIn(profile, { discordId: profile.id }, cb);
 }
 
 passport.use(
@@ -71,6 +82,16 @@ passport.use(
 		callbackURL: url.resolve(config.siteUrl, '/api/auth/google/callback')
 	},
 	SignInWithGoogle)
+);
+
+passport.use(
+	new DiscordStrategy({
+		clientID: config.auth.discordClientId,
+		clientSecret: config.auth.discordClientSecret,
+		callbackURL: url.resolve(config.siteUrl, '/api/auth/discord/callback'),
+		scope: [ 'identify', 'email' ]
+	},
+	SignInWithDiscord)
 );
 
 passport.serializeUser((user, done) => {

@@ -1,0 +1,15 @@
+{
+  "id": "239485602734510345",
+  "username": "Ben Garrison",
+  "avatar": "f92ecfe4d9cf11ebba340f6078cd8ef9",
+  "discriminator": "8432",
+  "public_flags": 0,
+  "flags": 0,
+  "locale": "en-CA",
+  "mfa_enabled": false,
+  "email": "beng27@gmail.com",
+  "verified": true,
+  "provider": "discord",
+  "accessToken": "9psUmNnKVb5lXTqRcirontGXnopZBH",
+  "fetchedAt": "2021-06-30T18:00:21.204Z"
+}
