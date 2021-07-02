@@ -2,6 +2,30 @@ import { forbidden, notFound, serverError, unauthorized } from '../utils/error-r
 import Friend from '../data/friend';
 import User from '../data/user';
 
+function setReadonlyFlag(req) {
+	if (req.user && (req.user.role === 'admin' || req.user.id === req.account.id)) {
+		req.readOnlyResource = false;
+		return true;
+	}
+
+	if (req.account.logsVisibility === 'public') {
+		req.readOnlyResource = true;
+		return true;
+	}
+
+	if (
+		req.account.logsVisibility === 'friends-only'
+		&& req.user
+		&& req.friends
+		&& req.friends[req.user.username]
+	) {
+		req.readOnlyResource = true;
+		return true;
+	}
+
+	return false;
+}
+
 export function RequireUser(req, res, next) {
 	if (!req.user) {
 		return unauthorized(res);
@@ -59,31 +83,22 @@ export async function RetrieveUserAccount(req, res, next) {
 }
 
 export function AssertUserReadPermission(req, res, next) {
-	if (req.user && (req.user.role === 'admin' || req.user.id === req.account.id)) {
-		req.readOnlyResource = false;
-		return next();
+	if (req.user && req.user.isRegistrationIncomplete) {
+		return forbidden(res, 'User account registration must be completed.');
 	}
 
-	if (req.account.logsVisibility === 'public') {
-		req.readOnlyResource = true;
-		return next();
-	}
-
-	if (
-		req.account.logsVisibility === 'friends-only'
-		&& req.user
-		&& req.friends
-		&& req.friends[req.user.username]
-	) {
-		req.readOnlyResource = true;
-		return next();
-	}
-
-	return forbidden(res, 'You are not permitted to perform the requested action.');
+	return setReadonlyFlag(req)
+		? next()
+		: forbidden(res, 'You are not permitted to perform the requested action.');
 }
 
 export function AssertUserWritePermission(req, res, next) {
 	const forbiddenMessage = 'You are not permitted to create or update entries in the specified log book';
+
+	if (req.user && req.user.isRegistrationIncomplete) {
+		return forbidden(res, forbiddenMessage);
+	}
+
 	if (!req.user) {
 		return forbidden(
 			res,

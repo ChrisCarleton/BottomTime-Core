@@ -25,6 +25,14 @@ module.exports = app => {
 	app.post('/auth/logout', Logout);
 	app.post('/auth/resetPassword', ResetPassword);
 
+	app.get('/auth/github', passport.authenticate('github', { scope: [ 'read:user' ] }));
+	app.get(
+		'/auth/github/callback',
+		setSsoProvider('github'),
+		passport.authenticate('github'),
+		redirectToHome
+	);
+
 	app.get('/auth/google', passport.authenticate('google', { scope: [ 'email' ] }));
 	app.get(
 		'/auth/google/callback',

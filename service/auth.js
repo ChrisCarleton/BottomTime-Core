@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import config from './config';
 import { Strategy as DiscordStrategy } from 'passport-discord';
 import { EmailTakenError, SsoError } from './utils/errors';
+import { Strategy as GithubStrategy } from 'passport-github2';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as LocalStrategy } from 'passport-local';
 import log from './logger';
@@ -32,10 +33,12 @@ async function oauthSignIn(profile, idField, cb) {
 			return cb(null, user);
 		}
 
-		const email = profile.email || profile.emails[0].value;
-		user = await User.findByEmail(email);
-		if (user) {
-			return cb(new EmailTakenError());
+		const { email } = profile;
+		if (email) {
+			user = await User.findByEmail(email);
+			if (user) {
+				return cb(new EmailTakenError());
+			}
 		}
 
 
@@ -44,7 +47,7 @@ async function oauthSignIn(profile, idField, cb) {
 			username,
 			usernameLower: username,
 			email,
-			emailLower: email.toLowerCase(),
+			emailLower: email ? email.toLowerCase() : null,
 			createdAt: moment().utc().toDate(),
 			isRegistrationIncomplete: true,
 			...idField
@@ -67,13 +70,28 @@ async function oauthSignIn(profile, idField, cb) {
 	}
 }
 
+export async function SignInWithGithub(accessToken, refreshToken, profile, cb) {
+	profile.email = profile._json.email;
+	await oauthSignIn(profile, { githubId: profile.id }, cb);
+}
+
 export async function SignInWithGoogle(accessToken, refreshToken, profile, cb) {
+	profile.email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
 	await oauthSignIn(profile, { googleId: profile.id }, cb);
 }
 
 export async function SignInWithDiscord(accessToken, refreshToken, profile, cb) {
 	await oauthSignIn(profile, { discordId: profile.id }, cb);
 }
+
+passport.use(
+	new GithubStrategy({
+		clientID: config.auth.githubClientId,
+		clientSecret: config.auth.githubClientSecret,
+		callbackURL: url.resolve(config.siteUrl, '/api/auth/github/callback')
+	},
+	SignInWithGithub)
+);
 
 passport.use(
 	new GoogleStrategy({
