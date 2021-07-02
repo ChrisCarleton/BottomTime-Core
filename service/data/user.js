@@ -18,7 +18,6 @@ const userSchema = mongoose.Schema({
 	emailLower: {
 		type: String,
 		unique: true,
-		required: true,
 		es_indexed: true,
 		es_type: 'keyword'
 	},
@@ -30,9 +29,13 @@ const userSchema = mongoose.Schema({
 	},
 	email: {
 		type: String,
-		required: true,
 		es_indexed: true,
 		es_type: 'text'
+	},
+	githubId: {
+		type: String,
+		unique: true,
+		sparse: true
 	},
 	googleId: {
 		type: String,
