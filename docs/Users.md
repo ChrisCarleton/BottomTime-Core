@@ -146,12 +146,17 @@ use it to locate friends in the system for making friend requests.
 
 #### Query Parameters
 * **query** - A username or e-mail address to search for.
-* **count** - Maximum number of records to return. (The default is 500.)
-* **sortBy** - The field on which to sort the results. Currently the only value supported is `username`.
-* **sortOrder** - The order in which results are returned. Must be `asc` or `desc`. (The default is `asc`.)
-* **lastSeen** - Used for querying the next "page" of search results. This should be set to the last
-username returned in the previous query and the search will return a new set of results following that
-record in the desired sort order.
+* **count** - Maximum number of records to return. The default is 500.
+* **skip** - The number of records to skip over before returning results. Use this for paging. The default is 0.
+* **sortBy** - The field on which to sort the results. Currently the only values supported are `username`,
+`created`, and `relevance`. The default is `username`.
+* **sortOrder** - The order in which results are returned. Must be `asc` or `desc`. The default is `asc`.
+* **lockedOut** - Use to filter on accounts that are locked or unlocked. Must be a boolean indicating the
+desired value of the `isLockedOut` flag. If omitted, then results are not filtered on `isLockedOut`.
+* **role** - Filter results based on users' roles. Can be `user` or `admin`. If omitted, users will not be
+filtered based on their role.
+* **logsVisibility** - Filter results based on users' logs visibility preference. Can be `private`, `public`,
+or `friends-only`. If omitted, results will not be filtered on logs visibility.
 
 **NOTES** For administrators, all query parameters are optional. For regular users only **query** is
 allowed - and it is *required*! That is, regular users can only use this route for finding exact matches

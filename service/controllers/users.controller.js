@@ -85,6 +85,30 @@ export async function AdminGetUsers(req, res) {
 			created: 'createdAt'
 		});
 
+		if (req.query.lockedOut) {
+			searchUtils.addFilter(esQuery, {
+				term: {
+					isLockedOut: req.query.lockedOut === 'true'
+				}
+			});
+		}
+
+		if (req.query.logsVisibility) {
+			searchUtils.addFilter(esQuery, {
+				term: {
+					logsVisibility: req.query.logsVisibility
+				}
+			});
+		}
+
+		if (req.query.role) {
+			searchUtils.addFilter(esQuery, {
+				term: {
+					role: req.query.role
+				}
+			});
+		}
+
 		const results = await User.esSearch(esQuery);
 		res.json(results.body.hits.hits.map(hit => ({
 			...hit._source,
