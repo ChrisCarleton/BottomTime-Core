@@ -92,9 +92,8 @@ describe('User searching', () => {
 
 		[
 			'relevance',
-			'created'
-			// TODO: Fix this tests for username sorting - they are unreliable and fail intermittently.
-			// 'username'
+			'created',
+			'username'
 		].forEach(sortBy => {
 			[ 'asc', 'desc' ].forEach(sortOrder => {
 				it(`Can return results sorted by ${ sortBy } (${ sortOrder })`, async () => {
@@ -174,6 +173,60 @@ describe('User searching', () => {
 			expect(body[0]).to.eql({
 				...toSearchResult(users[61]),
 				score: body[0].score
+			});
+		});
+
+		[ true, false ].forEach(isLockedOut => {
+			it(`Can filter on isLockedOut === ${ isLockedOut }`, async () => {
+				const { body } = await request(App)
+					.get('/users')
+					.set(...adminUser.authHeader)
+					.query({
+						count: 200,
+                        lockedOut: isLockedOut
+					})
+					.expect(200);
+
+				expect(body.length).to.be.at.least(1);
+				body.forEach(user => {
+					expect(user.isLockedOut).to.equal(isLockedOut);
+				});
+			});
+		});
+
+		[ 'user', 'admin' ].forEach(role => {
+			it(`Can filter on role === ${ role }`, async () => {
+				const { body } = await request(App)
+					.get('/users')
+					.set(...adminUser.authHeader)
+					.query({
+						count: 200,
+                        role
+					})
+					.expect(200);
+
+				expect(body.length).to.be.at.least(1);
+				body.forEach(user => {
+					expect(user.role).to.equal(role);
+				});
+			});
+		});
+
+		[ 'private', 'friends-only', 'public' ].forEach(logsVisibility => {
+			it(`Can filter on logsVisibility === ${ logsVisibility }`, async () => {
+				const { body } = await request(App)
+					.get('/users')
+					.set(...adminUser.authHeader)
+					.query({
+						count: 200,
+						logsVisibility
+					})
+					.expect(200);
+
+				expect(body).to.be.an('array');
+				body.forEach(user => {
+					expect(user.logsVisibility).to.equal(logsVisibility);
+				});
 			});
 		});
 
