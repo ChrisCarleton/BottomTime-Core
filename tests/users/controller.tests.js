@@ -946,18 +946,22 @@ describe('Users Controller', () => {
 
 	describe('POST /users/:username/[lock|unlock]', () => {
 		[ true, false ].forEach(locked => {
-		    const lockedString = () => locked ? 'locked' : 'unlocked';
-		    const route = () => locked ? 'lock' : 'unlock';
+			function lockedString() {
+				return locked ? 'locked' : 'unlocked';
+			}
+			function route() {
+				return locked ? 'lock' : 'unlock';
+			}
 
 			it(`Will toggle account locked status to ${ lockedString() }`, async () => {
-			    const user = new User(fakeUser());
-			    user.isLockedOut = !locked;
-			    await user.save();
+				const user = new User(fakeUser());
+				user.isLockedOut = !locked;
+				await user.save();
 
-			    await request(App).post(`/users/${ user.username }/${ route() }`).set(...admin.authHeader).expect(204);
+				await request(App).post(`/users/${ user.username }/${ route() }`).set(...admin.authHeader).expect(204);
 
-			    const result = await User.findByUsername(user.username);
-			    expect(result.isLockedOut).to.equal(locked);
+				const result = await User.findByUsername(user.username);
+				expect(result.isLockedOut).to.equal(locked);
 			});
 
 			it(`Will be a no-op if lock status is already ${ lockedString() }`, async () => {
@@ -985,12 +989,16 @@ describe('Users Controller', () => {
 				user.isLockedOut = !locked;
 				await user.save();
 
-				const res = await request(App).post(`/users/${ user.username }/${ route() }`).set(...regularUser.authHeader).expect(403);
+				const res = await request(App)
+					.post(`/users/${ user.username }/${ route() }`)
+					.set(...regularUser.authHeader).expect(403);
 				expect(res.body).to.be.a.forbiddenResponse;
 			});
 
 			it(`Will return Not Found if indicated user does not exist when calling ${ route() }`, async () => {
-				const res = await request(App).post(`/users/some_guy/${ route() }`).set(...admin.authHeader).expect(404);
+				const res = await request(App)
+					.post(`/users/some_guy/${ route() }`)
+					.set(...admin.authHeader).expect(404);
 				expect(res.body).to.be.a.notFoundResponse;
 			});
 
@@ -1001,7 +1009,9 @@ describe('Users Controller', () => {
 
 				stub = sinon.stub(User.prototype, 'save').rejects('nope');
 
-				const res = await request(App).post(`/users/${ user.username }/${ route() }`).set(...admin.authHeader).expect(500);
+				const res = await request(App)
+					.post(`/users/${ user.username }/${ route() }`)
+					.set(...admin.authHeader).expect(500);
 				expect(res.body).to.be.a.serverErrorResponse;
 			});
 		});
