@@ -991,14 +991,16 @@ describe('Users Controller', () => {
 
 				const res = await request(App)
 					.post(`/users/${ user.username }/${ route() }`)
-					.set(...regularUser.authHeader).expect(403);
+					.set(...regularUser.authHeader)
+					.expect(403);
 				expect(res.body).to.be.a.forbiddenResponse;
 			});
 
 			it(`Will return Not Found if indicated user does not exist when calling ${ route() }`, async () => {
 				const res = await request(App)
 					.post(`/users/some_guy/${ route() }`)
-					.set(...admin.authHeader).expect(404);
+					.set(...admin.authHeader)
+					.expect(404);
 				expect(res.body).to.be.a.notFoundResponse;
 			});
 
@@ -1011,7 +1013,8 @@ describe('Users Controller', () => {
 
 				const res = await request(App)
 					.post(`/users/${ user.username }/${ route() }`)
-					.set(...admin.authHeader).expect(500);
+					.set(...admin.authHeader)
+					.expect(500);
 				expect(res.body).to.be.a.serverErrorResponse;
 			});
 		});
