@@ -381,3 +381,20 @@ export async function ConfirmPasswordReset(req, res) {
 		serverError(res, logId);
 	}
 }
+
+export async function UpdateLockStatus(req, res) {
+	try {
+		const user = await User.findByUsername(req.params.username);
+		if (!user) {
+			return notFound(req, res);
+		}
+
+		user.isLockedOut = req.params.lockStatus === 'lock';
+		await user.save();
+
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError('Unable to update lock status', err);
+		serverError(res, logId);
+	}
+}

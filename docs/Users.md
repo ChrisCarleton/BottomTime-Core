@@ -315,3 +315,20 @@ HTTP Status Code | Details
 **403 Forbidden** | The request was rejected because the current user is not authorized to update the requested user profile. An [Error](General.md#error-object) Object will be returned in the response body.
 **404 Not Found** | A user with the username specified in the **username** route parameter does not exist and so no profile could be found. An [Error](General.md#error-object) Object will be returned in the response body.
 **500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
+
+### POST /users/:username/[lock|unlock]
+Sets or unsets the `isLockedOut` flag on user accounts. Accounts that are "locked out" cannot be logged into.
+
+**NOTE:** This route is only available to administrators. Normal users will always receive a **403 Forbidden** response.
+
+#### Route Parameters
+* **username** - A valid [username](#usernames) that identifies the user whose account will be locked or unlocked.
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**204 No Content** | The request succeeded and the `isLockedOut` flag has been set or unset.
+**401 Unauthorized** | The request was rejected because the current user is not logged in.
+**403 Forbidden** | The request was rejected because the current user is not an administrator.
+**404 Not Found** | A user with the username specified in the **username** route parameter does not exist and so no changes could be made.
+**500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.

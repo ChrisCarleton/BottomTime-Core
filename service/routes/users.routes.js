@@ -7,7 +7,8 @@ import {
 	GetUserAccount,
 	GetUsers,
 	RequireAccountPermission,
-	RequireUserForRegistration
+	RequireUserForRegistration,
+	UpdateLockStatus
 } from '../controllers/users.controller';
 import { RequireAdminUser, RequireUser } from '../controllers/security.controller';
 
@@ -23,4 +24,5 @@ module.exports = app => {
 		RequireAccountPermission,
 		CompleteRegistration
 	);
+	app.post('/users/:username/:lockStatus(lock|unlock)', RequireAdminUser, UpdateLockStatus);
 };
