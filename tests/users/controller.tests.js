@@ -549,6 +549,131 @@ describe('Users Controller', () => {
 		});
 	});
 
+	describe('POST /users/:username/changeEmail', () => {
+		const newEmail = 'New_Email@ShinyServer.org';
+		let account = null;
+
+		afterEach(async () => {
+			if (account) {
+				await account.user.delete();
+				account = null;
+			}
+		});
+
+		it('Will update user\'s email address', async () => {
+			account = await createFakeAccount();
+
+			await request(App)
+				.post(`/users/${ account.user.username }/changeEmail`)
+				.set(...account.authHeader)
+				.send({ newEmail })
+				.expect(204);
+
+			const result = await User.findByUsername(account.user.username);
+			expect(result.email).to.equal(newEmail);
+			expect(result.emailLower).to.equal(newEmail.toLowerCase());
+		});
+
+		it('Will allow admins to change other users\' emails', async () => {
+			account = await createFakeAccount();
+
+			await request(App)
+				.post(`/users/${ account.user.username }/changeEmail`)
+				.set(...admin.authHeader)
+				.send({ newEmail })
+				.expect(204);
+
+			const result = await User.findByUsername(account.user.username);
+			expect(result.email).to.equal(newEmail);
+			expect(result.emailLower).to.equal(newEmail.toLowerCase());
+		});
+
+		it('Will act as a no-op and return 204 if user changes their password to its current value', async () => {
+			account = await createFakeAccount();
+			stub = sinon.stub(User.prototype, 'save');
+			stub.rejects('nope');
+
+			await request(App)
+				.post(`/users/${ account.user.username }/changeEmail`)
+				.set(...account.authHeader)
+				.send({ newEmail: account.user.email.toUpperCase() })
+				.expect(204);
+		});
+
+		it('Will return 400 if request is invalid', async () => {
+			account = await createFakeAccount();
+
+			const { body } = await request(App)
+				.post(`/users/${ account.user.username }/changeEmail`)
+				.set(...account.authHeader)
+				.send({ lol: true })
+				.expect(400);
+
+			expect(body).to.be.a.badRequestResponse;
+		});
+
+		it('Will return 401 if user is not logged in', async () => {
+			account = await createFakeAccount();
+
+			const { body } = await request(App)
+				.post(`/users/${ account.user.username }/changeEmail`)
+				.send({ newEmail })
+				.expect(401);
+
+			expect(body).to.be.an.unauthorizedResponse;
+		});
+
+		it('Will return 403 if regular user tries to change another user\'s email', async () => {
+			account = await createFakeAccount();
+
+			const { body } = await request(App)
+				.post(`/users/${ regularUser.user.username }/changeEmail`)
+				.set(...account.authHeader)
+				.send({ newEmail })
+				.expect(403);
+
+			expect(body).to.be.a.forbiddenResponse;
+		});
+
+		it('Will return 403 if user account is not found', async () => {
+			const { body } = await request(App)
+				.post('/users/nobody/changeEmail')
+				.set(...admin.authHeader)
+				.send({ newEmail })
+				.expect(403);
+
+			expect(body).to.be.a.forbiddenResponse;
+		});
+
+		it('Will return 409 if the new email is already taken', async () => {
+			const otherUser = new User(fakeUser());
+			await otherUser.save();
+			account = await createFakeAccount();
+
+			const { body } = await request(App)
+				.post(`/users/${ account.user.username }/changeEmail`)
+				.set(...account.authHeader)
+				.send({ newEmail: otherUser.email.toUpperCase() })
+				.expect(409);
+
+			expect(body).to.be.a.conflictResponse;
+		});
+
+		it('Will return 500 if there is an error accessing the database', async () => {
+			account = await createFakeAccount();
+			stub = sinon.stub(User.prototype, 'save');
+			stub.rejects('nope');
+
+			const { body } = await request(App)
+				.post(`/users/${ account.user.username }/changeEmail`)
+				.set(...account.authHeader)
+				.send({ newEmail })
+				.expect(500);
+
+			expect(body).to.be.a.serverErrorResponse;
+		});
+	});
+
 	describe('POST /users/:username/changePassword', () => {
 		it('Will change the user\'s password', async () => {
 			const oldPassword = faker.internet.password(18, false, null, '@1_aZ');

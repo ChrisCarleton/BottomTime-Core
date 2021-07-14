@@ -274,6 +274,31 @@ HTTP Status Code | Details
 **404 Not Found** | A user with the username specified in the **username** route parameter does not exist and so no user account could be found. An [Error](General.md#error-object) Object will be returned in the response body.
 **500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
 
+### POST /users/:username/changeEmail
+Change a user's email address. Users may change their own email address. Admins can change the email
+address for any user account.
+
+#### Route Parameters
+* **username** - The username identifying the account for which the email address will be changed.
+
+### Message Body
+The message body must be a JSON object with a single key/value pair:
+
+```json
+{
+  "newEmail": "REQUIRED: A string containing the new email address to assign to the user account"
+}
+```
+
+#### Responses
+HTTP Status Code | Details
+----- | -----
+**204 No Content** | The request succeeded and the email address was successfully changed.
+**400 Bad Request** | The request was rejected because there was a problem validating the message body. It may have been malformed or the new email address may not be valid.
+**403 Forbidden** | The request was rejected because the current user is not authorized to change the email address for the user account indicated in the `username` route parameter. Alternatively, a 403 response will be returned if the target user account does not exist. An [Error](General.md#error-object) Object will be returned in the response body.
+**409 Conflict** | The request was rejected because another user account already exists with the new e-mail address. Email addresses must be unique across accounts. An [Error](General.md#error-object) Object will be returned in the response body.
+**500 Server Error** | An internal error occurred while attempting to read or write the profile information to/from the database. An [Error](General.md#error-object) Object will be returned in the response body with more details.
+
 ### POST /users/:username/confirmResetPassword
 Changes a user's password after a reset password request has been made. A call to
 `POST /users/:username/resetPassword` must be made before-hand to receive the reset token necessary to

@@ -3,6 +3,7 @@ import fakeCompleteRegistration from '../util/fake-complete-registration';
 import faker from 'faker';
 import {
 	AdminUserQuerySchema,
+	ChangeEmailSchema,
 	ChangePasswordSchema,
 	CompleteRegistrationSchema,
 	ConfirmResetPasswordSchema,
@@ -15,6 +16,7 @@ const LongString = faker.lorem.sentences(7).substr(0, 51);
 
 let account = null;
 let registration = null;
+let changeEmail = null;
 let changePassword = null;
 let resetPassword = null;
 let adminUserQuery = null;
@@ -41,6 +43,11 @@ function validateAccount(expectedError) {
 
 function validateCompleteRegistration(expectedError) {
 	const err = CompleteRegistrationSchema.validate(registration);
+	testExpectedError(err, expectedError);
+}
+
+function validateChangeEmail(expectedError) {
+	const err = ChangeEmailSchema.validate(changeEmail);
 	testExpectedError(err, expectedError);
 }
 
@@ -305,6 +312,29 @@ describe('Complete Registration Validation', () => {
 			registration.uiComplexity = c;
 			validateCompleteRegistration();
 		});
+	});
+});
+
+describe('Change Email Validation', () => {
+	beforeEach(() => {
+		changeEmail = {
+			newEmail: 'bob@emailserver.de'
+		};
+	});
+
+	it('New email must be a string', () => {
+		changeEmail.newEmail = 99;
+		validateChangeEmail('string.base');
+	});
+
+	it('New email must be a valid address', () => {
+		changeEmail.newEmail = 'nope';
+		validateChangeEmail('string.email');
+	});
+
+	it('New email is required', () => {
+		delete changeEmail.newEmail;
+		validateChangeEmail('any.required');
 	});
 });
 
