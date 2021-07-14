@@ -25,6 +25,10 @@ export const CompleteRegistrationSchema = Joi.object().keys({
 	uiComplexity: Joi.string().valid('basic', 'advanced', 'technical')
 });
 
+export const ChangeEmailSchema = Joi.object().keys({
+	newEmail: Joi.string().email().required()
+}).required();
+
 export const ChangePasswordSchema = Joi.object().keys({
 	oldPassword: Joi.string(),
 	newPassword: PasswordValidation

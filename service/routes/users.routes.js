@@ -1,5 +1,6 @@
 import {
 	AdminGetUsers,
+	ChangeEmail,
 	ChangePassword,
 	CompleteRegistration,
 	ConfirmPasswordReset,
@@ -16,6 +17,7 @@ module.exports = app => {
 	app.get('/users', RequireUser, GetUsers, AdminGetUsers);
 	app.get('/users/:username', RequireAdminUser, GetUserAccount);
 	app.put('/users/:username', CreateUserAccount);
+	app.post('/users/:username/changeEmail', RequireUser, RequireAccountPermission, ChangeEmail);
 	app.post('/users/:username/changePassword', RequireUser, RequireAccountPermission, ChangePassword);
 	app.post('/users/:username/confirmResetPassword', ConfirmPasswordReset);
 	app.post(

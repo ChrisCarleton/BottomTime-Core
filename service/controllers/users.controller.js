@@ -2,9 +2,10 @@ import bcrypt from 'bcrypt';
 import { badRequest, conflict, forbidden, notFound, serverError, unauthorized } from '../utils/error-response';
 import {
 	AdminUserQuerySchema,
+	ChangeEmailSchema,
+	ChangePasswordSchema,
 	CompleteRegistrationSchema,
 	ConfirmResetPasswordSchema,
-	ChangePasswordSchema,
 	UserAccountSchema,
 	UserQuerySchema
 } from '../validation/user';
@@ -329,8 +330,41 @@ export async function CompleteRegistration(req, res) {
 	}
 }
 
-export function ChangeEmail(req, res) {
-	res.sendStatus(501);
+export async function ChangeEmail(req, res) {
+	try {
+		const isValid = ChangeEmailSchema.validate(req.body);
+		if (isValid.error) {
+			return badRequest(
+				'Request was invalid. Check that the new e-mail is a valid e-mail address.',
+				isValid.error,
+				res);
+		}
+
+		const { newEmail } = req.body;
+		const newEmailLower = newEmail.toLowerCase();
+
+		if (req.account.emailLower === newEmailLower) {
+			// There is no change to be made here. Return 204.
+			return res.sendStatus(204);
+		}
+
+		const emailConflict = await User.findByEmail(newEmail);
+		if (emailConflict) {
+			return conflict(
+				res,
+				'email',
+				'Desired e-mail address is already in use on another account');
+		}
+
+		req.account.email = newEmail;
+		req.account.emailLower = newEmailLower;
+		await req.account.save();
+
+		res.sendStatus(204);
+	} catch (err) {
+		const logId = req.logError('Failed to change email address due to an unexpected server error', err);
+		serverError(res, logId);
+	}
 }
 
 export async function ChangePassword(req, res) {
