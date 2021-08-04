@@ -14,7 +14,7 @@ Describes a dive site.
 	"name": "REQUIRED String: The name of the site. (Max 200 characters.)",
 	"location": "String: The location, town, city, etc. where the dive site is located. (Max 100 characters.)",
 	"country": "String: The name of the country in which the dive site is located. (Max 100 characters.)",
-	"water": "String: One of 'fresh' or 'salt'.",
+	"water": "String: One of 'fresh', 'salt', or 'mixed'.",
 	"accessibility": "String: One of 'shore' or 'boat'.",
 	"entryFee": "Boolean: True if the site is a private location where you have to pay to dive there.",
 	"difficulty": "Number: Difficulty rating 1-5. 1 = Suitable for beginners, 5 = Expert/technical divers only.",
@@ -65,7 +65,7 @@ will be considered in the search. The default is `50`; the maximum is `1000`.
 * **count** - Number of records to return. The default is `250`; the maximum is `1000`.
 * **skip** - Number of records to skip over before returning results. (Useful for pagination.) Default is
 `0`.
-* **water** - Allows filtering by type of water. Valud values are `salt` and `fresh`.
+* **water** - Allows filtering by type of water. Valid values are `salt`, `fresh`, and `mixed`.
 * **accessibility** - Allows filtering by shore/boat access. Valid values are `shore` and `boat`.
 * **avoidEntryFee** - If true, will filter out dive sites where you need to pay to dive there. Valid
 values are `true` or `false`.

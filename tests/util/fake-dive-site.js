@@ -42,7 +42,7 @@ export default userName => {
 		name,
 		location: faker.address.city(),
 		country: faker.address.country(),
-		water: faker.random.arrayElement([ 'salt', 'fresh' ]),
+		water: faker.random.arrayElement([ 'salt', 'fresh', 'mixed' ]),
 		accessibility: faker.random.arrayElement([ 'shore', 'boat' ]),
 		entryFee: faker.datatype.boolean(),
 		difficulty: faker.datatype.number({ min: 10, max: 50 }) / 10,
