@@ -198,7 +198,7 @@ describe('Searching Dive Sites', () => {
 		const { body } = await request(App)
 			.get('/diveSites')
 			.query({
-				closeTo: SanMiguelDeCozumel,
+				closeTo: `[${ SanMiguelDeCozumel.join(',') } ]`,
 				distance: 25,
 				count: 20
 			})
@@ -212,7 +212,7 @@ describe('Searching Dive Sites', () => {
 		const { body } = await request(App)
 			.get('/diveSites')
 			.query({
-				closeTo: SanMiguelDeCozumel,
+				closeTo: `[${ SanMiguelDeCozumel.join(',') } ]`,
 				count: 20
 			})
 			.expect(200);
@@ -226,7 +226,7 @@ describe('Searching Dive Sites', () => {
 			.get('/diveSites')
 			.query({
 				query: 'deep',
-				closeTo: SanMiguelDeCozumel,
+				closeTo: `[${ SanMiguelDeCozumel.join(',') } ]`,
 				water: 'salt',
 				accessibility: 'boat',
 				minRating: 2.0,
