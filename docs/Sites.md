@@ -78,7 +78,7 @@ be a number between `1.0` and `5.0`.
 * **owner** - Only show dive sites submitted by specified specified user.
 * **sortOrder** - The order in which results are returned. Must be `asc` or `desc`. (The default is `asc`.)
 * **sortBy** - The field on which to sort the results. Valid values are `relevance` (the default),
-`difficulty`, and `rating`.
+`difficulty`, `modified`, and `rating`.
 
 **Notes:** If `distance` is supplied then `closeTo` is required. Supplying `distance` without `closeTo`
 will result in a 400 Bad Request error.
