@@ -37,6 +37,14 @@ async function getAverageRating(diveSiteId) {
 
 /* eslint-disable complexity */
 export async function searchSites(req, res) {
+	if (req.query.closeTo) {
+		try {
+			req.query.closeTo = JSON.parse(req.query.closeTo);
+		} catch (err) {
+			req.log.warn('Failed to parse JSON from query string', err);
+		}
+	}
+
 	const { error } = DiveSiteSearchSchema.validate(req.query);
 	if (error) {
 		return badRequest(
