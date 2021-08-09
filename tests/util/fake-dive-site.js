@@ -59,7 +59,13 @@ export default userName => {
 
 export function toDiveSite(fake) {
 	const site = new Site();
+	const now = new Date(Date.now());
+	const created = faker.date.past(6, now);
+	const updated = faker.date.between(created, now);
+
 	site.assign(fake);
 	site.owner = fake.owner;
+	site.created = created;
+	site.updated = updated;
 	return site;
 }
