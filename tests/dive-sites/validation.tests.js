@@ -114,7 +114,7 @@ describe('Dive Site Validation', () => {
 			validateDiveSite('any.only');
 		});
 
-		[ 'salt', 'fresh', null ].forEach(value => {
+		[ 'salt', 'fresh', 'mixed', null ].forEach(value => {
 			it(`Water can be ${ value }`, () => {
 				diveSite.water = value;
 				validateDiveSite();

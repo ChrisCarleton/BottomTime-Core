@@ -99,7 +99,7 @@ describe('Searching Dive Sites', () => {
 		});
 	});
 
-	[ 'fresh', 'salt' ].forEach(water => {
+	[ 'fresh', 'salt', 'mixed' ].forEach(water => {
 		it(`Results can be filtered by ${ water } water sites`, async () => {
 			const { body } = await request(App)
 				.get('/diveSites')

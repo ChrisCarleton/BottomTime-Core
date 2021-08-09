@@ -48,7 +48,7 @@ const siteSchema = mongoose.Schema({
 		es_type: 'text'
 	},
 
-	// salt or fresh
+	// salt, fresh, or mixed
 	water: {
 		type: String,
 		es_indexed: true,
