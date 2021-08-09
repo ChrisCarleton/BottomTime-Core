@@ -25,11 +25,13 @@ Describes a dive site.
 	"gps": {
 		"lon": "REQUIRED Number: Longitude of the dive site. Must be between -180.0 and 180.0.",
 		"lat": "REQUIRED Number: Latitude of the dive site. Must be between -90.0 and 90.0."
-	}
+	},
+  	"created": "String: The time/date at which the dive site entry was first created (ISO string in UTC.)",
+  	"updated": "String: The time/date at which the dive site entry was last modified (ISO string in UTC.)"
 }
 ```
-**Notes:** The `siteId`, `score`, and `owner` properties are ignored when creating and updating dive
-sites. On creation, the site ID will be generated and the owner will be set to the user who created the
+**Notes:** The `siteId`, `score`, `created`, `updated` and `owner` properties are ignored when creating and updating dive
+sites. On creation, the site ID and timestamps will be generated and the owner will be set to the user who created the
 site.
 
 All dive sites are publicly visible. They are meant to be shared among users.
@@ -76,7 +78,7 @@ be a number between `1.0` and `5.0`.
 * **owner** - Only show dive sites submitted by specified specified user.
 * **sortOrder** - The order in which results are returned. Must be `asc` or `desc`. (The default is `asc`.)
 * **sortBy** - The field on which to sort the results. Valid values are `relevance` (the default),
-`difficulty`, and `rating`.
+`difficulty`, `modified`, and `rating`.
 
 **Notes:** If `distance` is supplied then `closeTo` is required. Supplying `distance` without `closeTo`
 will result in a 400 Bad Request error.
@@ -105,7 +107,7 @@ HTTP Status Code | Details
 Saves new dive sites to the database and indexes them for searching.
 
 #### Message Body
-The message body must be an array of [DiveSite](#divesite-object) objects. The `siteId` and `owner`
+The message body must be an array of [DiveSite](#divesite-object) objects. The `siteId`, `created`, `updated` and `owner`
 properties must be omitted from the objects as these properties are considered read-only. Up to 250
 dive sites can be posted in a single request.
 
@@ -125,7 +127,7 @@ do this.
 * **siteId** - The ID of dive site to be updated.
 
 #### Message Body
-The request body must contain a [DiveSite](#divesite-object) object. The `siteId` and `owner`
+The request body must contain a [DiveSite](#divesite-object) object. The `siteId`, `created`, `updated` and `owner`
 properties must be omitted from the object as these properties are considered read-only.
 
 #### Responses

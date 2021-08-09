@@ -92,7 +92,8 @@ export async function CreateLogs(req, res) {
 			return new LogEntry(e);
 		});
 
-		await Promise.all(_.map(logEntries, entry => entry.save()));
+		await LogEntry.insertMany(logEntries);
+		await LogEntry.esSynchronize();
 		res.status(201).json(logEntries.map(e => e.toCleanJSON()));
 	} catch (err) {
 		const logId = req.logError(

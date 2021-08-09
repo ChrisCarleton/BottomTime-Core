@@ -56,11 +56,15 @@ describe('Dive sites controller', () => {
 
 			const [ result ] = body;
 			expect(result.siteId).to.exist;
+			expect(result.created).to.exist;
+			expect(result.updated).to.exist;
 
 			expect(result).to.eql({
 				...fake,
 				owner: userAccount.user.username,
-				siteId: result.siteId
+				siteId: result.siteId,
+				created: result.created,
+				updated: result.updated
 			});
 
 			const entity = await DiveSite.findById(result.siteId);
@@ -84,10 +88,14 @@ describe('Dive sites controller', () => {
 
 			body.forEach((result, i) => {
 				expect(result.siteId).to.exist;
+				expect(result.created).to.exist;
+				expect(result.updated).to.exist;
 				expect(result).to.eql({
 					...fakes[i],
 					owner: userAccount.user.username,
-					siteId: result.siteId
+					siteId: result.siteId,
+					created: result.created,
+					updated: result.updated
 				});
 			});
 
@@ -197,6 +205,8 @@ describe('Dive sites controller', () => {
 				.expect(200);
 
 			fake.siteId = diveSite.id;
+			fake.created = diveSite.created.toISOString();
+			fake.updated = diveSite.updated.toISOString();
 			expect(body).to.eql(fake);
 		});
 
@@ -254,7 +264,9 @@ describe('Dive sites controller', () => {
 				...fake,
 				owner: userAccount.user.username,
 				siteId: diveSite.id,
-				avgRating: diveSite.avgRating
+				avgRating: diveSite.avgRating,
+				created: diveSite.created.toISOString(),
+				updated: diveSite.updated.toISOString()
 			});
 		});
 
@@ -314,7 +326,9 @@ describe('Dive sites controller', () => {
 				...fake,
 				owner: userAccount.user.username,
 				siteId: diveSite.id,
-				avgRating: diveSite.avgRating
+				avgRating: diveSite.avgRating,
+				created: diveSite.created.toISOString(),
+				updated: diveSite.updated.toISOString()
 			});
 		});
 

@@ -23,6 +23,20 @@ const siteSchema = mongoose.Schema({
 		es_type: 'keyword',
 		es_indexed: true
 	},
+	created: {
+		type: Date,
+		required: true,
+		index: true,
+		es_type: 'date',
+		es_indexed: true
+	},
+	updated: {
+		type: Date,
+		required: true,
+		index: true,
+		es_type: 'date',
+		es_indexed: true
+	},
 	location: {
 		type: String,
 		es_indexed: true,
@@ -101,6 +115,9 @@ siteSchema.methods.toCleanJSON = function () {
 			'avgRating'
 		])
 	};
+
+	clean.created = this.created.toISOString();
+	clean.updated = this.updated.toISOString();
 
 	if (this.gps) {
 		clean.gps = {

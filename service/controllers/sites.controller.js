@@ -121,7 +121,8 @@ export async function searchSites(req, res) {
 
 		searchUtils.addSorting(esQuery, req.query.sortBy, req.query.sortOrder, {
 			difficulty: 'difficulty',
-			rating: 'avgRating'
+			rating: 'avgRating',
+			modified: 'updated'
 		});
 
 		const results = await DiveSite.esSearch(esQuery);
@@ -167,6 +168,8 @@ export async function createSites(req, res) {
 			const site = new DiveSite();
 			site.assign(s);
 			site.owner = req.user.username;
+			site.created = new Date(Date.now());
+			site.updated = new Date(Date.now());
 			return site;
 		});
 
@@ -191,8 +194,8 @@ export async function updateSite(req, res) {
 
 	try {
 		req.diveSite.assign(req.body);
+		req.diveSite.udpated = new Date(Date.now());
 		await req.diveSite.save();
-		await DiveSite.esSynchronize();
 		res.sendStatus(204);
 	} catch (err) {
 		const logId = req.logError('Failed to update dive site info', err);

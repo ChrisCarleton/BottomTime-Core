@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { App } from '../../service/server';
 import createAccount from '../util/create-fake-account';
 import mongoose from 'mongoose';
+import { ErrorIds } from '../../service/utils/error-response';
 import { expect } from 'chai';
 import fakeLogEntry, { toLogEntry } from '../util/fake-log-entry';
 import fakeMongoId from '../util/fake-mongo-id';
@@ -9,7 +10,6 @@ import LogEntry from '../../service/data/log-entry';
 import request from 'supertest';
 import sinon from 'sinon';
 import User from '../../service/data/user';
-import { ErrorIds } from '../../service/utils/error-response';
 
 let stub = null;
 
@@ -158,7 +158,7 @@ describe('Logs Controller', () => {
 		it('Will return Server Error if database request fails', async () => {
 			const fake = fakeLogEntry();
 
-			stub = sinon.stub(LogEntry.prototype, 'save');
+			stub = sinon.stub(LogEntry, 'insertMany');
 			stub.rejects('nope');
 
 			const res = await request(App)

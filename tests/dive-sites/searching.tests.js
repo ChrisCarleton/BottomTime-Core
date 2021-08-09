@@ -165,7 +165,7 @@ describe('Searching Dive Sites', () => {
 		});
 	});
 
-	[ 'relevance', 'difficulty', 'rating' ].forEach(sortBy => {
+	[ 'relevance', 'difficulty', 'rating', 'modified' ].forEach(sortBy => {
 		[ 'asc', 'desc' ].forEach(sortOrder => {
 			it(`Results can be ordered by ${ sortBy } (${ sortOrder })`, async () => {
 				const count = 25;
@@ -182,7 +182,11 @@ describe('Searching Dive Sites', () => {
 				case 'rating':
 					sortProperty = 'avgRating';
 					break;
+				case 'modified':
+					sortProperty = 'updated';
+					break;
 				default:
+					break;
 				}
 
 				expect(body).to.be.an('array').and.have.lengthOf(count);
