@@ -47,7 +47,7 @@
     ]
   },
   "devDependencies": {
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "chai": "^4.1.2",
     "chai-sorted": "^0.2.0",
     "chalk": "4.1.1",
